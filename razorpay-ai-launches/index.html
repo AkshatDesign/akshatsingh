@@ -1026,6 +1026,17 @@ window.addEventListener('scroll', updateH, {passive: true});
 window.addEventListener('resize', updateH);
 updateH();
 
+// ─ HORIZONTAL DOTS CLICK ─
+hDots.forEach((dot, i) => {
+  dot.addEventListener('click', () => {
+    if(!hOuter) return;
+    const scrollable = hOuter.offsetHeight - window.innerHeight;
+    const targetProgress = i / (hSlides.length - 1);
+    const targetScroll = hOuter.offsetTop + targetProgress * scrollable;
+    window.scrollTo({top: targetScroll, behavior: 'smooth'});
+  });
+});
+
 // ─ NEURAL NETWORK CANVAS ─
 const nc = document.getElementById('neural-canvas');
 const nctx = nc.getContext('2d');
@@ -1205,15 +1216,23 @@ document.querySelectorAll('.ic-card').forEach(card => {
 // ─ SECTION DOTS ─
 const dots = document.querySelectorAll('.s-dot');
 const dotSects = ['top','overview','process','launches','results'];
+const visibleSects = new Set();
 const dObs = new IntersectionObserver(entries => {
   entries.forEach(e => {
-    if(e.isIntersecting) dots.forEach(d => d.classList.toggle('active', d.dataset.target===e.target.id));
+    if(e.isIntersecting) visibleSects.add(e.target.id);
+    else visibleSects.delete(e.target.id);
   });
-}, {threshold:.3, rootMargin:'-15% 0px -15% 0px'});
+  // Activate the first (topmost in page) visible section
+  const active = dotSects.find(id => visibleSects.has(id)) || null;
+  dots.forEach(d => d.classList.toggle('active', d.dataset.target === active));
+}, {threshold: 0.05, rootMargin: '-10% 0px -10% 0px'});
 dotSects.forEach(id => { const el=document.getElementById(id); if(el) dObs.observe(el); });
 dots.forEach(d => d.addEventListener('click', () => {
   const el = document.getElementById(d.dataset.target);
-  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  if(!el) return;
+  // For launches (500vh), scroll to the start of that section
+  const top = el.getBoundingClientRect().top + window.scrollY - 60;
+  window.scrollTo({top, behavior:'smooth'});
 }));
 
 // ─ KEYBOARD NAV ─
