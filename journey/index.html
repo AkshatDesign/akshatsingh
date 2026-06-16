@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journey · Multi-Destination Trip Planning · Case Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz, wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F6F2;
+  --ink:#111010;
+  --stone:#7A7870;
+  --mist:#EDECEA;
+  --border:#E0DDD8;
+  --orange:#E85D3A;        /* brand and route accent */
+  --orange-light:#FFF6F0;
+  --sky:#1B3F8B;
+  --sky-light:#EBF0FB;
+  --red:#E85D3A;           /* danger and blocking */
+  --red-light:#FFF1ED;
+  --green:#1A6B3A;
+  --green-light:#F0FFF4;
+  --max:1080px;
+  --r-sm:12px;
+  --r-md:18px;
+  --r-lg:24px;
+  --shadow-sm:0 1px 2px rgba(17,16,16,.04),0 4px 12px -6px rgba(17,16,16,.12);
+  --shadow-md:0 1px 0 rgba(17,16,16,.02),0 12px 28px -16px rgba(17,16,16,.22);
+  --shadow-lg:0 2px 0 rgba(17,16,16,.02),0 30px 60px -34px rgba(17,16,16,.32);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--bg);
+  background-image:
+    radial-gradient(60% 50% at 12% -4%, rgba(232,93,58,.08), transparent 60%),
+    radial-gradient(46% 42% at 100% 8%, rgba(27,63,139,.07), transparent 60%);
+  background-attachment:fixed;
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--orange);color:#fff}
+.mono{font-family:'DM Mono',ui-monospace,monospace}
+
+/* ---------- Layout shell ---------- */
+.shell{
+  position:relative;
+  max-width:var(--max);
+  margin:0 auto;
+  padding:0 28px;
+}
+@media(max-width:720px){ .shell{ padding:0 18px; } }
+
+/* ---------- Sections ---------- */
+section{ position:relative; padding:64px 0; z-index:1; }
+.reveal{ opacity:0; transform:translateY(30px) scale(.992); transition:opacity .8s var(--ease),transform .8s var(--ease),filter .8s var(--ease); filter:blur(2px); }
+.reveal.in{ opacity:1; transform:none; filter:none; }
+.eyebrow{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--orange);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow .ln{ height:1px;width:28px;background:var(--orange);opacity:.5; }
+h2{ font-size:clamp(26px,4.4vw,40px); font-weight:700; letter-spacing:-.02em; line-height:1.12; margin-bottom:18px; }
+h3{ font-size:19px; font-weight:600; letter-spacing:-.01em; margin-bottom:8px; }
+p{ color:#2c2b28; font-size:16.5px; }
+.lead{ font-size:clamp(17px,2.2vw,20px); color:#3a3935; max-width:62ch; }
+.muted{ color:var(--stone); }
+
+/* ---------- Hero ---------- */
+.hero{ padding:88px 0 60px; }
+.hero .kicker{
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--stone);margin-bottom:22px;
+}
+.hero h1{
+  font-size:clamp(34px,6.6vw,68px);
+  font-weight:700;letter-spacing:-.03em;line-height:1.02;margin-bottom:22px;
+}
+.hero h1 .accent{ color:var(--orange); }
+.hero .sub{ font-size:clamp(17px,2.4vw,21px); color:#3a3935; max-width:60ch; margin-bottom:40px; }
+
+/* hero route visual */
+.routemap{
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.78));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.7);
+  outline:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:34px 26px;
+  box-shadow:var(--shadow-lg);
+}
+.routemap .label{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--stone);margin-bottom:24px;
+}
+.route{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  position:relative;
+}
+.route .city{
+  display:flex;flex-direction:column;align-items:center;
+  flex:0 0 auto;text-align:center;width:64px;z-index:2;
+}
+.route .citydot{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--orange);
+  border:4px solid #fff;
+  box-shadow:0 0 0 2px var(--orange);
+  margin-bottom:12px;
+}
+.route .city:last-child .citydot{ background:var(--sky); box-shadow:0 0 0 2px var(--sky); }
+.route .code{ font-weight:700;font-size:17px;letter-spacing:.02em; }
+.route .name{ font-size:11.5px;color:var(--stone);margin-top:2px; }
+.route .seg{
+  flex:1 1 auto;height:2px;background:repeating-linear-gradient(90deg,var(--border) 0 7px,transparent 7px 13px);
+  margin-top:9px;position:relative;
+}
+.route .seg::after{
+  content:attr(data-leg);
+  position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.08em;
+  color:var(--stone);white-space:nowrap;text-transform:uppercase;
+}
+@media(max-width:560px){
+  .route{ flex-direction:column;align-items:flex-start;gap:0; }
+  .route .city{ flex-direction:row;width:auto;align-items:center;gap:12px;text-align:left; }
+  .route .citydot{ margin-bottom:0; }
+  .route .seg{ width:2px;height:30px;margin:4px 0 4px 9px;background:repeating-linear-gradient(180deg,var(--border) 0 7px,transparent 7px 13px); }
+  .route .seg::after{ top:50%;left:18px;transform:translateY(-50%); }
+}
+.metarow{ display:flex;flex-wrap:wrap;gap:10px;margin-top:34px; }
+.chip{
+  font-family:'DM Mono',monospace;font-size:11.5px;
+  background:rgba(255,255,255,.6);border:1px solid var(--border);
+  border-radius:100px;padding:7px 14px;color:#3a3935;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .25s;
+}
+.chip:hover{ transform:translateY(-2px); box-shadow:var(--shadow-sm); background:#fff; }
+.chip b{ color:var(--ink);font-weight:500; }
+
+/* ---------- Resource links (Figma) ---------- */
+.links{ display:flex; flex-wrap:wrap; gap:12px; margin-top:22px; }
+.linkbtn{ display:inline-flex; align-items:center; gap:11px; text-decoration:none; border-radius:14px; padding:13px 18px; font-size:14.5px; font-weight:600; letter-spacing:-.01em; transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s; }
+.linkbtn:active{ transform:scale(.97); }
+.linkbtn .lb-ic{ width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+.linkbtn .lb-tx{ display:flex; flex-direction:column; line-height:1.15; }
+.linkbtn .lb-tx small{ font-family:'DM Mono',monospace; font-size:9.5px; font-weight:400; letter-spacing:.06em; text-transform:uppercase; opacity:.7; }
+.linkbtn .lb-go{ margin-left:4px; font-size:15px; opacity:.6; }
+.linkbtn.primary{ background:var(--ink); color:#fff; box-shadow:0 14px 30px -18px rgba(17,16,16,.7); }
+.linkbtn.primary .lb-ic{ background:rgba(255,255,255,.14); }
+.linkbtn.primary:hover{ background:#000; }
+.linkbtn.secondary{ background:#fff; color:var(--ink); border:1px solid var(--border); box-shadow:var(--shadow-sm); }
+.linkbtn.secondary .lb-ic{ background:var(--orange-light); }
+.linkbtn.secondary:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
+@media(max-width:560px){ .links{ flex-direction:column; } .linkbtn{ justify-content:flex-start; } }
+
+/* ---------- Generic cards / grids ---------- */
+.grid{ display:grid;gap:18px; }
+.g2{ grid-template-columns:1fr 1fr; }
+.g3{ grid-template-columns:repeat(3,1fr); }
+@media(max-width:760px){ .g2,.g3{ grid-template-columns:1fr; } }
+.card{
+  background:#fff;border:1px solid var(--border);border-radius:var(--r-md);padding:24px;
+  box-shadow:var(--shadow-sm);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+}
+.card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+.card.tint{ background:var(--mist);box-shadow:none; }
+.card.tint:hover{ transform:none;box-shadow:none; }
+
+/* problem before/after */
+.ba{ display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px; }
+@media(max-width:760px){ .ba{ grid-template-columns:1fr; } }
+.ba .col{ border-radius:16px;padding:24px;border:1px solid var(--border); }
+.ba .bad{ background:#fff; }
+.ba .good{ background:var(--green-light);border-color:#cdeed6; }
+.ba h4{ font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;color:var(--stone); }
+.ba .good h4{ color:var(--green); }
+.ba ul{ list-style:none; }
+.ba li{ font-size:15px;padding:9px 0 9px 26px;position:relative;border-top:1px solid rgba(0,0,0,.05); }
+.ba li:first-child{ border-top:none; }
+.ba .bad li::before{ content:"✕";position:absolute;left:0;color:var(--orange);font-size:13px;top:9px; }
+.ba .good li::before{ content:"✓";position:absolute;left:0;color:var(--green);font-weight:700;font-size:13px;top:9px; }
+
+/* mental model layers */
+.layer{ display:flex;gap:20px;align-items:flex-start;padding:22px 0;border-top:1px solid var(--border); }
+.layer:first-of-type{ border-top:none; }
+.layer .lnum{
+  flex:0 0 auto;width:54px;height:54px;border-radius:14px;
+  background:var(--sky-light);color:var(--sky);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-weight:500;font-size:13px;text-align:center;line-height:1.1;
+}
+.layer .impl{
+  margin-top:12px;font-size:14.5px;background:var(--mist);
+  border-left:3px solid var(--orange);padding:11px 14px;border-radius:0 8px 8px 0;color:#3a3935;
+}
+.layer .impl b{ color:var(--ink); }
+
+/* scenarios */
+.persona .av{
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:16px;margin-bottom:16px;
+}
+.persona quote,.persona .quote{
+  display:block;font-size:15.5px;font-style:italic;color:#2c2b28;
+  border-left:3px solid var(--border);padding-left:14px;margin:12px 0 16px;
+}
+.persona .need{ font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em; }
+.tag{ font-family:'DM Mono',monospace;font-size:11px;color:var(--stone); }
+
+/* approach / principles */
+.princ{ display:grid;grid-template-columns:repeat(2,1fr);gap:16px; }
+@media(max-width:760px){ .princ{ grid-template-columns:1fr; } }
+.p{ background:#fff;border:1px solid var(--border);border-radius:var(--r-md);padding:22px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .3s var(--ease),box-shadow .3s var(--ease); }
+.p::before{ content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--orange),#f0795b);opacity:0;transition:opacity .3s; }
+.p:hover{ transform:translateY(-3px);box-shadow:var(--shadow-md); }
+.p:hover::before{ opacity:1; }
+.p .pid{ font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);margin-bottom:10px;letter-spacing:.06em; }
+.p h3{ font-size:17px;margin-bottom:8px; }
+.p p{ font-size:14.5px;color:#3a3935; }
+
+.tension{
+  margin-top:22px;color:#fff;border-radius:var(--r-md);padding:28px;
+  background:
+    radial-gradient(70% 130% at 0% 0%, rgba(232,93,58,.26), transparent 55%),
+    var(--ink);
+  box-shadow:var(--shadow-lg);
+}
+.tension .e{ font-family:'DM Mono',monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:12px; }
+.tension p{ color:#e9e8e4;font-size:17px; }
+
+/* IA tree (dark) */
+.tree{
+  background:
+    radial-gradient(60% 80% at 100% 0%, rgba(27,63,139,.26), transparent 55%),
+    var(--ink);
+  border-radius:var(--r-md);padding:28px 24px;overflow-x:auto;box-shadow:var(--shadow-lg);
+}
+.tree pre{
+  font-family:'DM Mono',monospace;font-size:13px;line-height:1.85;color:#cfcdc7;white-space:pre;
+}
+.tree .root{ color:#fff;font-weight:500; }
+.tree .br{ color:#5f5d57; }
+.tree .or{ color:var(--orange); }
+.tree .sk{ color:#7fa6ef; }
+.tree .gr{ color:#5fce8a; }
+.tree .cm{ color:#6f6d67;font-style:italic; }
+
+/* decisions accordion */
+.acc{ border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:#fff;box-shadow:var(--shadow-sm); }
+.acc .item{ border-top:1px solid var(--border); }
+.acc .item:first-child{ border-top:none; }
+.acc .head{
+  width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  padding:20px 22px;display:flex;align-items:center;gap:16px;font-family:inherit;
+}
+.acc .head:hover{ background:var(--mist); }
+.acc .dnum{ font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);flex:0 0 auto; }
+.acc .htxt{ flex:1 1 auto;font-weight:600;font-size:16.5px;letter-spacing:-.01em; }
+.acc .plus{ flex:0 0 auto;width:22px;height:22px;position:relative;transition:transform .3s; }
+.acc .plus::before,.acc .plus::after{ content:"";position:absolute;background:var(--ink);border-radius:2px; }
+.acc .plus::before{ left:0;top:10px;width:22px;height:2px; }
+.acc .plus::after{ left:10px;top:0;width:2px;height:22px;transition:transform .3s; }
+.acc .item.open .plus{ transform:rotate(180deg); }
+.acc .item.open .plus::after{ transform:scaleY(0); }
+.acc .body{ max-height:0;overflow:hidden;transition:max-height .4s ease; }
+.acc .inner{ padding:0 22px 24px 50px; }
+.acc .row{ display:grid;grid-template-columns:120px 1fr;gap:14px;padding:10px 0;border-top:1px dashed var(--border);font-size:15px; }
+.acc .row:first-child{ border-top:none; }
+.acc .row .k{ font-family:'DM Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);padding-top:2px; }
+.acc .row.benefit{ background:var(--green-light);margin:8px -10px 0;padding:12px 10px;border-radius:10px;border-top:none; }
+.acc .row.benefit .k{ color:var(--green); }
+.acc .row.benefit .v{ color:#14532a;font-weight:500; }
+@media(max-width:560px){ .acc .row{ grid-template-columns:1fr;gap:3px; } .acc .inner{ padding-left:22px; } }
+
+/* edge cases */
+.edge{ display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+@media(max-width:760px){ .edge{ grid-template-columns:1fr; } }
+.ec{ background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);padding:20px;position:relative;box-shadow:var(--shadow-sm);transition:transform .3s var(--ease),box-shadow .3s var(--ease); }
+.ec:hover{ transform:translateY(-3px);box-shadow:var(--shadow-md); }
+.ec .sev{ display:inline-flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px; }
+.ec .sev .d{ width:9px;height:9px;border-radius:50%; }
+.sev.red .d{ background:var(--red); } .sev.red{ color:var(--red); }
+.sev.yellow .d{ background:#C9931B; } .sev.yellow{ color:#9a720f; }
+.sev.blue .d{ background:var(--sky); } .sev.blue{ color:var(--sky); }
+.sev.green .d{ background:var(--green); } .sev.green{ color:var(--green); }
+.ec h3{ font-size:16px;margin-bottom:6px; }
+.ec p{ font-size:14px;color:#3a3935; }
+.ec .res{ margin-top:12px;font-size:13.5px;background:var(--mist);border-radius:8px;padding:10px 12px; }
+.ec .res b{ font-family:'DM Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);display:block;margin-bottom:3px;font-weight:500; }
+
+/* flow diagram */
+.flow{ display:flex;flex-direction:column;gap:0;margin-top:8px; }
+.flow .stage{ position:relative;padding:0 0 0 0; }
+.flow .stagelabel{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);margin:22px 0 12px;display:flex;align-items:center;gap:10px;
+}
+.flow .stagelabel .ln{ flex:1;height:1px;background:var(--border); }
+.nodes{ display:flex;flex-wrap:wrap;gap:10px;align-items:stretch; }
+.node{
+  border-radius:12px;padding:12px 15px;font-size:13.5px;border:1px solid var(--border);
+  background:#fff;min-width:120px;flex:0 1 auto;position:relative;
+}
+.node .nt{ font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;color:var(--stone); }
+.node .nb{ font-weight:500;font-size:14px;color:var(--ink); }
+.node small{ display:block;color:var(--stone);font-size:12px;font-weight:400;margin-top:2px; }
+.node.transport{ background:var(--sky-light);border-color:#cdd9f2; } .node.transport .nt{ color:var(--sky); }
+.node.hotel{ background:var(--orange-light);border-color:#f3d9c8; } .node.hotel .nt{ color:var(--orange); }
+.node.activity{ background:#F6F2FF;border-color:#ddd2f3; } .node.activity .nt{ color:#5b3fb8; }
+.node.conflict{ background:var(--red-light);border:1px dashed var(--red); } .node.conflict .nt{ color:var(--red); }
+.node.confirm{ background:var(--green-light);border-color:#bfe8cc; } .node.confirm .nt{ color:var(--green); }
+.node.entry{ background:var(--ink);color:#fff; } .node.entry .nb{ color:#fff; } .node.entry .nt{ color:#9b9890; }
+.node.escape{ background:var(--mist);border-style:dashed; }
+.arrow{ align-self:center;color:var(--border);font-size:18px;line-height:1;flex:0 0 auto; }
+.flow .legend{ display:flex;flex-wrap:wrap;gap:14px;margin-top:24px;padding-top:18px;border-top:1px solid var(--border); }
+.flow .legend span{ display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--stone);font-family:'DM Mono',monospace; }
+.flow .legend i{ width:12px;height:12px;border-radius:4px;display:inline-block; }
+
+/* proposed solution screen cards */
+.screens{ display:grid;grid-template-columns:repeat(2,1fr);gap:20px; }
+@media(max-width:820px){ .screens{ grid-template-columns:1fr; } }
+.screen{
+  background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:var(--shadow-md);
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease);
+}
+.screen:hover{ transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+.screen .top{ padding:22px 22px 0; }
+.screen .sn{ font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);letter-spacing:.08em;margin-bottom:8px; }
+.screen h3{ font-size:18px;margin-bottom:8px; }
+.screen .top p{ font-size:14.5px;color:#3a3935; }
+/* mock phone UI */
+.mock{ margin:18px 22px 0;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:13px; }
+.mock .mhead{ display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; }
+.mock .mtitle{ font-weight:600;font-size:13px; }
+.mock .mpill{ font-family:'DM Mono',monospace;font-size:10px;background:#fff;border:1px solid var(--border);border-radius:100px;padding:3px 9px;color:var(--stone); }
+.miniroute{ display:flex;align-items:center;gap:4px;margin-bottom:12px; }
+.miniroute b{ font-family:'DM Mono',monospace;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:3px 7px; }
+.miniroute b.act{ background:var(--orange);color:#fff;border-color:var(--orange); }
+.miniroute s{ flex:1;height:1px;background:var(--border);text-decoration:none; }
+.mrow{ display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-bottom:7px; }
+.mrow .l{ font-size:12.5px; } .mrow .l small{ display:block;color:var(--stone);font-size:11px; }
+.mrow .r{ text-align:right;font-size:12.5px;font-weight:600; } .mrow .r small{ display:block;font-weight:400;color:var(--stone);font-size:10.5px; }
+.mrow.sel{ border-color:var(--sky);background:var(--sky-light); }
+.mtag{ font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase; }
+.mtag.best{ background:var(--green-light);color:var(--green); }
+.mtag.fast{ background:var(--sky-light);color:var(--sky); }
+.malert{ border-radius:9px;padding:9px 11px;font-size:12px;margin-bottom:7px;display:flex;gap:8px;align-items:flex-start; }
+.malert.r{ background:var(--red-light);color:#a8351c;border:1px solid #f3cabd; }
+.malert.y{ background:#FFF8E9;color:#8a6510;border:1px solid #f0e0b0; }
+.malert.b{ background:var(--sky-light);color:var(--sky);border:1px solid #cdd9f2; }
+.malert .ic{ flex:0 0 auto;font-weight:700; }
+.mbar{ display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px dashed var(--border); }
+.mbar .tot{ font-size:11px;color:var(--stone); } .mbar .tot b{ display:block;font-size:16px;color:var(--ink); }
+.mbar .cta{ background:var(--ink);color:#fff;border-radius:9px;padding:9px 16px;font-size:12.5px;font-weight:600; }
+.mbar .cta.gr{ background:var(--green); }
+.mnights{ text-align:center;font-size:22px;font-weight:700;letter-spacing:-.02em;padding:6px 0; }
+.mnights small{ display:block;font-size:11px;font-weight:400;color:var(--stone);letter-spacing:0; }
+.mauto{ font-family:'DM Mono',monospace;font-size:10.5px;color:var(--sky);background:var(--sky-light);border-radius:7px;padding:7px 9px;margin-bottom:8px;display:flex;gap:7px; }
+.mday{ font-family:'DM Mono',monospace;font-size:10px;color:var(--stone);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px; }
+.mtimeline .ev{ display:flex;gap:9px;margin-bottom:7px; }
+.mtimeline .tm{ font-family:'DM Mono',monospace;font-size:10.5px;color:var(--stone);width:42px;flex:0 0 auto;padding-top:8px; }
+.mtimeline .bx{ flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px; }
+.mtimeline .bx.tp{ border-left:3px solid var(--sky); }
+.mtimeline .bx.ht{ border-left:3px solid var(--orange); }
+.mtimeline .bx.tr{ border-left:3px solid var(--stone);background:var(--mist);font-style:italic;color:var(--stone); }
+/* benefit callout */
+.benefit{
+  margin-top:auto;background:var(--green-light);border-top:1px solid #cdeed6;
+  padding:16px 22px;display:flex;gap:12px;align-items:flex-start;
+}
+.benefit .bi{ flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700; }
+.benefit .bt{ font-size:13.5px;color:#14532a; }
+.benefit .bt b{ display:block;font-family:'DM Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:2px;font-weight:500; }
+
+/* ---------- Device flow (phone mockups) ---------- */
+.flowdevices{ margin-top:26px; }
+.frow{ display:flex; gap:20px; overflow-x:auto; padding:10px 2px 22px; scroll-snap-type:x proximity; }
+.frow::-webkit-scrollbar{ height:8px; }
+.frow::-webkit-scrollbar-track{ background:transparent; }
+.frow::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
+.frow::-webkit-scrollbar-thumb:hover{ background:var(--stone); }
+.fstep{ flex:0 0 auto; width:244px; scroll-snap-align:center; display:flex; flex-direction:column; }
+.fcap{ display:flex; align-items:center; gap:10px; margin-bottom:14px; min-height:42px; }
+.fnum{ font-family:'DM Mono',monospace; font-size:12px; font-weight:500; color:#fff; background:var(--orange); width:27px; height:27px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto; box-shadow:0 5px 12px -4px rgba(232,93,58,.55); }
+.fttl{ font-size:14px; font-weight:600; letter-spacing:-.01em; line-height:1.2; }
+.fttl small{ display:block; font-family:'DM Mono',monospace; font-size:9px; font-weight:400; letter-spacing:.08em; text-transform:uppercase; color:var(--stone); margin-top:2px; }
+.phone{ position:relative; background:linear-gradient(160deg,#2c2a28,#141312); border-radius:42px; padding:7px; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.06), var(--shadow-lg); transition:transform .35s var(--ease); }
+.fstep:hover .phone{ transform:translateY(-5px); }
+.pscreen{ position:relative; background:var(--bg); border-radius:36px; overflow:hidden; height:478px; display:flex; flex-direction:column; }
+.island{ position:absolute; top:11px; left:50%; transform:translateX(-50%); width:82px; height:24px; background:#0c0c0c; border-radius:14px; z-index:6; }
+.pstatus{ display:flex; align-items:center; justify-content:space-between; padding:13px 22px 0; font-size:12px; font-weight:600; color:var(--ink); height:42px; flex:0 0 auto; }
+.pstatus .sys{ display:flex; align-items:center; gap:6px; }
+.pstatus .net{ display:flex; align-items:flex-end; gap:2px; height:10px; }
+.pstatus .net i{ width:3px; background:var(--ink); border-radius:1px; }
+.pstatus .bat{ position:relative; width:22px; height:11px; border:1.4px solid var(--ink); border-radius:3px; opacity:.9; }
+.pstatus .bat::before{ content:""; position:absolute; left:1.5px; top:1.5px; bottom:1.5px; width:12px; background:var(--ink); border-radius:1px; }
+.pstatus .bat::after{ content:""; position:absolute; right:-3.5px; top:3px; width:2px; height:5px; background:var(--ink); border-radius:0 2px 2px 0; }
+.pbar{ display:flex; align-items:center; gap:9px; padding:9px 17px 12px; flex:0 0 auto; }
+.pbar .bk{ font-size:19px; color:var(--stone); line-height:.7; }
+.pbar .ttl{ font-size:15px; font-weight:700; letter-spacing:-.015em; }
+.pbar .rt{ margin-left:auto; font-family:'DM Mono',monospace; font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--orange); background:var(--orange-light); padding:3px 9px; border-radius:100px; }
+.pcontent{ flex:1 1 auto; padding:0 15px; overflow:hidden; }
+.phome{ width:108px; height:4px; border-radius:4px; background:rgba(17,16,16,.22); margin:8px auto 9px; flex:0 0 auto; }
+.fconn{ flex:0 0 auto; align-self:center; color:var(--border); font-size:26px; line-height:1; margin-top:36px; }
+.fben{ margin-top:14px; background:var(--green-light); border:1px solid #bfe8cc; border-radius:13px; padding:12px 14px; font-size:12px; color:#14532a; line-height:1.45; }
+.fben b{ display:block; font-family:'DM Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--green); margin-bottom:3px; font-weight:500; }
+.fhint{ font-family:'DM Mono',monospace; font-size:11px; color:var(--stone); margin-top:6px; display:flex; align-items:center; gap:8px; }
+.fhint .ar{ color:var(--orange); font-size:14px; }
+@media(max-width:720px){ .fstep{ width:230px; } .pscreen{ height:462px; } }
+
+.psum{ display:flex; flex-direction:column; margin-top:2px; }
+.psrow{ display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:9px 2px; border-bottom:1px solid var(--border); }
+.psrow:last-child{ border-bottom:none; }
+.psrow b{ font-weight:600; }
+.psrow.total{ margin-top:3px; padding-top:11px; border-top:1.5px solid var(--ink); border-bottom:none; font-size:13.5px; }
+.psrow.total b{ font-size:18px; }
+.psuccess{ text-align:center; padding:14px 0 16px; }
+.pcheck{ width:48px; height:48px; border-radius:50%; background:var(--green); color:#fff; font-size:25px; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; box-shadow:0 9px 20px -7px rgba(26,107,58,.65); }
+.pst{ font-size:18px; font-weight:700; letter-spacing:-.015em; }
+.pss{ font-size:12px; color:var(--stone); margin-top:3px; }
+.pbtns{ display:flex; gap:7px; margin-top:13px; }
+.pbtn{ flex:1; text-align:center; font-size:11px; font-weight:600; padding:11px 4px; border-radius:10px; background:var(--ink); color:#fff; }
+.pbtn.full{ flex:1 1 100%; font-size:13.5px; padding:13px; }
+.pbtn.grn{ background:var(--green); }
+.pbtn.sky{ background:var(--sky); }
+.pbtn.ghost{ background:var(--mist); color:var(--ink); border:1px solid var(--border); }
+
+/* philosophy block */
+.philosophy{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(80% 120% at 0% 0%, rgba(232,93,58,.30), transparent 55%),
+    radial-gradient(70% 120% at 100% 100%, rgba(27,63,139,.30), transparent 55%),
+    var(--ink);
+  color:#fff;border-radius:var(--r-lg);padding:clamp(36px,6vw,68px);text-align:center;margin:24px 0 0;
+  box-shadow:var(--shadow-lg);
+}
+.philosophy .e{ font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:24px; }
+.philosophy .big{ font-size:clamp(22px,3.6vw,34px);font-weight:600;letter-spacing:-.02em;line-height:1.32;max-width:22ch;margin:0 auto;color:#fff; }
+.philosophy .big em{ color:var(--orange);font-style:normal; }
+.philosophy .route2{ display:flex;justify-content:center;align-items:center;gap:8px;margin-top:36px; }
+.philosophy .route2 b{ font-family:'DM Mono',monospace;font-size:12px;color:#9b9890; }
+.philosophy .route2 .d{ width:8px;height:8px;border-radius:50%;background:var(--orange); }
+.philosophy .route2 s{ width:26px;height:1px;background:#3a3935;text-decoration:none; }
+
+footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM Mono',monospace;font-size:12px; }
+
+/* ---------- Floating step indicator ---------- */
+.stepnav{
+  position:fixed; top:18px; right:18px; z-index:60; width:228px;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.6); outline:1px solid var(--border);
+  border-radius:16px; padding:13px 15px; box-shadow:var(--shadow-md);
+  opacity:0; transform:translateY(-8px); transition:opacity .45s var(--ease),transform .45s var(--ease);
+}
+.stepnav.show{ opacity:1; transform:none; }
+.sn-head{ display:flex; align-items:baseline; gap:9px; margin-bottom:11px; }
+.sn-idx{
+  font-family:'DM Mono',monospace; font-size:13px; font-weight:500;
+  color:var(--orange); flex:0 0 auto;
+  background:var(--orange-light); border-radius:7px; padding:2px 7px; line-height:1.4;
+}
+.sn-name{ font-size:14px; font-weight:600; letter-spacing:-.01em; color:var(--ink); line-height:1.2; }
+.sn-segs{ display:flex; gap:4px; }
+.sn-segs i{ flex:1; height:5px; border-radius:3px; background:var(--border); transition:background .35s var(--ease),box-shadow .35s; }
+.sn-segs i.done{ background:var(--orange); }
+.sn-segs i.cur{ background:var(--orange); box-shadow:0 0 0 2px rgba(232,93,58,.18),0 0 9px rgba(232,93,58,.55); }
+.sn-foot{ margin-top:9px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.04em; color:var(--stone); text-transform:uppercase; }
+@media(max-width:720px){
+  .stepnav{ top:auto; bottom:14px; right:50%; transform:translateX(50%) translateY(10px); width:min(86vw,300px); padding:10px 13px; }
+  .stepnav.show{ transform:translateX(50%); }
+  .sn-foot{ display:none; }
+}
+@media print{ .stepnav{ display:none; } }
+</style>
+</head>
+<body>
+<div class="stepnav" id="stepnav" aria-hidden="true">
+  <div class="sn-head">
+    <span class="sn-idx" id="snIdx">00</span>
+    <span class="sn-name" id="snName">Overview</span>
+  </div>
+  <div class="sn-segs" id="snSegs"></div>
+  <div class="sn-foot"><span id="snFoot">Start of the case study</span></div>
+</div>
+
+<div class="shell">
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero reveal" id="sec-hero">
+    <div class="kicker">Design Challenge · Multi-Destination Travel</div>
+    <h1>Plan a trip as <span class="accent">one journey</span>,<br>not four bookings.</h1>
+    <p class="sub">A mobile experience for planning and booking a multi-city trip, where the system absorbs the complexity, conflicts are caught in real time, and the user only ever feels the journey, not the friction.</p>
+
+    <div class="routemap">
+      <div class="label">The Journey</div>
+      <div class="route">
+        <div class="city"><div class="citydot"></div><div class="code">BLR</div><div class="name">Bangalore</div></div>
+        <div class="seg" data-leg="Leg 1 · Flight"></div>
+        <div class="city"><div class="citydot"></div><div class="code">GOA</div><div class="name">Goa · 3 nights</div></div>
+        <div class="seg" data-leg="Leg 2 · Train"></div>
+        <div class="city"><div class="citydot"></div><div class="code">MUM</div><div class="name">Mumbai · 2 nights</div></div>
+        <div class="seg" data-leg="Leg 3 · Flight"></div>
+        <div class="city"><div class="citydot"></div><div class="code">BLR</div><div class="name">Home</div></div>
+      </div>
+    </div>
+
+    <div class="metarow">
+      <span class="chip"><b>Role</b> &nbsp;Product Design + UX</span>
+      <span class="chip"><b>Platform</b> &nbsp;Mobile</span>
+      <span class="chip"><b>Focus</b> &nbsp;Managing complexity</span>
+      <span class="chip"><b>3 legs</b> &nbsp;· 5 nights · 1 connected trip</span>
+    </div>
+  </header>
+
+  <!-- ===================== 01 PROBLEM FRAMING ===================== -->
+  <section class="reveal" id="sec-01">
+    <div class="eyebrow"><span class="ln"></span>01 · Problem Framing</div>
+    <h2>Multi-city trips aren't bigger trips.<br>They're a different problem.</h2>
+    <p class="lead">Most booking experiences are optimized for simple one-way or round-trip journeys. Multi-city travel introduces a fundamentally different planning problem, one current solutions <em>patch</em> rather than solve.</p>
+
+    <div class="ba">
+      <div class="col bad">
+        <h4>How tools work today</h4>
+        <ul>
+          <li>Each leg is an isolated transaction, no intelligence between decisions.</li>
+          <li>Conflicts are discovered at checkout, when it's too late.</li>
+          <li>Users do the mental math manually across tabs and spreadsheets.</li>
+          <li>Hotel dates are typed by hand and disconnected from transport.</li>
+          <li>Total cost is a surprise revealed at the very end.</li>
+        </ul>
+      </div>
+      <div class="col good">
+        <h4>How this design works</h4>
+        <ul>
+          <li>The trip is one connected journey, every decision informs the next.</li>
+          <li>Conflicts are caught in real time, inline, the moment they appear.</li>
+          <li>The app does the mental math: dates, gaps, and timing.</li>
+          <li>Hotel check-in auto-populates from when the transport actually lands.</li>
+          <li>A persistent cost bar keeps value visible at every step.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card tint" style="margin-top:18px">
+      <div class="eyebrow" style="margin-bottom:10px"><span class="ln"></span>How Might I</div>
+      <p style="font-size:19px;font-weight:500;color:var(--ink)">How might I design a multi-destination travel experience where complexity is managed by the system, so the user only ever feels the journey, not the friction?</p>
+    </div>
+  </section>
+
+  <!-- ===================== 02 USER MENTAL MODEL ===================== -->
+  <section class="reveal" id="sec-02">
+    <div class="eyebrow"><span class="ln"></span>02 · User Mental Model</div>
+    <h2>Three layers of how people actually think about a trip.</h2>
+    <p class="lead">If the interface mirrors the user's mental model, complexity disappears. I mapped three layers, and let each one dictate a design decision.</p>
+
+    <div style="margin-top:26px">
+      <div class="layer">
+        <div class="lnum">Layer<br>01</div>
+        <div>
+          <h3>The Journey, they think in legs, not bookings</h3>
+          <p class="muted">Users visualize a linear path with stops. They need to see the whole route before filling in any of the parts.</p>
+          <div class="impl"><b>Design implication:</b> Always show the complete route as a persistent visual anchor, from the first screen onward.</div>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lnum">Layer<br>02</div>
+        <div>
+          <h3>The Stay, they think in nights, not dates</h3>
+          <p class="muted">"3 nights in Goa" feels natural. But accommodation is sandwiched between two transport decisions users don't consciously connect.</p>
+          <div class="impl"><b>Design implication:</b> Auto-populate hotel dates from transport times. Show the night count prominently. Flag conflicts immediately.</div>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lnum">Layer<br>03</div>
+        <div>
+          <h3>The Time, they run constant mental simulations</h3>
+          <p class="muted">"Will the flight land in time? Does checkout happen before departure?" This is where anxiety peaks.</p>
+          <div class="impl"><b>Design implication:</b> A timeline view is essential, not optional. Show time gaps, flag tight windows, surface conflicts early.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card"><div class="tag">EMOTIONAL STATE · SETUP</div><h3 style="margin-top:8px">Excitement</h3><p class="muted" style="font-size:14.5px">During setup they need speed and a sense of possibility.</p></div>
+      <div class="card"><div class="tag">EMOTIONAL STATE · MID-PLAN</div><h3 style="margin-top:8px">Anxiety</h3><p class="muted" style="font-size:14.5px">Mid-planning they need clarity and guidance.</p></div>
+      <div class="card"><div class="tag">EMOTIONAL STATE · REVIEW</div><h3 style="margin-top:8px">Confidence</h3><p class="muted" style="font-size:14.5px">At review they need completeness and control.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================== 03 USER SCENARIOS ===================== -->
+  <section class="reveal" id="sec-03">
+    <div class="eyebrow"><span class="ln"></span>03 · User Scenarios</div>
+    <h2>Three travellers, three very different needs.</h2>
+    <p class="lead">The design has to serve the nervous first-timer and the seasoned pro in the same flow.</p>
+
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card persona">
+        <div class="av" style="background:var(--orange)">P</div>
+        <h3>Priya, 28</h3>
+        <div class="tag">First multi-city trip</div>
+        <span class="quote">"I don't know where to start. Do I book flights first or hotels? What if something doesn't line up?"</span>
+        <div class="need">Needs guidance &amp; structure</div>
+        <p class="muted" style="font-size:13.5px;margin-top:8px">The app must protect her from mistakes she can't anticipate.</p>
+      </div>
+      <div class="card persona">
+        <div class="av" style="background:var(--sky)">RN</div>
+        <h3>Rahul &amp; Neha, 34</h3>
+        <div class="tag">Family of 3, with a toddler</div>
+        <span class="quote">"We need a hotel near the beach, flights with a reasonable layover, and to check out before noon everywhere for the baby's naps."</span>
+        <div class="need">Need flexibility within structure</div>
+        <p class="muted" style="font-size:13.5px;margin-top:8px">Specific constraints standard flows don't accommodate.</p>
+      </div>
+      <div class="card persona">
+        <div class="av" style="background:var(--green)">K</div>
+        <h3>Kiran, 31</h3>
+        <div class="tag">Frequent business traveller</div>
+        <span class="quote">"I've already got my flights sorted. I just need to add hotels and see everything in one place."</span>
+        <div class="need">Needs speed &amp; control</div>
+        <p class="muted" style="font-size:13.5px;margin-top:8px">The guided flow should never slow him down.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 04 APPROACH ===================== -->
+  <section class="reveal" id="sec-04">
+    <div class="eyebrow"><span class="ln"></span>04 · Approach &amp; Reasoning</div>
+    <h2>Six principles that do the heavy lifting.</h2>
+    <p class="lead">Each principle resolves a specific source of friction for a specific user.</p>
+
+    <div class="princ" style="margin-top:24px">
+      <div class="p"><div class="pid">P01</div><h3>Journey First, Booking Second</h3><p>The complete route BLR → GOA → MUM → BLR is visible from the first screen and persists throughout. Priya's anxiety drops the moment she can see the whole trip.</p></div>
+      <div class="p"><div class="pid">P02</div><h3>One Leg At A Time</h3><p>Planning three legs at once is overwhelming. Guide through each leg sequentially, transport, stay, activities, then move forward. Completion keeps momentum.</p></div>
+      <div class="p"><div class="pid">P03</div><h3>Connected Decisions</h3><p>A flight landing at 3pm auto-sets check-in to 3pm. A 6am train flags a checkout conflict. The output of one decision becomes the input of the next.</p></div>
+      <div class="p"><div class="pid">P04</div><h3>Real-Time Conflict Detection</h3><p>Three severity tiers, red blocks, yellow warns, blue suggests. Only truly critical issues interrupt flow. This stops alarm fatigue without hiding real problems.</p></div>
+      <div class="p"><div class="pid">P05</div><h3>Escape Hatches For Power Users</h3><p>Every guided step has an "I already have this booked" option. Kiran enters a reference and skips the search. Lower the floor without lowering the ceiling.</p></div>
+      <div class="p"><div class="pid">P06</div><h3>Price In Context, Not Isolation</h3><p>A persistent cost bar updates with each selection. Smart comparisons surface: "₹500 more but saves a hotel night, net saving ₹1,200." Value, not just numbers.</p></div>
+    </div>
+
+    <div class="tension">
+      <div class="e">The Overarching Tension</div>
+      <p>The design defaults to <b style="color:#fff">guided and safe</b> for Priya, but always offers <b style="color:#fff">escape hatches</b> for flexible, powerful use by Kiran. Lower the floor for beginners, without lowering the ceiling for experts.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 05 INFORMATION ARCHITECTURE ===================== -->
+  <section class="reveal" id="sec-05">
+    <div class="eyebrow"><span class="ln"></span>05 · Information Architecture</div>
+    <h2>The full structure, top to bottom.</h2>
+    <p class="lead">A linear spine with branches only where users genuinely diverge.</p>
+
+    <div class="tree" style="margin-top:22px">
+<pre><span class="root">Journey/</span>
+├── <span class="or">App Entry</span>
+│   └── Home <span class="cm"># Active Trips · Past Trips · [+ New Trip]</span>
+│
+├── <span class="or">Trip Creation</span>
+│   └── Trip Setup
+│       ├── Trip name
+│       ├── Destination Builder <span class="cm"># drag to reorder · add or remove stops</span>
+│       │   └── BLR → GOA → MUM → BLR
+│       ├── Dates per destination <span class="cm"># nights-first, not a date picker</span>
+│       └── Travellers <span class="cm"># Adults, Children, Infants → flows everywhere</span>
+│
+├── <span class="or">Journey Planning</span> <span class="cm"># repeats per leg</span>
+│   ├── Leg 1 · Bangalore → Goa
+│   │   ├── Transport <span class="cm"># Flight, Train or Bus · time·price·duration·stops</span>
+│   │   │   └── <span class="sk">[ "Already booked?" → enter ref → skip ]</span>
+│   │   ├── Accommodation
+│   │   │   ├── check-in  <span class="cm"># auto from arrival · editable</span>
+│   │   │   ├── check-out <span class="cm"># auto from next departure · editable</span>
+│   │   │   ├── night count <span class="cm"># shown prominently</span>
+│   │   │   └── Hotel or Hostel
+│   │   └── Activities <span class="cm"># optional · never blocks progress</span>
+│   ├── Leg 2 · Goa → Mumbai <span class="cm"># same structure</span>
+│   └── Leg 3 · Mumbai → Bangalore
+│       └── Transport only <span class="gr"># "You're heading home",no stay step</span>
+│
+├── <span class="or">Conflict Detection</span> <span class="cm"># fires across any leg, any time</span>
+│   ├── 🔴 Red    blocking  <span class="cm"># departure before checkout · date overlap</span>
+│   ├── 🟡 Yellow warning   <span class="cm"># &lt;90 min between arrival &amp; next departure</span>
+│   └── 🔵 Blue   suggestion <span class="cm"># luggage storage · gap nights · late checkout</span>
+│
+├── <span class="or">Itinerary Overview</span>
+│   └── Master Timeline
+│       ├── Day-by-day collapsible sections
+│       ├── Destination color-coding
+│       ├── Leg status <span class="cm"># Complete, Incomplete, or Conflict</span>
+│       └── Quick edit <span class="cm"># without leaving the overview</span>
+│
+├── <span class="or">Review &amp; Confirm</span>
+│   └── Trip Summary
+│       ├── Visual route map
+│       ├── Full itinerary snapshot
+│       ├── Cost breakdown <span class="cm"># per leg + grand total + smart comparisons</span>
+│       ├── All conflicts shown as resolved
+│       └── <span class="gr">[ Confirm &amp; Book ]</span>
+│
+└── <span class="or">Post Booking</span>
+    └── Reference numbers · PDF · Add to Calendar · Share</pre>
+    </div>
+  </section>
+
+  <!-- ===================== 06 KEY DECISIONS ===================== -->
+  <section class="reveal" id="sec-06">
+    <div class="eyebrow"><span class="ln"></span>06 · Key Decisions &amp; Trade-offs</div>
+    <h2>Six decisions, each with a cost.</h2>
+    <p class="lead">Every choice traded something away. Tap a decision to see the reasoning, the trade-off, and how it was resolved.</p>
+
+    <div class="acc" id="accordion" style="margin-top:22px">
+      <div class="item">
+        <button class="head"><span class="dnum">D1</span><span class="htxt">Linear guided flow vs. free-form planning</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Multi-destination trips have hard dependencies, accommodation dates depend on transport times. Free-form invites mistakes.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">Linear flows can feel slow and restrictive to experienced users.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">Linear by default, with an "I already have this booked" escape hatch at every step.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">Priya gets protection. Kiran gets speed.</div></div>
+        </div></div>
+      </div>
+      <div class="item">
+        <button class="head"><span class="dnum">D2</span><span class="htxt">Real-time conflict detection vs. end-of-flow validation</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Conflicts discovered at the review stage cause abandonment, the user has to unwind decisions.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">Too many warnings causes alarm fatigue; users stop reading them.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">A three-tier severity system. Only red blocks progress; yellow and blue inform without interrupting.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">Problems surface early, while they're still cheap to fix.</div></div>
+        </div></div>
+      </div>
+      <div class="item">
+        <button class="head"><span class="dnum">D3</span><span class="htxt">Auto-populate hotel dates vs. manual entry</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Connecting transport times to hotel dates is the single biggest source of multi-city booking errors.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">Auto-dates might not match the user's actual intent.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">Auto-populate with transparent reasoning shown ("Based on your 11pm arrival") plus one-tap override.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">The error-prone math is done for them, but they stay in control.</div></div>
+        </div></div>
+      </div>
+      <div class="item">
+        <button class="head"><span class="dnum">D4</span><span class="htxt">Timeline view vs. destination card view</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Multi-destination trips are fundamentally about time. Card views break temporal continuity.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">A full timeline is dense on a small mobile screen.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">Collapsible days with a skeleton view by default; expand any day for detail.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">The whole journey at a glance, depth on demand.</div></div>
+        </div></div>
+      </div>
+      <div class="item">
+        <button class="head"><span class="dnum">D5</span><span class="htxt">Include activities vs. stay focused on transport &amp; stay</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Activities complete the itinerary, without them, users leave to plan elsewhere.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">Adds steps and complexity to an already multi-step flow.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">Activities are optional, always last in each leg's flow, and never block progress.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">A richer trip for those who want it, zero drag for those who don't.</div></div>
+        </div></div>
+      </div>
+      <div class="item">
+        <button class="head"><span class="dnum">D6</span><span class="htxt">Show prices upfront vs. reveal at review</span><span class="plus"></span></button>
+        <div class="body"><div class="inner">
+          <div class="row"><div class="k">Why</div><div class="v">Revealing total cost only at checkout causes sticker shock and abandonment.</div></div>
+          <div class="row"><div class="k">Trade-off</div><div class="v">Constant price visibility can anchor users on cost and discourage good choices.</div></div>
+          <div class="row"><div class="k">Resolution</div><div class="v">A persistent, non-intrusive cost bar plus smart value comparisons surfaced contextually.</div></div>
+          <div class="row benefit"><div class="k">User benefit</div><div class="v">No surprises at the end; value framed in context, not in isolation.</div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 07 EDGE CASES ===================== -->
+  <section class="reveal" id="sec-07">
+    <div class="eyebrow"><span class="ln"></span>07 · Edge Cases</div>
+    <h2>The hard parts a real trip throws at you.</h2>
+    <p class="lead">Robustness lives in the edges. Each case is handled by an existing system behaviour, not a one-off patch.</p>
+
+    <div class="edge" style="margin-top:22px">
+      <div class="ec">
+        <div class="sev blue"><span class="d"></span>In transit</div>
+        <h3>Overnight travel</h3>
+        <p>A night train spans two calendar days, no hotel needed.</p>
+        <div class="res"><b>Handling</b>An "in transit" state fills the gap on the timeline so there's no confusing empty night.</div>
+      </div>
+      <div class="ec">
+        <div class="sev blue"><span class="d"></span>Blue suggestion</div>
+        <h3>Luggage gap</h3>
+        <p>Checkout at 11am, flight at 7pm, an 8-hour gap with bags.</p>
+        <div class="res"><b>Handling</b>"Store your luggage nearby" suggestion with integrated storage options.</div>
+      </div>
+      <div class="ec">
+        <div class="sev blue"><span class="d"></span>Single leg</div>
+        <h3>Connecting flights</h3>
+        <p>A flight with a layover is one decision, not two.</p>
+        <div class="res"><b>Handling</b>Treated as a single leg with expandable layover details. The transit city never triggers an accommodation step.</div>
+      </div>
+      <div class="ec">
+        <div class="sev green"><span class="d"></span>Set once, applied everywhere</div>
+        <h3>Traveller-specific rules</h3>
+        <p>Infants don't need separate train seats; children need specific fare categories.</p>
+        <div class="res"><b>Handling</b>Traveller composition is set once at trip creation and flows through every search automatically.</div>
+      </div>
+      <div class="ec">
+        <div class="sev yellow"><span class="d"></span>Yellow warning</div>
+        <h3>Tight transfer window</h3>
+        <p>75 minutes between arrival and the next departure.</p>
+        <div class="res"><b>Handling</b>Flagged inline. The user can proceed but is informed, the decision stays theirs, made consciously.</div>
+      </div>
+      <div class="ec">
+        <div class="sev blue"><span class="d"></span>Blue suggestion</div>
+        <h3>Early arrival, late checkout</h3>
+        <p>Flight lands 6am, hotel check-in is 2pm.</p>
+        <div class="res"><b>Handling</b>"Early check-in may not be available, book the previous night or consider day-use options."</div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card" style="border-color:#f3cabd"><div class="sev red" style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;display:flex;align-items:center;gap:7px;"><span class="d" style="width:9px;height:9px;border-radius:50%;background:var(--red);display:inline-block"></span>Red · Blocks</div><p style="font-size:14px;margin-top:8px" class="muted">Departure before checkout, or overlapping dates. Must be resolved before proceeding.</p></div>
+      <div class="card" style="border-color:#f0e0b0"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:#9a720f;display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:#C9931B;display:inline-block"></span>Yellow · Warns</div><p style="font-size:14px;margin-top:8px" class="muted">Under 90 min between arrival and departure. Flagged, but never blocks.</p></div>
+      <div class="card" style="border-color:#cdd9f2"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--sky);display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:var(--sky);display:inline-block"></span>Blue · Suggests</div><p style="font-size:14px;margin-top:8px" class="muted">Luggage storage, gap nights, late checkout. Informational and dismissable.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================== 08 USER FLOW ===================== -->
+  <section class="reveal" id="sec-08">
+    <div class="eyebrow"><span class="ln"></span>08 · User Flow</div>
+    <h2>The end-to-end flow of the proposed solution.</h2>
+    <p class="lead">Entry to confirmation, with escape hatches where power users diverge.</p>
+
+    <div class="card" style="margin-top:22px;padding:24px 22px">
+      <div class="flow">
+        <div class="stage">
+          <div class="stagelabel">Entry<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node entry"><div class="nt">Start</div><div class="nb">Open App</div></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Screen</div><div class="nb">Home</div><small>Active &amp; past trips</small></div>
+            <span class="arrow">→</span>
+            <div class="node confirm"><div class="nt">Action</div><div class="nb">+ New Trip</div></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Trip Setup<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node"><div class="nt">Step</div><div class="nb">Name trip</div></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Step</div><div class="nb">Destination Builder</div><small>BLR→GOA→MUM→BLR · drag</small></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Step</div><div class="nb">Nights-first selector</div><small>not a date picker</small></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Step</div><div class="nb">Travellers</div><small>flows to all searches</small></div>
+            <span class="arrow">→</span>
+            <div class="node confirm"><div class="nt">Result</div><div class="nb">Route visualized</div></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Leg 1 · Bangalore → Goa<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node transport"><div class="nt">Transport</div><div class="nb">Search options</div><small>Best value or Fastest</small></div>
+            <span class="arrow">→</span>
+            <div class="node escape"><div class="nt">Escape hatch</div><div class="nb">Already booked?</div><small>enter ref · skip search</small></div>
+            <span class="arrow">→</span>
+            <div class="node hotel"><div class="nt">Stay</div><div class="nb">Accommodation</div><small>dates auto-populated</small></div>
+            <span class="arrow">→</span>
+            <div class="node conflict"><div class="nt">Check</div><div class="nb">🔴🟡🔵 inline</div></div>
+            <span class="arrow">→</span>
+            <div class="node activity"><div class="nt">Optional</div><div class="nb">Activities</div><small>skip never blocked</small></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Leg 2 · Goa → Mumbai<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node transport"><div class="nt">Transport</div><div class="nb">Search</div></div>
+            <span class="arrow">→</span>
+            <div class="node hotel"><div class="nt">Stay</div><div class="nb">Accommodation</div><small>auto-dates</small></div>
+            <span class="arrow">→</span>
+            <div class="node activity"><div class="nt">Optional</div><div class="nb">Activities</div></div>
+            <span class="arrow">→</span>
+            <div class="node conflict"><div class="nt">Check</div><div class="nb">Conflict scan</div></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Leg 3 · Mumbai → Bangalore<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node transport"><div class="nt">Transport only</div><div class="nb">Return flight</div></div>
+            <span class="arrow">→</span>
+            <div class="node confirm"><div class="nt">State</div><div class="nb">You're heading home</div><small>no accommodation step</small></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Itinerary Overview<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node"><div class="nt">View</div><div class="nb">Master Timeline</div><small>color-coded by stop</small></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Behaviour</div><div class="nb">Collapsible days</div><small>skeleton default</small></div>
+            <span class="arrow">→</span>
+            <div class="node conflict"><div class="nt">Flag</div><div class="nb">Tight windows</div><small>amber inline</small></div>
+            <span class="arrow">→</span>
+            <div class="node"><div class="nt">Action</div><div class="nb">Quick edit</div><small>without leaving view</small></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stagelabel">Review &amp; Confirm → Booked<span class="ln"></span></div>
+          <div class="nodes">
+            <div class="node"><div class="nt">Summary</div><div class="nb">Route map + costs</div><small>smart comparisons</small></div>
+            <span class="arrow">→</span>
+            <div class="node confirm"><div class="nt">Trust</div><div class="nb">All conflicts resolved</div></div>
+            <span class="arrow">→</span>
+            <div class="node confirm"><div class="nt">CTA</div><div class="nb">Confirm &amp; Book</div></div>
+            <span class="arrow">→</span>
+            <div class="node entry"><div class="nt">Done</div><div class="nb">Confirmed</div><small>Ref · PDF · Calendar · Share</small></div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><i style="background:var(--sky-light);border:1px solid #cdd9f2"></i>Transport</span>
+          <span><i style="background:var(--orange-light);border:1px solid #f3d9c8"></i>Accommodation</span>
+          <span><i style="background:#F6F2FF;border:1px solid #ddd2f3"></i>Activities</span>
+          <span><i style="background:var(--red-light);border:1px dashed var(--red)"></i>Conflict</span>
+          <span><i style="background:var(--green-light);border:1px solid #bfe8cc"></i>Confirm</span>
+          <span><i style="background:var(--mist);border:1px dashed var(--stone)"></i>Escape hatch</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 09 PROPOSED SOLUTION ===================== -->
+  <section class="reveal" id="sec-09">
+    <div class="eyebrow"><span class="ln"></span>09 · Proposed Solution</div>
+    <h2>The experience, screen by screen.</h2>
+    <p class="lead">Eight screens trace the full journey, from opening the app to a booked trip.</p>
+    <div class="fhint"><span class="ar">&rarr;</span> Scroll across to walk the flow from start to end.</div>
+
+    <div class="flowdevices">
+      <div class="frow">
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">1</span><span class="fttl">Home<small>App entry</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="ttl">Your trips</span><span class="rt">2 trips</span></div>
+            <div class="pcontent"><div class="mrow"><div class="l">Goa Getaway<small>BLR → GOA → MUM → BLR</small></div><div class="r">Planning<small>3 legs</small></div></div>
+            <div class="mrow"><div class="l">Manali Weekend<small>Round trip</small></div><div class="r">✓<small>Booked</small></div></div>
+            <div class="mbar"><div class="tot">Plan a new one<b>Multi-city trip</b></div><div class="cta">+ New Trip</div></div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For everyone</b>Every trip starts in one place, with the full route visible before a single booking.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">2</span><span class="fttl">Trip setup<small>Nights first</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">New trip</span><span class="rt">2A · 1I</span></div>
+            <div class="pcontent"><div class="miniroute"><b class="act">BLR</b><s></s><b>GOA</b><s></s><b>MUM</b><s></s><b>BLR</b></div>
+            <div class="mrow"><div class="l">Goa<small>How many nights?</small></div><div class="r">3 nights<small>≡ reorder</small></div></div>
+            <div class="mrow"><div class="l">Mumbai<small>How many nights?</small></div><div class="r">2 nights<small>≡ reorder</small></div></div>
+            <div class="mauto"><span>↳</span>Hotel dates fill in automatically from your transport times.</div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For Priya</b>She sees the whole trip before booking anything, so she knows exactly where to start.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">3</span><span class="fttl">Transport<small>Leg 1</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">BLR &rarr; GOA</span><span class="rt">Leg 1</span></div>
+            <div class="pcontent"><div class="mrow sel"><div class="l">IndiGo 6E-231<small>06:10 → 07:25 · non-stop</small></div><div class="r">₹4,200<span class="mtag best">Best value</span></div></div>
+            <div class="mrow"><div class="l">Akasa QP-114<small>09:00 → 10:10 · non-stop</small></div><div class="r">₹5,650<span class="mtag fast">Fastest</span></div></div>
+            <div class="mauto" style="background:var(--mist);color:var(--ink)"><span>⚡</span>Already booked? Enter a reference and skip the search.</div>
+            <div class="mbar"><div class="tot">Trip total<b>₹4,200</b></div><div class="cta">Select</div></div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For Kiran</b>One tap on the power-user shortcut skips the search and jumps straight to hotels.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">4</span><span class="fttl">Stay<small>Leg 1</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">Stay in Goa</span><span class="rt">Hotel</span></div>
+            <div class="pcontent"><div class="mnights">3 nights<small>14 Jun → 17 Jun</small></div>
+            <div class="mauto"><span>↳</span>Check-in set to 07:25, from your morning arrival. Tap to override.</div>
+            <div class="mrow"><div class="l">Beachfront Resort<small>Near Baga · noon checkout</small></div><div class="r">₹8,400<small>3 nights</small></div></div>
+            <div class="mbar"><div class="tot">Trip total<b>₹12,600</b></div><div class="cta">Add stay</div></div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For Rahul &amp; Neha</b>The noon-checkout filter is auto-applied for the baby's nap schedule, with no manual cross-checking.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">5</span><span class="fttl">Conflicts<small>Real time</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">Live check</span><span class="rt">Leg 2</span></div>
+            <div class="pcontent"><div class="malert r"><span class="ic">🔴</span><div>Train departs 06:00 but checkout is 12:00. <b>Resolve to continue.</b></div></div>
+            <div class="malert y"><span class="ic">🟡</span><div>Only 75 min between landing and your next departure.</div></div>
+            <div class="malert b"><span class="ic">🔵</span><div>11am checkout, 7pm flight. Store luggage nearby?</div></div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For Priya</b>The mistake she could not have anticipated is caught now, not at checkout when it is too late.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">6</span><span class="fttl">Itinerary<small>Master timeline</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">Itinerary</span><span class="rt">Timeline</span></div>
+            <div class="pcontent"><div class="mday">Day 1 · Bangalore → Goa</div>
+            <div class="mtimeline">
+              <div class="ev"><div class="tm">06:10</div><div class="bx tp">Flight 6E-231 → Goa</div></div>
+              <div class="ev"><div class="tm">07:25</div><div class="bx ht">Check in · Beachfront Resort</div></div>
+            </div>
+            <div class="mday">Day 4 · Goa → Mumbai</div>
+            <div class="mtimeline">
+              <div class="ev"><div class="tm">22:40</div><div class="bx tr">In transit · overnight train</div></div>
+            </div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For everyone</b>The constant worry of whether it lines up is replaced by one glance at a continuous timeline.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">7</span><span class="fttl">Review<small>Confirm</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="bk">&lsaquo;</span><span class="ttl">Review</span><span class="rt">Confirm</span></div>
+            <div class="pcontent"><div class="miniroute"><b>BLR</b><s></s><b>GOA</b><s></s><b>MUM</b><s></s><b>BLR</b></div>
+            <div class="psum">
+              <div class="psrow"><span>Leg 1 · Flight + 3 nights</span><b>₹12,600</b></div>
+              <div class="psrow"><span>Leg 2 · Train + 2 nights</span><b>₹9,300</b></div>
+              <div class="psrow"><span>Leg 3 · Return flight</span><b>₹4,800</b></div>
+              <div class="psrow total"><span>Grand total</span><b>₹26,700</b></div>
+            </div>
+            <div class="malert" style="background:var(--green-light);color:var(--green);border:1px solid #bfe8cc;margin-top:12px"><span class="ic">✓</span><div>All conflicts resolved.</div></div>
+            <div class="pbtns"><span class="pbtn full grn">Confirm &amp; Book</span></div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For everyone</b>No sticker shock, and every conflict shown resolved before the single Confirm and Book.</div>
+        </div>
+        <div class="fconn" aria-hidden="true">&rarr;</div>
+        <div class="fstep">
+          <div class="fcap"><span class="fnum">8</span><span class="fttl">Confirmed<small>Post booking</small></span></div>
+          <div class="phone"><div class="pscreen">
+            <span class="island"></span>
+            <div class="pstatus"><span>9:41</span><span class="sys"><span class="net"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="bat"></span></span></div>
+            <div class="pbar"><span class="ttl">Confirmed</span><span class="rt">Booked</span></div>
+            <div class="pcontent"><div class="psuccess"><div class="pcheck">✓</div><div class="pst">Trip booked</div><div class="pss">4 references issued</div></div>
+            <div class="mrow"><div class="l">Flight BLR → GOA<small>IndiGo 6E-231</small></div><div class="r">X4K2P9</div></div>
+            <div class="mrow"><div class="l">Train GOA → MUM<small>Konkan GR-22</small></div><div class="r">K7M3T1</div></div>
+            <div class="mrow"><div class="l">Flight MUM → BLR<small>Akasa QP-114</small></div><div class="r">A9Z2L4</div></div>
+            <div class="pbtns">
+              <span class="pbtn">Download PDF</span>
+              <span class="pbtn sky">Calendar</span>
+              <span class="pbtn ghost">Share</span>
+            </div></div>
+            <div class="phome"></div>
+          </div></div>
+          <div class="fben"><b>For everyone</b>References, PDF, calendar and share, so the journey leaves the app intact.</div>
+        </div>
+      </div>
+    </div>
+    <div class="links" style="margin-top:34px">
+      <a class="linkbtn primary" href="https://journey-app.figma.site" target="_blank" rel="noopener">
+        <span class="lb-ic">▶</span>
+        <span class="lb-tx"><small>Try it</small>Live interactive prototype</span>
+        <span class="lb-go">↗</span>
+      </a>
+      <a class="linkbtn secondary" href="https://www.figma.com/design/xsINV0vO8eoy53lH5GeV0V/Journey-App---Multi-Travel-UI-Design---AKSHAT-SINGH?node-id=0-1&t=bRnfDkt2r72Zo9ve-1" target="_blank" rel="noopener">
+        <span class="lb-ic">✦</span>
+        <span class="lb-tx"><small>Figma</small>UI design file</span>
+        <span class="lb-go">↗</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===================== PHILOSOPHY ===================== -->
+  <section class="reveal" id="sec-end" style="padding-bottom:24px">
+    <div class="philosophy">
+      <div class="e">The Core Design Statement</div>
+      <p class="big">Manage the complexity in the system, so the user only ever feels the <em>journey</em>,not the <em>friction</em>.</p>
+      <div class="route2"><b>BLR</b><span class="d"></span><s></s><b>GOA</b><s></s><span class="d"></span><b>MUM</b><s></s><span class="d"></span><b>BLR</b></div>
+    </div>
+  </section>
+
+  <footer>Multi-Destination Trip Planning · Design Challenge Submission · AKSHAT SINGH</footer>
+</div>
+
+<script>
+(function(){
+  // ---- IntersectionObserver: fade in sections ----
+  var reveals = document.querySelectorAll('.reveal');
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  },{ threshold:0.12, rootMargin:'0px 0px -8% 0px' });
+  reveals.forEach(function(r){ io.observe(r); });
+
+  // ---- Labeled step indicator (tracks the section nearest viewport centre) ----
+  var sections = Array.prototype.slice.call(document.querySelectorAll('[id^="sec-"]'));
+  // Step labels in document order (hero, 01-09, closing statement)
+  var STEPS = [
+    {idx:'00', name:'Overview',               foot:'Start of the case study'},
+    {idx:'01', name:'Problem Framing',        foot:'Step 1 of 9'},
+    {idx:'02', name:'User Mental Model',      foot:'Step 2 of 9'},
+    {idx:'03', name:'User Scenarios',         foot:'Step 3 of 9'},
+    {idx:'04', name:'Approach & Reasoning',   foot:'Step 4 of 9'},
+    {idx:'05', name:'Information Architecture',foot:'Step 5 of 9'},
+    {idx:'06', name:'Key Decisions',          foot:'Step 6 of 9'},
+    {idx:'07', name:'Edge Cases',             foot:'Step 7 of 9'},
+    {idx:'08', name:'User Flow',              foot:'Step 8 of 9'},
+    {idx:'09', name:'Proposed Solution',      foot:'Step 9 of 9'},
+    {idx:'→',  name:'The Statement',          foot:'End of the case study'}
+  ];
+  // Build segment ticks (one per step)
+  var stepnav = document.getElementById('stepnav');
+  var segWrap = document.getElementById('snSegs');
+  var segs = [];
+  STEPS.forEach(function(){ var i=document.createElement('i'); segWrap.appendChild(i); segs.push(i); });
+  var snIdx = document.getElementById('snIdx'),
+      snName = document.getElementById('snName'),
+      snFoot = document.getElementById('snFoot');
+  var current = -1;
+
+  function setStep(n){
+    if(n===current) return; current = n;
+    var s = STEPS[n] || STEPS[0];
+    snIdx.textContent = s.idx;
+    snName.textContent = s.name;
+    snFoot.textContent = s.foot;
+    segs.forEach(function(seg,i){
+      seg.classList.toggle('done', i < n);
+      seg.classList.toggle('cur', i === n);
+    });
+    // reveal the indicator once we leave the hero
+    stepnav.classList.toggle('show', true);
+  }
+
+  function updateRoute(){}
+  // active = section nearest viewport centre; passed sections stay lit
+  function activeNearest(){
+    var center = window.innerHeight/2;
+    var bestIndex=0, bestDist=Infinity;
+    sections.forEach(function(sec,i){
+      var r=sec.getBoundingClientRect();
+      var c=r.top + r.height/2;
+      var d=Math.abs(c-center);
+      if(d<bestDist){ bestDist=d; bestIndex=i; }
+    });
+    setStep(bestIndex);
+  }
+  function onScroll(){ activeNearest(); updateRoute(); }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  // ---- Accordion (Key Decisions) ----
+  var acc = document.getElementById('accordion');
+  if(acc){
+    acc.addEventListener('click', function(e){
+      var head = e.target.closest('.head');
+      if(!head) return;
+      var item = head.parentElement;
+      var body = item.querySelector('.body');
+      var isOpen = item.classList.contains('open');
+      // close siblings
+      acc.querySelectorAll('.item.open').forEach(function(it){
+        if(it!==item){ it.classList.remove('open'); it.querySelector('.body').style.maxHeight='0px'; }
+      });
+      if(isOpen){ item.classList.remove('open'); body.style.maxHeight='0px'; }
+      else{ item.classList.add('open'); body.style.maxHeight = body.scrollHeight + 'px'; }
+    });
+    // open first by default
+    var first = acc.querySelector('.item');
+    if(first){ first.classList.add('open'); var b=first.querySelector('.body'); b.style.maxHeight=b.scrollHeight+'px'; }
+    // recompute open heights on resize
+    window.addEventListener('resize', function(){
+      acc.querySelectorAll('.item.open .body').forEach(function(b){ b.style.maxHeight = b.scrollHeight + 'px'; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
