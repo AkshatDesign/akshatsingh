@@ -6,7 +6,7 @@
      Curtain-Wall Skyscrapers with Helipads & Spires) + 5 Portfolio Showrooms
    - 14-Frond 3D Arching Palm Trees, Sculpted Traffic Coupes & GTA Pedestrians
    ========================================================================== */
-import * as THREE from '/vendor/three/build/three.module.js';
+import * as THREE from '../vendor/three/build/three.module.js';
 import {
   makeArtDecoFacadeTextures,
   makeSkyscraperGlassTextures,
@@ -15,7 +15,7 @@ import {
   makeNeonSignTexture,
   makeContactShadowTexture,
   makeLicensePlateTexture
-} from '/assets/vice-env.js?v=4';
+} from './vice-env.js?v=6';
 
 export const PAINTS = [
   { name: 'Rosso Vice',      swatch: '#C8142E', color: 0xbf122c, metalness: 0.62, roughness: 0.16, caliper: 0xf0c248, rim: 0xd8c494, underglow: 0xe63554 },

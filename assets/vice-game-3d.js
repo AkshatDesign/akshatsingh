@@ -6,11 +6,11 @@
    - 3-Point Oriented Car Hull Solid Collisions (ZERO clipping through solids!)
    - GTA-Style Pedestrian Squishing, Ragdoll Launches, Panic AI & 5-Star Wanted
    ========================================================================== */
-import * as THREE from '/vendor/three/build/three.module.js';
-import { EffectComposer } from '/vendor/three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from '/vendor/three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from '/vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from '/vendor/three/examples/jsm/postprocessing/OutputPass.js';
+import * as THREE from '../vendor/three/build/three.module.js';
+import { EffectComposer } from '../vendor/three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from '../vendor/three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from '../vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from '../vendor/three/examples/jsm/postprocessing/OutputPass.js';
 
 import {
   SUN_DIR,
@@ -28,7 +28,7 @@ import {
   makeNeonSignTexture,
   makeSoftParticleTexture,
   makeSplatDecalTexture
-} from '/assets/vice-env.js?v=5';
+} from './vice-env.js?v=6';
 
 import {
   PAINTS,
@@ -40,9 +40,9 @@ import {
   createCaseStudyShowroom,
   createTrafficCar,
   createPedestrian
-} from '/assets/vice-assets.js?v=5';
+} from './vice-assets.js?v=6';
 
-import { ViceAudioEngine } from '/assets/vice-audio.js?v=5';
+import { ViceAudioEngine } from './vice-audio.js?v=6';
 
 const AVENUES = [0, -96, -192]; // Ocean Drive, Washington Ave, Downtown Hwy
 const CROSS_STREETS = [20, -140, -300, -460, -620];
@@ -379,17 +379,33 @@ class ViceCity3DApp {
     this.renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.stopLoop(); });
     this.renderer.domElement.addEventListener('webglcontextrestored', () => { if (this.isOpen) this.startLoop(); });
 
-    // Golden-Hour Sunset PMREM Environment Map (vivid sky/sun/city reflections across all glass, paint & road puddles)
-    this.scene.environment = createGoldenHourEnvironment(this.renderer);
+    // Golden-Hour Sunset PMREM Environment Map (vivid sky/sun/city reflections across all glass, paint & road)
+    try {
+      this.scene.environment = createGoldenHourEnvironment(this.renderer);
+    } catch (err) {
+      console.warn('[ViceCity3D] PMREM environment fallback:', err);
+    }
 
-    // True HDR HalfFloatType EffectComposer with MSAA so bloom ONLY gently accents neon & sun
+    // True HDR HalfFloatType EffectComposer with MSAA (WebGL2) so bloom gently accents neon & sun
+    this.composer = null;
+    this.bloomPass = null;
     if (!this.isSoftwareGl) {
-      const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: 4 });
-      this.composer = new EffectComposer(this.renderer, rt);
-      this.composer.addPass(new RenderPass(this.scene, this.camera));
-      this.bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 0.22, 0.30, 1.38);
-      this.composer.addPass(this.bloomPass);
-      this.composer.addPass(new OutputPass());
+      try {
+        const isWebGL2 = this.renderer.capabilities.isWebGL2;
+        const rt = new THREE.WebGLRenderTarget(w, h, {
+          type: THREE.HalfFloatType,
+          samples: isWebGL2 ? 4 : 0
+        });
+        this.composer = new EffectComposer(this.renderer, rt);
+        this.composer.addPass(new RenderPass(this.scene, this.camera));
+        this.bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 0.22, 0.30, 1.38);
+        this.composer.addPass(this.bloomPass);
+        this.composer.addPass(new OutputPass());
+      } catch (err) {
+        console.warn('[ViceCity3D] Post-processing composer fallback to direct render:', err);
+        this.composer = null;
+        this.bloomPass = null;
+      }
     }
 
     const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
@@ -401,17 +417,27 @@ class ViceCity3DApp {
     this.scene.add(this.car.root);
 
     // Real-time Dynamic CubeCamera reflections on Player Supercar (GPU)
+    this.cubeCamera = null;
+    this.cubeRT = null;
     if (!this.isSoftwareGl) {
-      this.cubeRT = new THREE.WebGLCubeRenderTarget(128, {
-        generateMipmaps: true,
-        minFilter: THREE.LinearMipmapLinearFilter
-      });
-      this.cubeCamera = new THREE.CubeCamera(0.6, 520, this.cubeRT);
-      this.scene.add(this.cubeCamera);
-      this.car.setDynamicEnvMap(this.cubeRT.texture);
+      try {
+        this.cubeRT = new THREE.WebGLCubeRenderTarget(128, {
+          generateMipmaps: true,
+          minFilter: THREE.LinearMipmapLinearFilter
+        });
+        this.cubeCamera = new THREE.CubeCamera(0.6, 520, this.cubeRT);
+        this.scene.add(this.cubeCamera);
+        this.car.setDynamicEnvMap(this.cubeRT.texture);
+      } catch (err) {
+        console.warn('[ViceCity3D] CubeCamera fallback to PMREM:', err);
+        this.cubeCamera = null;
+        this.cubeRT = null;
+      }
     }
 
-    if (!this.isSoftwareGl) this.renderer.compile(this.scene, this.camera);
+    if (!this.isSoftwareGl) {
+      try { this.renderer.compile(this.scene, this.camera); } catch (_) {}
+    }
     this.clock = new THREE.Clock();
   }
 
@@ -1506,7 +1532,7 @@ class ViceCity3DApp {
     this.renderer.setSize(w, h);
     if (this.composer) {
       this.composer.setSize(w, h);
-      this.bloomPass.resolution.set(w, h);
+      if (this.bloomPass) this.bloomPass.resolution.set(w, h);
     }
   }
 
@@ -1554,13 +1580,25 @@ class ViceCity3DApp {
   renderFrame() {
     // Update live CubeCamera reflection probe on GPU every 4th frame
     if (this.cubeCamera && this.frameCount % 4 === 0) {
-      this.car.root.visible = false;
-      this.cubeCamera.position.set(this.carState.x, 1.2, this.carState.z);
-      this.cubeCamera.update(this.renderer, this.scene);
-      this.car.root.visible = true;
+      try {
+        this.car.root.visible = false;
+        this.cubeCamera.position.set(this.carState.x, 1.2, this.carState.z);
+        this.cubeCamera.update(this.renderer, this.scene);
+        this.car.root.visible = true;
+      } catch (_) {
+        this.car.root.visible = true;
+        this.cubeCamera = null;
+      }
     }
-    if (this.isSoftwareGl) this.renderer.render(this.scene, this.camera);
-    else this.composer.render();
+    if (this.composer) {
+      try {
+        this.composer.render();
+        return;
+      } catch (_) {
+        this.composer = null;
+      }
+    }
+    this.renderer.render(this.scene, this.camera);
   }
 
   startLoop() {
