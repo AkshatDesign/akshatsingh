@@ -1,10 +1,12 @@
 import compression from 'compression';
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const THREE_ROOT = path.resolve(__dirname, 'node_modules/three');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -32,6 +34,26 @@ app.use((req, res, next) => {
     return res.status(404).end();
   }
   next();
+});
+
+// Serve Three.js ES modules locally from node_modules/three with bare specifier rewrite
+app.get(/^\/vendor\/three\/(.+)$/, (req, res) => {
+  const rel = req.params[0];
+  if (!rel || rel.includes('..') || !rel.endsWith('.js')) {
+    return res.status(404).end();
+  }
+  const absPath = path.resolve(THREE_ROOT, rel);
+  if (!absPath.startsWith(THREE_ROOT + path.sep) || !fs.existsSync(absPath)) {
+    return res.status(404).end();
+  }
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=604800');
+  if (rel.startsWith('examples/jsm/')) {
+    const src = fs.readFileSync(absPath, 'utf8')
+      .replace(/from\s+['"]three['"]/g, "from '/vendor/three/build/three.module.js'");
+    return res.send(src);
+  }
+  return res.sendFile(absPath);
 });
 
 app.use(

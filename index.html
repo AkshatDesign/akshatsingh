@@ -1067,26 +1067,14 @@ html.calm .city svg{filter:none!important}
   .rad{width:min(190px,calc(100vw - 24px))}
   .rad.open{width:calc(100vw - 24px)}
 }
-/* ===== v8: Mainpage Fun Micro-Interactions & Delight Pack ===== */
+/* ===== Clean 3D Project Card Tilt & Subtle Hover Polish ===== */
 .pj{transform-style:preserve-3d;will-change:transform}
-.pj::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .25s ease;background:radial-gradient(360px circle at var(--px,50%) var(--py,50%),color-mix(in srgb,var(--dc,#21E6D1) 28%,transparent),transparent 62%)}
+.pj::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .25s ease;background:radial-gradient(340px circle at var(--px,50%) var(--py,50%),color-mix(in srgb,var(--dc,#21E6D1) 20%,transparent),transparent 62%)}
 .pj:hover::before{opacity:1}
 .pj .pj-top,.pj .bot{position:relative;z-index:1}
-.roles i{cursor:pointer;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .18s,background .18s,color .18s}
-.roles i:hover{transform:translateY(-3px) scale(1.06);border-color:var(--teal);color:#fff}
-.roles i.pop{animation:roleJelly .42s cubic-bezier(.34,1.56,.64,1)}
-@keyframes roleJelly{0%{transform:scale(1)}35%{transform:scale(1.18) rotate(-3deg)}70%{transform:scale(.94) rotate(2deg)}100%{transform:scale(1)}}
-.sun{cursor:pointer}
-.sun-ring{position:fixed;border-radius:50%;border:2px solid #FFD36B;box-shadow:0 0 24px rgba(255,46,136,.65);pointer-events:none;z-index:120;animation:sunPulse .85s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes sunPulse{from{width:40px;height:40px;margin:-20px 0 0 -20px;opacity:.95}to{width:340px;height:340px;margin:-170px 0 0 -170px;opacity:0}}
-.vc-star-shoot{position:fixed;height:2.5px;width:130px;border-radius:99px;pointer-events:none;z-index:25;background:linear-gradient(90deg,rgba(255,245,238,0),#21E6D1 55%,#FFF5EE);box-shadow:0 0 12px #21E6D1;transform-origin:right center;animation:starZip .72s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes starZip{0%{opacity:0;transform:rotate(var(--sa,18deg)) translateX(-40px) scaleX(.3)}25%{opacity:1}100%{opacity:0;transform:rotate(var(--sa,18deg)) translateX(340px) scaleX(1.15)}}
-.rec-l li{cursor:pointer;transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s}
-.rec-l li:hover{transform:translateX(5px)}
-.wc.sk-pop{animation:wcBounce .42s cubic-bezier(.34,1.56,.64,1)}
-@keyframes wcBounce{0%{transform:scale(1)}40%{transform:scale(1.03) translateY(-4px)}100%{transform:scale(1)}}
-.calm .pj::before,.calm .vc-star-shoot,.calm .sun-ring{display:none!important}
+.calm .pj::before{display:none!important}
 </style>
+<link rel="stylesheet" href="/assets/vice-game.css?v=8">
 </head>
 <body>
 
@@ -1105,6 +1093,7 @@ html.calm .city svg{filter:none!important}
   <div class="wrap nav-in">
     <a class="logo" href="#top" aria-label="Akshat Singh, top of page"><img class="logo-img" src="/assets/images/home-1.webp" alt="Akshat Singh" width="147" height="40"></a>
     <div class="nav-r">
+      <button class="vo-nav-play" type="button" data-open-game title="Play Vice City Ocean Drive (Shift+G)"><svg viewBox="0 0 12 12" aria-hidden="true"><polygon points="2,1 11,6 2,11"/></svg><span>Play Game</span></button>
       <button class="switch" id="calmBtn" type="button" aria-pressed="false" title="Reduce motion and ambient effects"><span class="trk" aria-hidden="true"></span><span class="lab">Calm</span></button>
       <button class="switch" id="inspectBtn" type="button" aria-pressed="false" title="Inspect the page like a design file"><span class="trk" aria-hidden="true"></span><span class="lab">Inspect</span><kbd>I</kbd></button>
       <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="drawer"><span>Menu</span><span class="burger" aria-hidden="true"><b></b><b></b><b></b></span></button>
@@ -1125,6 +1114,7 @@ html.calm .city svg{filter:none!important}
       <div class="dr-card">
         <h4>Quick Actions</h4>
         <div class="dr-actions">
+          <button class="dr-act" type="button" data-open-game><span>Drive Vice City Game</span><kbd>Shift+G</kbd></button>
           <button class="dr-act" type="button" data-open-map><span>Vice City Map</span><kbd>Shift+M</kbd></button>
           <button class="dr-act" type="button" data-open-dossier><span>Printable Resume / CV</span><kbd>Shift+R</kbd></button>
           <button class="dr-act" type="button" data-open-cmd><span>Command Palette</span><kbd>⌘K</kbd></button>
@@ -1161,6 +1151,7 @@ html.calm .city svg{filter:none!important}
         <div class="coming"><b>Now playing · Vice City edition</b><p class="roles"><i>Design Engineer</i><i>Product Designer</i><i>UX/UI</i><i>Web</i><i>No-Code</i></p></div>
         <div class="cta-row">
           <a class="cta mag" href="#projects"><span>See case studies</span><svg aria-hidden="true"><use href="#arrow"/></svg></a>
+          <button class="cta-alt cta-play" type="button" data-open-game><svg viewBox="0 0 12 12" width="11" height="11" fill="currentColor" aria-hidden="true"><polygon points="2,1 11,6 2,11"/></svg><span>Play Game</span></button>
           <button class="cta-alt" type="button" data-open-dossier>Resume PDF</button>
           <a class="cta-alt" href="mailto:akshat018singh@gmail.com">Email me</a>
           <label class="tod" for="tod"><span>Time</span><input type="range" id="tod" min="0" max="100" value="50"><b id="todLbl" title="Click to sync with your local clock">Golden hour</b></label>
@@ -2996,28 +2987,9 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
   });
 })();
 
-/* ===== v8: Mainpage Fun Micro-Interactions & Delight Pack ===== */
+/* ===== Clean 3D Project Card Tilt ===== */
 (function(){
   const noMotion = () => RM || root.classList.contains('calm');
-  let marimbaAc = null;
-  function playNote(freq, dur, type){
-    try{
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) return;
-      if(!marimbaAc) marimbaAc = new AC();
-      if(marimbaAc.state === 'suspended') marimbaAc.resume();
-      const t = marimbaAc.currentTime, o = marimbaAc.createOscillator(), g = marimbaAc.createGain();
-      o.type = type || 'triangle';
-      o.frequency.setValueAtTime(freq, t);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(0.065, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.22));
-      o.connect(g); g.connect(marimbaAc.destination);
-      o.start(t); o.stop(t + (dur || 0.22) + 0.03);
-    }catch(_){}
-  }
-
-  /* 1. 3D Holographic Tilt & District Spotlight on all 5 Vice City Project Cards */
   if(matchMedia('(hover:hover) and (pointer:fine)').matches){
     $$('.pj').forEach(card=>{
       card.addEventListener('pointermove',e=>{
@@ -3026,118 +2998,15 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
         const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
         card.style.setProperty('--px',(px*100).toFixed(1)+'%');
         card.style.setProperty('--py',(py*100).toFixed(1)+'%');
-        const rx=(0.5-py)*8, ry=(px-0.5)*10;
-        card.style.transform=`perspective(950px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-6px)`;
+        const rx=(0.5-py)*5, ry=(px-0.5)*6;
+        card.style.transform=`perspective(950px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-4px)`;
       });
       card.addEventListener('pointerleave',()=>{ card.style.transform=''; });
-      card.addEventListener('click',e=>{
-        if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,18);
-      });
     });
   }
-
-  /* 2. Playable 5-Note Synthwave Marimba on Hero Role Tags */
-  const PENT=[329.63, 392.00, 440.00, 523.25, 659.25];
-  $$('.roles i').forEach((tag,i)=>{
-    tag.title='Tap to play synth note';
-    tag.addEventListener('click',e=>{
-      tag.classList.remove('pop'); void tag.offsetWidth; tag.classList.add('pop');
-      playNote(PENT[i%PENT.length], 0.26, 'triangle');
-      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,14);
-    });
-  });
-
-  /* 3. Interactive Glowing Sunset Sun & 4. Hero Convertible Turbo Nitro + Night-Sky Shooting Stars */
-  const sun=$('#sun'), tod=$('#tod'), hero=$('#hero'), car=$('#car');
-  const VIBES=[
-    {v:18, name:'Tropical Sunrise'},
-    {v:50, name:'Golden Hour'},
-    {v:76, name:'Hotline Dusk'},
-    {v:96, name:'Neon Midnight'}
-  ];
-  let vibeIdx=1;
-  if(hero){
-    hero.addEventListener('pointerdown',e=>{
-      if(e.target.closest('a,button,input,label,.idc,.stk,.modes,.roles')) return;
-      /* Check Hero Convertible hit-box first */
-      if(car && !noMotion()){
-        const r=car.getBoundingClientRect();
-        if(e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top-14 && e.clientY<=r.bottom+14){
-          if(typeof sparkle==='function') sparkle(r.left+12, r.top+r.height*0.64, 32);
-          const carSvg=car.querySelector('svg');
-          if(carSvg){
-            carSvg.animate([
-              {transform:'translateX(0) scale(1)', filter:'drop-shadow(0 0 0 rgba(255,46,136,0))'},
-              {transform:'translateX(22px) skewX(-5deg) scale(1.06)', filter:'drop-shadow(-14px 2px 16px rgba(255,46,136,.95))'},
-              {transform:'translateX(-4px) scale(0.99)'},
-              {transform:'translateX(0) scale(1)', filter:'drop-shadow(0 0 0 rgba(255,46,136,0))'}
-            ],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'});
-          }
-          playNote(220, 0.14, 'sawtooth');
-          setTimeout(()=>playNote(330, 0.22, 'sawtooth'), 70);
-          return;
-        }
-      }
-      /* Check Glowing Sunset Sun circular hit-area */
-      if(sun && tod){
-        const sr=sun.getBoundingClientRect();
-        const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2, rad=sr.width/2;
-        if(Math.hypot(e.clientX-cx, e.clientY-cy) <= rad){
-          vibeIdx=(vibeIdx+1)%VIBES.length;
-          const v=VIBES[vibeIdx];
-          tod.value=v.v;
-          tod.dispatchEvent(new Event('input',{bubbles:true}));
-          playNote(440+vibeIdx*75, 0.3, 'sine');
-          if(!noMotion()){
-            const ring=document.createElement('span');
-            ring.className='sun-ring';
-            ring.style.left=e.clientX+'px'; ring.style.top=e.clientY+'px';
-            document.body.appendChild(ring);
-            setTimeout(()=>ring.remove(), 900);
-            if(typeof sparkle==='function') sparkle(e.clientX,e.clientY,24);
-          }
-          if(typeof toast==='function') toast('Sky Vibe: '+v.name, 'Tap the sun again to shift time', 1800);
-          return;
-        }
-      }
-      /* Open sky tap -> spawn a Vice City shooting star */
-      if(noMotion()) return;
-      const star=document.createElement('span');
-      star.className='vc-star-shoot';
-      star.style.left=e.clientX+'px';
-      star.style.top=e.clientY+'px';
-      star.style.setProperty('--sa', (8 + Math.random()*22).toFixed(1)+'deg');
-      document.body.appendChild(star);
-      playNote(880+Math.random()*320, 0.14, 'sine');
-      setTimeout(()=>star.remove(), 760);
-    });
-  }
-
-  /* 5. Joyful Feedback on Skill Chips, Recognition Medals & Copy Email */
-  document.addEventListener('click',e=>{
-    const sk=e.target.closest('.sk');
-    if(sk){
-      playNote(523.25, 0.12, 'triangle');
-      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,10);
-      setTimeout(()=>{
-        $$('.wc.hi').forEach(c=>{ c.classList.remove('sk-pop'); void c.offsetWidth; c.classList.add('sk-pop'); });
-      },20);
-      return;
-    }
-    const rec=e.target.closest('.rec-l li');
-    if(rec){
-      playNote(659.25, 0.18, 'triangle');
-      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,22);
-      return;
-    }
-    const cp=e.target.closest('[data-copy]');
-    if(cp){
-      playNote(587.33, 0.16, 'sine');
-      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,26);
-    }
-  });
 })();
 })();
 </script>
+<script src="/assets/vice-game.js?v=9"></script>
 
 </body></html>

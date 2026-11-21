@@ -1163,137 +1163,13 @@ h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin: 0; }
 .rad.open .lcd-n { font-size: 0.72rem; letter-spacing: 0.2em; }
 
 /* ==========================================================================
-   6B. SUBPAGE ARCADE DELIGHT LAYER (Toast · Ripples · Hidden Package · Cruise)
+   6B. FOOTER ACTIONS SPACING
    ========================================================================== */
-.vc-hero-title { cursor: pointer; }
-.vc-hero-title.vc-zap .vc-hero-row {
-  animation: vcZap 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes vcZap {
-  0% { filter: brightness(1); transform: skewX(-9deg) scale(1); }
-  35% { filter: brightness(1.55) drop-shadow(0 0 28px rgba(33, 230, 209, 0.8)); transform: skewX(-12deg) scale(1.03); }
-  100% { filter: brightness(1); transform: skewX(-9deg) scale(1); }
-}
-
-.vc-toast {
-  position: fixed;
-  top: calc(var(--vc-nav-h) + 16px);
-  right: 18px;
-  z-index: 1250;
-  max-width: min(320px, calc(100vw - 36px));
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--vc-accent) 55%, rgba(255, 255, 255, 0.2));
-  background: rgba(14, 4, 24, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), 0 0 24px color-mix(in srgb, var(--vc-accent) 22%, transparent);
-  opacity: 0;
-  transform: translateY(-14px) scale(0.96);
-  pointer-events: none;
-  transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.vc-toast.on { opacity: 1; transform: translateY(0) scale(1); }
-.vc-toast b {
-  display: block;
-  font-family: var(--font-cond);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--vc-gold);
-}
-.vc-toast span {
-  display: block;
-  margin-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--vc-ink-2);
-}
-
-.vc-ripple {
-  position: fixed;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  border: 2px solid var(--vc-accent);
-  box-shadow: 0 0 14px var(--vc-accent);
-  pointer-events: none;
-  z-index: 1350;
-  animation: vcRippleOut 0.56s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-@keyframes vcRippleOut {
-  from { opacity: 0.9; transform: scale(0.6); }
-  to { opacity: 0; transform: scale(5.4); }
-}
-
-/* Collectible GTA Hidden Package inside Fast-Travel Header */
 .vc-travel-acts {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-}
-.vc-pkg {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 211, 107, 0.45);
-  background: rgba(255, 211, 107, 0.10);
-  color: var(--vc-gold);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, border-color 0.2s ease;
-}
-.vc-pkg:hover {
-  transform: translateY(-2px) scale(1.03);
-  background: rgba(255, 211, 107, 0.2);
-  border-color: var(--vc-gold);
-}
-.vc-pkg .vc-pkg-gem {
-  display: inline-block;
-  font-size: 15px;
-  line-height: 1;
-  animation: vcFloatGem 2.2s ease-in-out infinite;
-}
-.vc-pkg.found {
-  border-color: rgba(33, 230, 209, 0.45);
-  background: rgba(33, 230, 209, 0.1);
-  color: var(--vc-teal);
-}
-.vc-pkg.found .vc-pkg-gem { animation: none; }
-@keyframes vcFloatGem {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-3px) rotate(14deg); }
-}
-
-/* Cruise Convertible Easter Egg */
-.vc-cruise-car {
-  position: fixed;
-  left: 0;
-  bottom: 84px;
-  width: 196px;
-  z-index: 1240;
-  cursor: pointer;
-  filter: drop-shadow(0 8px 20px rgba(255, 46, 136, 0.48));
-  animation: vcCruiseAcross 5.8s linear forwards;
-}
-@keyframes vcCruiseAcross {
-  from { transform: translateX(-240px); }
-  to { transform: translateX(calc(100vw + 80px)); }
-}
-body.vc-disco {
-  animation: vcDiscoPulse 0.9s linear infinite;
-}
-@keyframes vcDiscoPulse {
-  0% { filter: hue-rotate(0deg) saturate(1.18); }
-  50% { filter: hue-rotate(38deg) saturate(1.32); }
-  100% { filter: hue-rotate(0deg) saturate(1.18); }
 }
 
 /* ==========================================================================

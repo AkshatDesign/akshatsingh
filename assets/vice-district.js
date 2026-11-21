@@ -290,21 +290,7 @@
     });
   }
 
-  // GTA-style top-right toast helper
-  const toastEl = document.createElement('div');
-  toastEl.className = 'vc-toast';
-  toastEl.setAttribute('role', 'status');
-  toastEl.setAttribute('aria-live', 'polite');
-  document.body.appendChild(toastEl);
-  let toastT = 0;
-  function toast(title, sub, ms) {
-    toastEl.innerHTML = '<b>' + String(title || '').replace(/</g, '&lt;') + '</b>' + (sub ? '<span>' + String(sub).replace(/</g, '&lt;') + '</span>' : '');
-    toastEl.classList.add('on');
-    clearTimeout(toastT);
-    toastT = setTimeout(() => toastEl.classList.remove('on'), ms || 2600);
-  }
-
-  window.ViceFX = { burst, beep, toast, initReveals, initCounters, initTilt };
+  window.ViceFX = { burst, beep, initReveals, initCounters, initTilt };
   initReveals();
   initCounters();
   initTilt();
@@ -322,6 +308,7 @@
         active.nav.map(item => `<a href="#${item.id}" data-sec="${item.id}">${item.label}</a>`).join('') +
       `</nav>` +
       `<div class="vc-actions">` +
+        `<button class="vo-nav-play" type="button" data-open-game title="Play Vice City Ocean Drive (Shift+G)"><svg viewBox="0 0 12 12" aria-hidden="true"><polygon points="2,1 11,6 2,11"/></svg><span>Play Game</span></button>` +
         `<a class="vc-cta" href="${active.liveUrl}" target="_blank" rel="noopener">${active.liveLabel}</a>` +
         `<button class="vc-burger" type="button" aria-label="Toggle section menu" aria-expanded="false"><span><b></b><b></b><b></b></span></button>` +
       `</div>` +
@@ -333,6 +320,7 @@
   drawer.setAttribute('aria-label', 'Mobile section navigation');
   drawer.innerHTML =
     active.nav.map(item => `<a href="#${item.id}" data-sec="${item.id}"><span>${item.label}</span><span>→</span></a>`).join('') +
+    `<a href="#" data-open-game><span>Play Game</span><span>▶</span></a>` +
     `<a href="/#projects"><span>All Projects</span><span>←</span></a>`;
 
   document.body.insertBefore(drawer, document.body.firstChild);
@@ -435,10 +423,6 @@
   /* ========================================================================
      3. 5-DISTRICT FAST-TRAVEL FOOTER BAR (.vc-travel)
      ======================================================================== */
-  let pkgs = new Set();
-  try { pkgs = new Set(JSON.parse(localStorage.getItem('vc_packages') || '[]')); } catch (_) {}
-  const pkgDone = pkgs.has(active.stamp);
-
   const travel = document.createElement('section');
   travel.className = 'vc-travel';
   travel.setAttribute('aria-label', 'Vice City District Fast Travel');
@@ -446,13 +430,12 @@
     `<div class="vc-travel-in">` +
       `<div class="vc-travel-top">` +
         `<div>` +
-          `<div class="vc-travel-eyebrow">Vice City Fast Travel · ${visited.size} / 5 Districts Cleared · <span id="vcPkgStat">${pkgs.size} / 5 Packages</span></div>` +
+          `<div class="vc-travel-eyebrow">Vice City Districts · ${visited.size} / 5 Explored</div>` +
           `<h2 class="vc-travel-h">Explore Another District</h2>` +
         `</div>` +
         `<div class="vc-travel-acts">` +
-          `<button class="vc-pkg${pkgDone ? ' found' : ''}" id="vcPkgBtn" type="button" data-interactive><span class="vc-pkg-gem" aria-hidden="true">${pkgDone ? '✓' : '★'}</span><span>${pkgDone ? 'District Package Found' : 'Grab Hidden Package'}</span></button>` +
-          `<button class="vc-travel-home" id="vcCruiseBtn" type="button" data-interactive>Cruise Ride 🚗</button>` +
-          `<a class="vc-travel-home" href="/#projects">← Back to Vice City</a>` +
+          `<button class="vc-travel-home" type="button" data-open-game>Play Vice Drive</button>` +
+          `<a class="vc-travel-home" href="/#projects">← Back to Portfolio</a>` +
         `</div>` +
       `</div>` +
       `<div class="vc-districts">` +
@@ -471,22 +454,6 @@
       `</div>` +
     `</div>`;
   document.body.appendChild(travel);
-
-  const pkgBtn = document.getElementById('vcPkgBtn');
-  if (pkgBtn) {
-    pkgBtn.addEventListener('click', e => {
-      const fresh = !pkgs.has(active.stamp);
-      pkgs.add(active.stamp);
-      try { localStorage.setItem('vc_packages', JSON.stringify([...pkgs])); } catch (_) {}
-      pkgBtn.classList.add('found');
-      pkgBtn.innerHTML = '<span class="vc-pkg-gem" aria-hidden="true">✓</span><span>District Package Found</span>';
-      const st = document.getElementById('vcPkgStat');
-      if (st) st.textContent = pkgs.size + ' / 5 Packages';
-      beep('success');
-      burst(e.clientX, e.clientY, ['#FFD36B', '#21E6D1', '#FF2E88', '#FFF5EE']);
-      toast(fresh ? 'Hidden Package Collected!' : 'Package Already Stashed', active.city + ' · ' + pkgs.size + ' / 5 Vice City Packages', 2800);
-    });
-  }
 
   /* ========================================================================
      4. EXACT MAIN PAGE CAR RADIO (.rad) — 5 WEB AUDIO SYNTH STATIONS
@@ -652,7 +619,6 @@
       if (ac) delay.delayTime.setTargetAtTime(spb * 3, ac.currentTime, .05);
       if (playing) { stat(); step = 0; nextT = ac.currentTime + .32; } else play();
       ui();
-      toast(ST[idx].n, 'FM ' + ST[idx].f + ' · Vice City Radio', 1800);
     }
 
     pres.forEach((b, i) => b.addEventListener('click', () => tune(i)));
@@ -938,108 +904,17 @@
   })();
 
   /* ========================================================================
-     6. SUBPAGE ARCADE DELIGHT PACK (Ripples · Hero Zap · Magnets · Cheats)
+     6. CLEAN SUBPAGE INTERACTIONS (Subtle Magnetic CTA Pull Only)
      ======================================================================== */
-  (function initSubpageDelight() {
-    /* A. Neon Click Ripple on Interactive Controls */
-    document.addEventListener('pointerdown', e => {
-      if (RM || e.button !== 0) return;
-      if (!e.target.closest('button, a, [role="tab"], [role="button"], .vc-hero-title')) return;
-      const r = document.createElement('span');
-      r.className = 'vc-ripple';
-      r.style.left = e.clientX + 'px';
-      r.style.top = e.clientY + 'px';
-      document.body.appendChild(r);
-      setTimeout(() => r.remove(), 600);
-    }, { passive: true });
-
-    /* B. Interactive Hero Neon Title Zap */
-    const heroTitle = document.querySelector('.vc-hero-title');
-    if (heroTitle) {
-      heroTitle.title = 'Tap for Miami Vice neon surge';
-      heroTitle.addEventListener('click', e => {
-        heroTitle.classList.remove('vc-zap');
-        void heroTitle.offsetWidth;
-        heroTitle.classList.add('vc-zap');
-        beep('stamp');
-        burst(e.clientX, e.clientY, ['#FF2E88', '#21E6D1', '#FFD36B']);
+  if (!RM && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('.cs-btn-primary, .cs-btn-ghost').forEach(btn => {
+      btn.addEventListener('pointermove', e => {
+        const r = btn.getBoundingClientRect();
+        const dx = ((e.clientX - r.left) / r.width - 0.5) * 6;
+        const dy = ((e.clientY - r.top) / r.height - 0.5) * 4;
+        btn.style.transform = `translate3d(${dx.toFixed(1)}px, ${(dy - 2).toFixed(1)}px, 0)`;
       });
-    }
-
-    /* C. Subtle Magnetic Hover Pull on Primary Buttons (Desktop) */
-    if (!RM && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      document.querySelectorAll('.cs-btn-primary, .cs-btn-ghost, .vc-cta').forEach(btn => {
-        btn.addEventListener('pointermove', e => {
-          const r = btn.getBoundingClientRect();
-          const dx = ((e.clientX - r.left) / r.width - 0.5) * 8;
-          const dy = ((e.clientY - r.top) / r.height - 0.5) * 6;
-          btn.style.transform = `translate3d(${dx.toFixed(1)}px, ${(dy - 2).toFixed(1)}px, 0)`;
-        });
-        btn.addEventListener('pointerleave', () => { btn.style.transform = ''; });
-      });
-      document.querySelectorAll('.vc-dcard').forEach(card => {
-        card.addEventListener('pointerenter', () => beep('tick'));
-      });
-    }
-
-    /* D. Neon Vice City Convertible Cruise Spawner */
-    function launchCruise() {
-      if (RM) { toast('Cruise Ride', 'Enable motion to watch the neon convertible cruise!'); return; }
-      const car = document.createElement('div');
-      car.className = 'vc-cruise-car';
-      car.setAttribute('title', 'Click to honk!');
-      car.innerHTML =
-        '<svg viewBox="0 0 300 84" aria-hidden="true">' +
-          '<defs><linearGradient id="vcTrail" x1="1" x2="0"><stop offset="0" stop-color="#FF2E88" stop-opacity=".95"/><stop offset="1" stop-color="#FF2E88" stop-opacity="0"/></linearGradient></defs>' +
-          '<rect x="-100" y="52" width="120" height="4" fill="url(#vcTrail)"/>' +
-          '<ellipse cx="150" cy="76" rx="126" ry="7" fill="#21E6D1" opacity=".4"/>' +
-          '<g><path d="M8 62l4-13 48-6 40-17 62-3 36 17 66 4 24 8 4 8z" fill="#12051F" stroke="#FF2E88" stroke-width="2.2" stroke-linejoin="round"/>' +
-          '<path d="M104 28l58-3 28 15H96z" fill="#3A0F5E" stroke="#FF8A2A" stroke-width="1.4"/>' +
-          '<rect x="6" y="50" width="12" height="5" rx="2" fill="#FF2E88"/>' +
-          '<rect x="278" y="52" width="14" height="4" rx="2" fill="#FFD36B"/></g>' +
-          '<circle cx="62" cy="64" r="13" fill="#05010a" stroke="#FF2E88" stroke-width="2"/>' +
-          '<circle cx="62" cy="64" r="6" fill="none" stroke="#FFD36B" stroke-width="2" stroke-dasharray="6 5"/>' +
-          '<circle cx="238" cy="64" r="13" fill="#05010a" stroke="#FF2E88" stroke-width="2"/>' +
-          '<circle cx="238" cy="64" r="6" fill="none" stroke="#FFD36B" stroke-width="2" stroke-dasharray="6 5"/>' +
-        '</svg>';
-      car.addEventListener('click', e => {
-        beep('warn');
-        burst(e.clientX, e.clientY, ['#FF2E88', '#FFD36B', '#21E6D1']);
-        toast('BEEP BEEP!', 'Ocean Beach convertible turbo engaged', 1800);
-      });
-      document.body.appendChild(car);
-      beep('stamp');
-      toast('Cruise Engaged', 'Click the neon convertible to honk!', 2400);
-      setTimeout(() => car.remove(), 6100);
-    }
-    const cruiseBtn = document.getElementById('vcCruiseBtn');
-    if (cruiseBtn) cruiseBtn.addEventListener('click', launchCruise);
-
-    /* E. Live GTA Vice City Cheat Codes on Every Subpage */
-    let cBuf = '';
-    const CHEATS = {
-      hesoyam() {
-        beep('success');
-        burst(innerWidth * 0.25, innerHeight * 0.35, ['#FFD36B', '#21E6D1', '#FF2E88']);
-        setTimeout(() => burst(innerWidth * 0.75, innerHeight * 0.35, ['#FFD36B', '#21E6D1', '#FF2E88']), 160);
-        toast('Cheat Activated', 'Health, Armor & +$250,000 in ' + active.city, 3000);
-      },
-      cruise() { launchCruise(); },
-      disco() {
-        beep('success');
-        document.body.classList.add('vc-disco');
-        toast('Vice Disco Mode', '5 seconds of pure 1986 Miami synth prism', 2800);
-        setTimeout(() => document.body.classList.remove('vc-disco'), 5000);
-      }
-    };
-    addEventListener('keydown', e => {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      cBuf = (cBuf + e.key.toLowerCase()).slice(-18);
-      for (const code in CHEATS) {
-        if (cBuf.endsWith(code)) { cBuf = ''; CHEATS[code](); break; }
-      }
+      btn.addEventListener('pointerleave', () => { btn.style.transform = ''; });
     });
-  })();
+  }
 })();
