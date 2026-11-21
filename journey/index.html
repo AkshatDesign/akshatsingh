@@ -3,11 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Journey · Multi-Destination Trip Planning · Case Study</title>
+<title>Journey · Multi-Destination Trip Planning · Case Study · Akshat Singh</title>
+<meta name="description" content="Product design case study for Journey — a multi-destination mobile travel planner with real-time conflict detection across connected flights and stays.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Journey · Multi-Destination Trip Planning · Case Study">
+<meta property="og:description" content="Plan a multi-city trip as one connected journey, not four disconnected bookings.">
+<meta property="og:image" content="/assets/images/journey-cover.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#12051F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz, wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+:focus-visible{outline:2px solid #171717;outline-offset:3px}
+.cs-top-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#555;padding:8px 14px;border:1px solid rgba(23,23,23,.14);border-radius:999px;background:rgba(255,255,255,.7);margin-bottom:28px;transition:color .2s,border-color .2s,background .2s}
+.cs-top-back:hover{color:#111;border-color:#111;background:#fff}
+.cs-pager{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:28px 0 48px;border-top:1px solid rgba(23,23,23,.1);flex-wrap:wrap}
+.cs-pager a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#171717;padding:12px 18px;border:1px solid rgba(23,23,23,.18);border-radius:10px;background:#fff;transition:border-color .2s,transform .2s}
+.cs-pager a:hover{border-color:#171717;transform:translateY(-1px)}
 :root{
   --bg:#F7F6F2;
   --ink:#111010;
@@ -490,8 +504,10 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
 }
 @media print{ .stepnav{ display:none; } }
 </style>
+<link rel="stylesheet" href="/assets/vice-theme.css?v=4">
+<script src="/assets/vice-district.js?v=4" defer></script>
 </head>
-<body>
+<body data-project="journey">
 <div class="stepnav" id="stepnav" aria-hidden="true">
   <div class="sn-head">
     <span class="sn-idx" id="snIdx">00</span>
@@ -505,6 +521,7 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
 
   <!-- ===================== HERO ===================== -->
   <header class="hero reveal" id="sec-hero">
+    <a href="/#projects" class="cs-top-back">← Back to Portfolio</a>
     <div class="kicker">Design Challenge · Multi-Destination Travel</div>
     <h1>Plan a trip as <span class="accent">one journey</span>,<br>not four bookings.</h1>
     <p class="sub">A mobile experience for planning and booking a multi-city trip, where the system absorbs the complexity, conflicts are caught in real time, and the user only ever feels the journey, not the friction.</p>
@@ -828,9 +845,9 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
     </div>
 
     <div class="grid g3" style="margin-top:18px">
-      <div class="card" style="border-color:#f3cabd"><div class="sev red" style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;display:flex;align-items:center;gap:7px;"><span class="d" style="width:9px;height:9px;border-radius:50%;background:var(--red);display:inline-block"></span>Red · Blocks</div><p style="font-size:14px;margin-top:8px" class="muted">Departure before checkout, or overlapping dates. Must be resolved before proceeding.</p></div>
-      <div class="card" style="border-color:#f0e0b0"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:#9a720f;display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:#C9931B;display:inline-block"></span>Yellow · Warns</div><p style="font-size:14px;margin-top:8px" class="muted">Under 90 min between arrival and departure. Flagged, but never blocks.</p></div>
-      <div class="card" style="border-color:#cdd9f2"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--sky);display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:var(--sky);display:inline-block"></span>Blue · Suggests</div><p style="font-size:14px;margin-top:8px" class="muted">Luggage storage, gap nights, late checkout. Informational and dismissable.</p></div>
+      <div class="card" style="border-color:rgba(255,91,127,.45)"><div class="sev red" style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;display:flex;align-items:center;gap:7px;"><span class="d" style="width:9px;height:9px;border-radius:50%;background:var(--red);display:inline-block"></span>Red · Blocks</div><p style="font-size:14px;margin-top:8px" class="muted">Departure before checkout, or overlapping dates. Must be resolved before proceeding.</p></div>
+      <div class="card" style="border-color:rgba(255,211,107,.4)"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:#FFD36B;display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:#FFD36B;display:inline-block"></span>Yellow · Warns</div><p style="font-size:14px;margin-top:8px" class="muted">Under 90 min between arrival and departure. Flagged, but never blocks.</p></div>
+      <div class="card" style="border-color:rgba(33,230,209,.4)"><div style="font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--sky);display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:var(--sky);display:inline-block"></span>Blue · Suggests</div><p style="font-size:14px;margin-top:8px" class="muted">Luggage storage, gap nights, late checkout. Informational and dismissable.</p></div>
     </div>
   </section>
 
@@ -932,12 +949,12 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
         </div>
 
         <div class="legend">
-          <span><i style="background:var(--sky-light);border:1px solid #cdd9f2"></i>Transport</span>
-          <span><i style="background:var(--orange-light);border:1px solid #f3d9c8"></i>Accommodation</span>
-          <span><i style="background:#F6F2FF;border:1px solid #ddd2f3"></i>Activities</span>
-          <span><i style="background:var(--red-light);border:1px dashed var(--red)"></i>Conflict</span>
-          <span><i style="background:var(--green-light);border:1px solid #bfe8cc"></i>Confirm</span>
-          <span><i style="background:var(--mist);border:1px dashed var(--stone)"></i>Escape hatch</span>
+          <span><i style="background:rgba(33,230,209,.18);border:1px solid rgba(33,230,209,.5)"></i>Transport</span>
+          <span><i style="background:rgba(255,138,42,.18);border:1px solid rgba(255,138,42,.5)"></i>Accommodation</span>
+          <span><i style="background:rgba(255,46,136,.18);border:1px solid rgba(255,46,136,.5)"></i>Activities</span>
+          <span><i style="background:rgba(255,91,127,.18);border:1px dashed #FF5B7F"></i>Conflict</span>
+          <span><i style="background:rgba(33,230,209,.18);border:1px solid #21E6D1"></i>Confirm</span>
+          <span><i style="background:rgba(36,16,59,.9);border:1px dashed var(--stone)"></i>Escape hatch</span>
         </div>
       </div>
     </div>
@@ -1058,7 +1075,7 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
               <div class="psrow"><span>Leg 3 · Return flight</span><b>₹4,800</b></div>
               <div class="psrow total"><span>Grand total</span><b>₹26,700</b></div>
             </div>
-            <div class="malert" style="background:var(--green-light);color:var(--green);border:1px solid #bfe8cc;margin-top:12px"><span class="ic">✓</span><div>All conflicts resolved.</div></div>
+            <div class="malert" style="background:rgba(33,230,209,.14);color:#21E6D1;border:1px solid rgba(33,230,209,.45);margin-top:12px"><span class="ic">✓</span><div>All conflicts resolved.</div></div>
             <div class="pbtns"><span class="pbtn full grn">Confirm &amp; Book</span></div></div>
             <div class="phome"></div>
           </div></div>
@@ -1110,6 +1127,10 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
   </section>
 
   <footer>Multi-Destination Trip Planning · Design Challenge Submission · AKSHAT SINGH</footer>
+  <nav class="cs-pager" aria-label="Case study navigation">
+    <a href="/#projects">← Back to Portfolio</a>
+    <a href="/fix-my-itch/">Next: FixMyItch →</a>
+  </nav>
 </div>
 
 <script>
@@ -1207,5 +1228,6 @@ footer{ text-align:center;padding:40px 0 64px;color:var(--stone);font-family:'DM
   }
 })();
 </script>
+<script>try{const s=new Set(JSON.parse(localStorage.getItem('vc_stamps')||'[]'));s.add('journey');localStorage.setItem('vc_stamps',JSON.stringify([...s]));}catch(_){}</script>
 </body>
 </html>
