@@ -1,817 +1,1000 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Fix My Itch — Case Study · Akshat Singh</title>
-<meta name="description" content="Case study of Razorpay's Fix My Itch campaign microsite built in Framer — surfacing 10,000+ founder problems from 50,000+ people across India."/>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-<meta property="og:type" content="article"/>
-<meta property="og:title" content="Fix My Itch — Case Study · Akshat Singh"/>
-<meta property="og:description" content="AI-powered founder wishlist microsite for Razorpay, launched on National Startup Day 2026."/>
-<meta property="og:image" content="/assets/images/mockup-fix-my-itch.webp"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="theme-color" content="#12051F"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --black:#080808;--white:#f4f3ef;--blue:#1f4eff;--blue-light:#4a6fff;
-  --gray:#141414;--gray2:#1e1e1e;--gray-text:#666;--accent:#c8ff00;
-}
-html{scroll-behavior:smooth}
-body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden;cursor:none}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FixMyItch — Ocean Beach · Akshat Singh</title>
+  <meta name="description" content="Razorpay's National Startup Day campaign microsite built by Akshat Singh — tactile scratch cards, 10,000+ Indian problems, 81K+ sessions, and a Shorty Awards submission.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/vice-theme.css?v=8">
+  <style>
+    /* =====================================================================
+       OCEAN BEACH — TACTILE NEON PINBOARD & SCRATCH ARCADE UI
+       Completely distinct centered poster + floating stickers + pinboard
+       ===================================================================== */
+    .ob-hero {
+      position: relative;
+      padding: clamp(34px, 6vh, 66px) 0 clamp(44px, 7vh, 72px);
+      overflow: hidden;
+    }
+    .ob-hero-top {
+      position: relative;
+      text-align: center;
+      max-width: 820px;
+      margin: 0 auto clamp(28px, 4.5vw, 46px);
+      z-index: 2;
+    }
+    .ob-hero-top .cs-lead { margin: 18px auto 0; max-width: 58ch; }
+    .ob-hero-acts {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-/* ─  CUSTOM CURSOR    */
-#cursor{position:fixed;width:12px;height:12px;background:var(--blue);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s ease,width 0.3s ease,height 0.3s ease,opacity 0.3s ease;mix-blend-mode:normal}
-#cursor-ring{position:fixed;width:40px;height:40px;border:1px solid rgba(31,78,255,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left 0.12s ease,top 0.12s ease,width 0.3s ease,height 0.3s ease,opacity 0.3s ease}
-body:hover #cursor{opacity:1}
-.cursor-grow #cursor{width:48px;height:48px;background:rgba(31,78,255,0.15)}
-.cursor-grow #cursor-ring{width:60px;height:60px;opacity:0}
-:focus-visible{outline:2px solid var(--blue-light);outline-offset:3px}
-@media (hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){body{cursor:auto!important}#cursor,#cursor-ring{display:none!important}}
-.cs-back{color:var(--gray-text);text-decoration:none;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-right:18px;transition:color .2s}
-.cs-back:hover{color:var(--white)}
-.cs-pager{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:36px 64px;border-top:1px solid #1e1e1e;background:#080808;flex-wrap:wrap}
-.cs-pager a{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);padding:12px 20px;border:1px solid #262626;transition:border-color .2s,background .2s}
-.cs-pager a:hover{border-color:var(--blue);background:rgba(31,78,255,0.12)}
-@media (max-width:768px){.cs-pager{padding:28px 24px}}
+    /* Floating Interactive Itch Stickers flanking the centered poster */
+    .ob-stickers {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 26px auto 0;
+      max-width: 960px;
+    }
+    .ob-sticker {
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 46, 136, 0.36);
+      background: rgba(27, 10, 46, 0.86);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.42);
+      font-family: var(--font-cond);
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--vc-ink);
+      transform: rotate(var(--rot, -2deg));
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background 0.2s ease;
+    }
+    .ob-sticker:hover {
+      transform: rotate(0deg) translateY(-5px) scale(1.04);
+      border-color: var(--vc-teal);
+      background: rgba(42, 11, 69, 0.96);
+    }
+    .ob-sticker.popped {
+      border-color: var(--vc-teal);
+      background: rgba(33, 230, 209, 0.14);
+      color: var(--vc-teal);
+    }
+    .ob-sticker small {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--vc-pink);
+      margin-bottom: 2px;
+    }
 
-/* ─  PROGRESS BAR    */
-#progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--blue-light));z-index:9997;width:0%;transition:width 0.1s linear}
+    /* Arcade Scratch Booth */
+    .ob-arcade {
+      max-width: 1020px;
+      margin: 0 auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 46, 136, 0.42);
+      background:
+        radial-gradient(480px 260px at 90% 10%, rgba(33, 230, 209, 0.14), transparent 70%),
+        linear-gradient(160deg, rgba(36, 14, 62, 0.94), rgba(14, 4, 24, 0.98));
+      box-shadow: 0 32px 76px rgba(0, 0, 0, 0.56);
+      padding: clamp(18px, 2.8vw, 28px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+    .ob-scratch-box {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 290px;
+      border: 1px solid rgba(255, 245, 238, 0.16);
+      background: #140624;
+      user-select: none;
+      touch-action: none;
+    }
+    .ob-under {
+      padding: 26px 24px;
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .ob-under-cat {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--vc-pink);
+    }
+    .ob-under-q {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 3.2vw, 36px);
+      font-weight: 800;
+      line-height: 1.04;
+      text-transform: uppercase;
+      color: var(--vc-ink);
+    }
+    .ob-under-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--vc-line);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--vc-ink-3);
+    }
+    .ob-upvote-btn {
+      padding: 6px 12px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 46, 136, 0.45);
+      background: rgba(255, 46, 136, 0.14);
+      color: var(--vc-ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      transition: transform 0.16s ease, background 0.16s ease;
+    }
+    .ob-upvote-btn:hover { transform: scale(1.06); background: var(--vc-pink); }
+    #fmiCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      transition: opacity 0.45s ease;
+    }
+    #fmiCanvas.cleared { opacity: 0; pointer-events: none; }
 
-/* ─  STICKY NAV    */
-#sticky-nav{position:fixed;top:0;left:0;right:0;z-index:999;padding:0 48px;height:56px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,8,8,0);backdrop-filter:blur(0px);border-bottom:1px solid transparent;transition:all 0.4s ease;transform:translateY(-100%)}
-#sticky-nav.visible{transform:translateY(0);background:rgba(8,8,8,0.9);backdrop-filter:blur(20px);border-bottom-color:#1a1a1a}
-#sticky-nav .nav-logo{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)}
-#sticky-nav .nav-links{display:flex;gap:32px}
-#sticky-nav .nav-links a{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-text);text-decoration:none;transition:color 0.2s ease}
-#sticky-nav .nav-links a:hover{color:var(--white)}
-#sticky-nav .nav-live{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-light);text-decoration:none;border:1px solid rgba(31,78,255,0.4);padding:6px 16px;border-radius:2px;transition:all 0.2s ease}
-#sticky-nav .nav-live:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .ob-arcade-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 4px 2px;
+    }
+    .ob-ring-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(11, 3, 21, 0.72);
+      border: 1px solid var(--vc-line);
+    }
+    .ob-ring {
+      width: 58px; height: 58px;
+      flex-shrink: 0;
+    }
+    .ob-ring circle.bg { fill: none; stroke: rgba(255, 245, 238, 0.12); stroke-width: 5; }
+    .ob-ring circle.fg {
+      fill: none; stroke: var(--vc-teal); stroke-width: 5; stroke-linecap: round;
+      stroke-dasharray: 150.8; stroke-dashoffset: 150.8;
+      transform: rotate(-90deg); transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.16s ease;
+    }
+    .ob-brush-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ob-tool-btn {
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--vc-line);
+      background: rgba(255, 245, 238, 0.04);
+      font-family: var(--font-cond);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--vc-ink-2);
+      transition: all 0.16s ease;
+    }
+    .ob-tool-btn.active {
+      border-color: var(--vc-teal);
+      background: rgba(33, 230, 209, 0.14);
+      color: var(--vc-teal);
+    }
+    .ob-act-stack { display: flex; flex-direction: column; gap: 8px; }
+    .ob-act-pri {
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--vc-pink), var(--vc-orange));
+      color: #FFF5EE;
+      font-family: var(--font-cond);
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: transform 0.16s ease;
+    }
+    .ob-act-pri:hover { transform: translateY(-2px); }
+    .ob-act-sec {
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--vc-line-hi);
+      background: rgba(255, 245, 238, 0.04);
+      font-family: var(--font-cond);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--vc-ink);
+    }
+    .ob-act-sec:hover { border-color: var(--vc-teal); color: var(--vc-teal); }
 
-/* ─  REVEAL ANIMATIONS    */
-.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
-.reveal-left.visible{opacity:1;transform:translateX(0)}
-.reveal-right{opacity:0;transform:translateX(40px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
-.reveal-right.visible{opacity:1;transform:translateX(0)}
-.reveal-scale{opacity:0;transform:scale(0.92);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
-.reveal-scale.visible{opacity:1;transform:scale(1)}
-.delay-1{transition-delay:0.1s}
-.delay-2{transition-delay:0.2s}
-.delay-3{transition-delay:0.3s}
-.delay-4{transition-delay:0.4s}
-.delay-5{transition-delay:0.5s}
+    /* Live Neon Metric Tape */
+    .ob-tape {
+      border-top: 1px solid var(--vc-line);
+      border-bottom: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.56);
+    }
+    .ob-tape-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .ob-stat {
+      padding: 24px 16px;
+      border-right: 1px solid var(--vc-line);
+      text-align: center;
+    }
+    .ob-stat:last-child { border-right: none; }
+    .ob-stat-v {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 3.8vw, 3.2rem);
+      font-weight: 900;
+      line-height: 0.94;
+      color: var(--vc-ink);
+    }
+    .ob-stat-v em { font-style: normal; color: var(--vc-pink); }
+    .ob-stat-l {
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--vc-ink-3);
+    }
 
-/* ─  COVER    */
-.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:80px 64px 60px;position:relative;overflow:hidden;border-bottom:1px solid #1a1a1a}
-.cover-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 65% 20%,rgba(31,78,255,0.2) 0%,transparent 65%),radial-gradient(ellipse 50% 70% at 15% 85%,rgba(31,78,255,0.07) 0%,transparent 60%),var(--black)}
-.cover-noise{position:absolute;inset:0;opacity:0.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");background-size:200px}
-.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:64px 64px}
-.cover-tag{display:inline-flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--blue-light);border:1px solid rgba(31,78,255,0.35);padding:6px 14px;border-radius:2px;margin-bottom:40px;width:fit-content;position:relative;z-index:2}
-.cover-tag::before{content:'';width:5px;height:5px;background:var(--blue);border-radius:50%;animation:blink 2s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
-.cover-title{font-family:'Syne',sans-serif;font-size:clamp(72px,12vw,160px);font-weight:800;line-height:0.88;letter-spacing:-0.04em;position:relative;z-index:2;margin-bottom:48px}
-.cover-title .blue{color:var(--blue)}
-.cover-title .dim{color:rgba(244,243,239,0.18)}
-.cover-marquee-wrap{position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);overflow:hidden;opacity:0.04;pointer-events:none;z-index:1}
-.cover-marquee{display:flex;gap:40px;animation:marquee 20s linear infinite;white-space:nowrap;font-family:'Syne',sans-serif;font-size:120px;font-weight:800;letter-spacing:-0.04em}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.cover-meta{display:flex;flex-wrap:wrap;gap:40px;position:relative;z-index:2;padding-top:32px;border-top:1px solid #222}
-.meta-item label{display:block;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px}
-.meta-item span{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--white)}
+    /* Interactive Ocean Beach Itch Pinboard Wall */
+    .ob-composer {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(33, 230, 209, 0.3);
+      background: rgba(11, 3, 21, 0.72);
+    }
+    .ob-input {
+      flex: 1 1 240px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--vc-line-hi);
+      background: rgba(27, 10, 46, 0.85);
+      color: var(--vc-ink);
+      font-family: var(--font-sans);
+      font-size: 14.5px;
+    }
+    .ob-input::placeholder { color: var(--vc-ink-3); }
+    .ob-select {
+      padding: 11px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--vc-line-hi);
+      background: #1B0A2E;
+      color: var(--vc-ink);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .ob-wall {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+    .ob-pin {
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.72);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .ob-pin.fresh { border-color: var(--vc-teal); animation: obPopIn 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes obPopIn { from { opacity: 0; transform: translateY(-12px) scale(0.95); } to { opacity: 1; transform: none; } }
+    .ob-pin-top {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--vc-pink);
+    }
+    .ob-pin p { font-size: 15px; line-height: 1.55; color: var(--vc-ink); }
+    .ob-pin-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 10px; border-top: 1px solid var(--vc-line);
+      font-family: var(--font-mono); font-size: 11px; color: var(--vc-ink-3);
+    }
+    .ob-vote {
+      padding: 5px 10px; border-radius: 6px;
+      border: 1px solid var(--vc-line-hi);
+      background: rgba(255, 245, 238, 0.04);
+      font-family: var(--font-mono); font-size: 11px; color: var(--vc-ink);
+      transition: all 0.16s ease;
+    }
+    .ob-vote:hover { border-color: var(--vc-pink); color: var(--vc-pink); transform: translateY(-1px); }
+    .ob-vote.voted { background: var(--vc-pink); border-color: var(--vc-pink); color: #FFF5EE; }
 
-/* ─  SECTIONS    */
-section{padding:100px 64px;border-bottom:1px solid #161616}
-.section-label{font-size:9px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;color:var(--blue-light);margin-bottom:20px}
-h2{font-family:'Syne',sans-serif;font-size:clamp(34px,5vw,60px);font-weight:800;line-height:1.02;letter-spacing:-0.03em;margin-bottom:28px}
-h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em}
-p{font-size:16px;line-height:1.8;color:rgba(244,243,239,0.68);max-width:680px}
-p+p{margin-top:18px}
+    /* Morphing Breakpoint Blueprint Stage */
+    .ob-bp-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .ob-device-stage {
+      border-radius: 18px;
+      border: 1px solid var(--vc-line-hi);
+      background: #0B0315;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .ob-device-bezel {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 13px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 46, 136, 0.38);
+      background: #0B0315;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.56);
+      transition: max-width 0.45s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, border-radius 0.35s ease;
+    }
+    .ob-device-bezel.w-tablet { max-width: 460px; border-color: var(--vc-orange); border-radius: 18px; }
+    .ob-device-bezel.w-mobile { max-width: 310px; border-color: var(--vc-teal); border-radius: 26px; }
+    .ob-device-bezel.w-mobile .cs-dev-dots,
+    .ob-device-bezel.w-mobile .cs-dev-url { display: none; }
+    .ob-device-bezel.w-mobile .cs-dev-island { display: block; }
+    .ob-viewport { width: 100%; background: #0B0315; }
+    .ob-viewport.fit-landscape img { width: 100%; height: auto; display: block; }
+    .ob-viewport.cs-scroll-vp { height: 480px; }
 
-/* ─  OVERVIEW    */
-.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
-.stat-card{background:var(--gray);border:1px solid #1e1e1e;padding:32px 28px;position:relative;overflow:hidden;transition:border-color 0.3s ease,transform 0.3s ease}
-.stat-card:hover{border-color:rgba(31,78,255,0.4);transform:translateY(-2px)}
-.stat-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 0% 100%,rgba(31,78,255,0.06) 0%,transparent 60%);opacity:0;transition:opacity 0.3s ease}
-.stat-card:hover::after{opacity:1}
-.stat-card .num{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;letter-spacing:-0.04em;color:var(--white);line-height:1;margin-bottom:8px}
-.stat-card .num .unit{color:var(--blue)}
-.stat-card .desc{font-size:11px;color:var(--gray-text);font-weight:500;letter-spacing:0.04em;max-width:none;line-height:1.5}
-.stat-wide{grid-column:1/-1;background:var(--gray);border:1px solid #1e1e1e;padding:28px;margin-top:2px;display:flex;align-items:center;gap:24px;transition:border-color 0.3s ease}
-.stat-wide:hover{border-color:rgba(31,78,255,0.4)}
-.stat-wide .big{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--white);letter-spacing:-0.03em;white-space:nowrap}
-.stat-wide .desc{font-size:13px;color:var(--gray-text);max-width:none}
+    .ob-xray-stack { display: flex; flex-direction: column; gap: 10px; }
+    .ob-xray {
+      padding: 16px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.68);
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    .ob-xray.active {
+      border-color: var(--vc-pink);
+      background: rgba(255, 46, 136, 0.12);
+    }
+    .ob-xray-h {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+      font-family: var(--font-cond); font-size: 18px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .ob-xray-h span { font-family: var(--font-mono); font-size: 11px; color: var(--vc-pink); }
+    .ob-xray-body {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--vc-line);
+      font-size: 14px;
+      color: var(--vc-ink-2);
+    }
+    .ob-xray.active .ob-xray-body { display: block; }
 
-/* ─  ROLE BANNER    */
-.role-banner{background:var(--blue);padding:56px 64px;display:flex;align-items:center;justify-content:space-between;gap:40px;border-bottom:1px solid #1a1a1a;position:relative;overflow:hidden}
-.role-banner::before{content:'DEVELOPER';position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-family:'Syne',sans-serif;font-size:120px;font-weight:800;color:rgba(255,255,255,0.05);pointer-events:none;letter-spacing:-0.04em}
-.role-banner h2{color:#fff;margin-bottom:0;font-size:clamp(22px,3vw,38px);max-width:560px;line-height:1.15}
-.chips{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-.chip{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:2px;font-family:'Syne',sans-serif;white-space:nowrap;transition:background 0.2s ease}
-.chip:hover{background:rgba(255,255,255,0.2)}
+    /* Fanned Filmstrip Carousel */
+    .ob-film-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 2px 12px;
+      margin-bottom: 16px;
+      scrollbar-width: thin;
+    }
+    .ob-film-chip {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.72);
+      font-family: var(--font-cond);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--vc-ink-2);
+      transition: all 0.18s ease;
+    }
+    .ob-film-chip.active {
+      border-color: var(--vc-pink);
+      background: var(--vc-pink);
+      color: #FFF5EE;
+      transform: translateY(-2px);
+    }
 
-/* ─  IMAGES    */
-.img-block{width:100%;overflow:hidden;border:1px solid #1e1e1e;border-radius:3px;position:relative;background:var(--gray)}
-.img-block img{width:100%;display:block;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1)}
-.img-block:hover img{transform:scale(1.015)}
-.img-label{position:absolute;bottom:14px;left:14px;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,243,239,0.5);background:rgba(8,8,8,0.75);padding:5px 10px;border-radius:2px;backdrop-filter:blur(8px)}
+    /* Shorty Awards Trophy Banner */
+    .ob-trophy {
+      padding: clamp(24px, 3.6vw, 38px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 211, 107, 0.42);
+      background:
+        radial-gradient(420px 220px at 88% 20%, rgba(255, 211, 107, 0.16), transparent 70%),
+        linear-gradient(135deg, rgba(42, 11, 69, 0.88), rgba(18, 5, 31, 0.94));
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 24px;
+      align-items: center;
+    }
+    .ob-trophy-nums { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .ob-tstat {
+      padding: 16px; border-radius: 12px; border: 1px solid var(--vc-line); background: rgba(11, 3, 21, 0.72);
+    }
+    .ob-tstat strong {
+      display: block; font-family: var(--font-display); font-size: 34px; font-weight: 900; line-height: 1; color: var(--vc-gold);
+    }
+    .ob-tstat span { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vc-ink-3); }
 
-/* ─  PROCESS    */
-.process-list{display:flex;flex-direction:column;margin-top:56px}
-.process-item{display:grid;grid-template-columns:72px 1fr;gap:32px;padding:36px 0;border-top:1px solid #181818;transition:background 0.3s ease;cursor:default}
-.process-item:hover{background:rgba(31,78,255,0.03)}
-.process-num{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:#1e1e1e;letter-spacing:-0.04em;line-height:1;padding-top:2px;transition:color 0.3s ease}
-.process-item:hover .process-num{color:#2a2a2a}
-.process-content h3{color:var(--white)}
-.process-content p{font-size:15px}
-.tech-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
-.tech-tag{background:#0e0e0e;border:1px solid #252525;color:var(--gray-text);padding:4px 12px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:2px;transition:border-color 0.2s ease,color 0.2s ease}
-.process-item:hover .tech-tag{border-color:rgba(31,78,255,0.3);color:var(--blue-light)}
-
-/* ─  INTERACTION CARDS    */
-.interaction-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px}
-.ic-card{background:var(--gray);border:1px solid #1e1e1e;padding:40px 36px;transition:border-color 0.3s ease,transform 0.3s ease;cursor:default;position:relative;overflow:hidden}
-.ic-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1)}
-.ic-card:hover{border-color:rgba(31,78,255,0.3);transform:translateY(-4px)}
-.ic-card:hover::before{transform:scaleX(1)}
-.ic-card .ic-icon{font-size:28px;margin-bottom:20px;display:block}
-.ic-card h3{font-size:17px;color:var(--white);margin-bottom:10px}
-.ic-card p{font-size:13px;color:var(--gray-text);line-height:1.75;max-width:none}
-
-/* ─  DEVICE ROW    */
-.device-row{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px}
-.device-frame{background:var(--gray);border:1px solid #1e1e1e;border-radius:3px;overflow:hidden;position:relative}
-.device-frame img{width:100%;display:block;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1)}
-.device-frame:hover img{transform:scale(1.02)}
-.device-label{text-align:center;padding:14px;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);border-top:1px solid #1e1e1e}
-
-/* ─  RESULTS    */
-.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:56px}
-.result-card{background:var(--gray);border:1px solid #1e1e1e;padding:44px 32px;text-align:center;position:relative;overflow:hidden;transition:transform 0.3s ease,border-color 0.3s ease;cursor:default}
-.result-card:hover{transform:translateY(-4px);border-color:rgba(31,78,255,0.3)}
-.result-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);transform:scaleX(0);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1)}
-.result-card:hover::after{transform:scaleX(1)}
-.result-card .big-num{font-family:'Syne',sans-serif;font-size:54px;font-weight:800;letter-spacing:-0.04em;color:var(--white);line-height:1;margin-bottom:10px}
-.result-card .big-num .unit{color:var(--blue-light)}
-.result-card .label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-text);max-width:none}
-
-/* ─  QUOTE    */
-.quote-block{border-left:2px solid var(--blue);padding:24px 32px;background:var(--gray);margin:40px 0;font-family:'Syne',sans-serif;font-size:clamp(17px,2.2vw,24px);font-weight:700;color:var(--white);line-height:1.35;letter-spacing:-0.01em}
-.quote-block span{color:var(--blue-light)}
-
-/* ─  LEARNINGS    */
-.learnings-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px}
-.l-card{background:var(--gray);border:1px solid #1e1e1e;padding:36px;transition:border-color 0.3s ease}
-.l-card:hover{border-color:rgba(31,78,255,0.25)}
-.l-card .l-num{font-size:9px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--blue-light);margin-bottom:14px}
-.l-card h3{color:var(--white);font-size:16px}
-.l-card p{font-size:14px;max-width:none;margin-top:8px}
-
-/* ─  FOOTER / PHOTO    */
-.footer-section{display:grid;grid-template-columns:320px 1fr;border-top:1px solid #1a1a1a;overflow:hidden}
-.footer-photo{width:100%;height:100%;object-fit:contain;object-position:bottom center;display:block;background:#f0efeb;max-height:500px}
-.footer-content{padding:64px;display:flex;flex-direction:column;justify-content:space-between;background:var(--black)}
-.fp-tag{font-size:9px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--blue-light);margin-bottom:14px}
-.footer-content h4{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,52px);font-weight:800;letter-spacing:-0.03em;line-height:1.0;color:var(--white);margin-bottom:20px}
-.fp-creds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:40px}
-.fp-chip{background:#111;border:1px solid #222;color:var(--gray-text);padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:2px;font-family:'Syne',sans-serif;transition:border-color 0.2s ease,color 0.2s ease}
-.fp-chip:hover{border-color:rgba(31,78,255,0.4);color:var(--blue-light)}
-.fp-bottom{border-top:1px solid #1a1a1a;padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.fp-bottom p{font-size:12px;color:#333;max-width:none}
-.live-btn{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-light);text-decoration:none;border:1px solid rgba(31,78,255,0.4);padding:12px 24px;border-radius:2px;transition:all 0.25s ease;display:inline-block}
-.live-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue);transform:translateY(-1px)}
-
-/* ─  SECTION IMAGE STACKS    */
-.img-stack{display:flex;flex-direction:column;gap:2px;margin-top:48px}
-.img-full{border-radius:3px;overflow:hidden;border:1px solid #1e1e1e;position:relative}
-.img-full img{width:100%;display:block;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1)}
-.img-full:hover img{transform:scale(1.01)}
-.img-full .img-label{position:absolute;bottom:14px;left:14px;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,243,239,0.5);background:rgba(8,8,8,0.75);padding:5px 10px;border-radius:2px;backdrop-filter:blur(8px)}
-
-/* ─  HOVER LINK    */
-a{cursor:none}
-
-@media(max-width:900px){
-body{cursor:auto}
-#cursor,#cursor-ring{display:none}
-section,.cover,.role-banner,.footer-content{padding-left:28px;padding-right:28px}
-.overview-grid,.stat-grid,.interaction-grid,.learnings-grid,.results-grid,.device-row{grid-template-columns:1fr}
-.role-banner{flex-direction:column}
-.cover-meta{flex-wrap:wrap;gap:24px}
-.footer-section{grid-template-columns:1fr}
-.footer-photo{max-height:360px;object-position:top center}
-#sticky-nav{padding:0 20px}
-#sticky-nav .nav-links{display:none}
-}
-
-/* ── SECTION DOTS ── */
-#section-dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:9990;display:flex;flex-direction:column;gap:12px;pointer-events:none}
-.s-dot{width:6px;height:6px;border-radius:50%;background:#282828;border:1px solid #333;cursor:pointer;pointer-events:all;transition:all 0.3s ease;position:relative;display:block}
-.s-dot.active{background:var(--blue);border-color:var(--blue);transform:scale(1.5)}
-.s-dot::before{content:attr(data-label);position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(8,8,8,0.9);color:var(--white);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 8px;border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s ease;font-family:'DM Sans',sans-serif}
-.s-dot:hover::before{opacity:1}
-.s-dot:hover:not(.active){background:var(--blue-light);border-color:var(--blue-light)}
-/* ── KEYBOARD HINT ── */
-#kb-hint{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);border:1px solid #1e1e1e;border-radius:3px;padding:7px 14px;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#444;z-index:9980;backdrop-filter:blur(12px);transition:opacity 0.8s ease;pointer-events:none;white-space:nowrap}
-#kb-hint kbd{background:#1a1a1a;border:1px solid #2a2a2a;padding:1px 5px;border-radius:2px;color:var(--white);font-family:inherit}
-#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--blue);color:#fff;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:8px 16px;border-radius:2px;z-index:9985;opacity:0;transition:all 0.25s ease;pointer-events:none;font-family:'Syne',sans-serif;backdrop-filter:blur(10px)}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* ── EXPANDABLE PROCESS ── */
-.process-item{cursor:pointer;user-select:none}
-.process-expand{display:none;margin-top:14px;padding:18px 22px;background:rgba(31,78,255,0.04);border-left:2px solid rgba(31,78,255,0.2)}
-.process-item.open .process-expand{display:block;animation:fadeDown 0.3s cubic-bezier(0.16,1,0.3,1)}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-.process-expand p{font-size:14px;color:rgba(244,243,239,0.48);max-width:none;line-height:1.75}
-.process-toggle{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #252525;border-radius:50%;font-size:14px;color:#444;margin-left:8px;vertical-align:middle;transition:all 0.3s ease;flex-shrink:0;font-style:normal}
-.process-item.open .process-toggle{border-color:var(--blue);color:var(--blue);transform:rotate(45deg)}
-.process-item:hover .process-toggle{border-color:rgba(31,78,255,0.5);color:var(--blue-light)}
-/* ── DEVICE TABS ── */
-.device-tabs{display:flex;gap:2px;margin-top:48px;margin-bottom:2px}
-.dtab{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text);padding:9px 18px;background:#111;border:1px solid #1e1e1e;cursor:none;transition:all 0.2s ease;font-family:'Syne',sans-serif}
-.dtab:first-child{border-radius:2px 0 0 2px}.dtab:last-child{border-radius:0 2px 2px 0}
-.dtab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.dtab:hover:not(.active){border-color:#333;color:var(--white)}
-.device-frame.d-hidden{display:none!important}
-.device-frame{animation:fadeIn 0.35s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-/* ── SCRATCH DEMO ── */
-.scratch-demo-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:56px;padding:48px;background:var(--gray);border:1px solid #1e1e1e;border-radius:3px}
-.scratch-demo-label{font-size:9px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--blue-light)}
-.scratch-demo-sub{font-size:12px;color:var(--gray-text)}
-.scratch-canvas-wrap{position:relative;width:380px;height:210px;border-radius:3px;overflow:hidden;border:1px solid #252525}
-#scratch-canvas{position:absolute;inset:0;cursor:none;touch-action:none;width:100%;height:100%}
-#scratch-text-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;z-index:1}
-#scratch-text-overlay .sto-main{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.9);text-align:center}
-#scratch-text-overlay .sto-sub{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:0.05em;color:rgba(255,255,255,0.4);text-align:center}
-.scratch-reveal{position:absolute;inset:0;background:var(--black);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:28px;text-align:center}
-.scratch-reveal .srcat{font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--blue-light)}
-.scratch-reveal .srprob{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--white);line-height:1.4}
-#scratch-reset{background:none;border:1px solid #1e1e1e;color:var(--gray-text);padding:8px 20px;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;border-radius:2px;cursor:none;transition:all 0.2s ease;font-family:'Syne',sans-serif}
-#scratch-reset:hover{border-color:var(--blue);color:var(--blue-light)}
-#scratch-pct{color:var(--blue-light)}
-.cursor-scratch #cursor{width:56px!important;height:56px!important;background:rgba(200,255,0,0.2)!important}
-/* ── STAT & RESULT BARS ── */
-.stat-bar-row{margin-top:10px;height:2px;background:#1a1a1a;border-radius:1px;overflow:hidden}
-.stat-bar{height:100%;background:var(--blue);width:0;transition:width 1.6s cubic-bezier(0.16,1,0.3,1);border-radius:1px}
-.stat-bar.go{width:var(--bw)}
-.result-bar-row{margin-top:14px;height:2px;background:#1a1a1a;border-radius:1px;overflow:hidden}
-.result-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-light));width:0;transition:width 1.8s cubic-bezier(0.16,1,0.3,1);border-radius:1px}
-.result-bar.go{width:var(--bw)}
-@media(max-width:900px){#section-dots,#kb-hint,#toast{display:none}.device-tabs{display:none}.device-frame.d-hidden{display:block!important}.scratch-canvas-wrap{width:100%;max-width:320px;height:180px}}
-
-</style>
-<link rel="stylesheet" href="/assets/vice-theme.css?v=4"/>
-<script src="/assets/vice-district.js?v=4" defer></script>
+    @media (max-width: 960px) {
+      .ob-arcade, .ob-bp-layout, .ob-trophy { grid-template-columns: 1fr; }
+      .ob-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ob-tape-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .ob-wall { grid-template-columns: 1fr; }
+      .ob-tape-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
 </head>
 <body data-project="fix-my-itch">
+  <main>
+    <!-- ── HERO: CENTERED OCEAN BEACH POSTER + SCRATCH ARCADE BOOTH ───────── -->
+    <section class="ob-hero">
+      <div class="cs-wrap">
+        <div class="ob-hero-top" data-reveal>
+          <div class="cs-kicker">District 01 · Ocean Beach · National Startup Day · Jan 16, 2026</div>
+          <h1 class="vc-hero-title vc-center">
+            <span class="vc-hero-row vc-pink">FIX MY</span>
+            <span class="vc-hero-row vc-teal">ITCH.</span>
+          </h1>
+          <p class="cs-lead">
+            Shipped days after joining Razorpay — an interactive Framer campaign turning 10,000+ everyday Indian frustrations into founder-ready startup briefs.
+          </p>
+          <div class="ob-hero-acts">
+            <a class="cs-btn-primary" href="https://razorpay.com/m/fix-my-itch/" target="_blank" rel="noopener">Launch Live Campaign ↗</a>
+            <a class="cs-btn-ghost" href="#overview">Pin Your Own Itch ↓</a>
+          </div>
 
-<div id="section-dots">
-  <div class="s-dot active" data-label="Top" data-target="top"></div>
-  <div class="s-dot" data-label="Overview" data-target="overview"></div>
-  <div class="s-dot" data-label="Process" data-target="process"></div>
-  <div class="s-dot" data-label="Results" data-target="results"></div>
-</div>
-<div id="kb-hint"><kbd>J</kbd> / <kbd>K</kbd> &nbsp;to jump sections</div>
-<div id="toast"></div>
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
-<div id="progress-bar"></div>
+          <!-- Playful Clickable Itch Stickers -->
+          <div class="ob-stickers" aria-label="Interactive startup itch stickers">
+            <button class="ob-sticker" type="button" style="--rot:-2.5deg" data-sticker="Auto drivers cancel 3× in rain">
+              <small>Commute · Bengaluru</small>Auto cancel roulette in monsoon
+            </button>
+            <button class="ob-sticker" type="button" style="--rot:1.8deg" data-sticker="6-month deposit locks out renters">
+              <small>Renting · Mumbai</small>6-month security deposit trap
+            </button>
+            <button class="ob-sticker" type="button" style="--rot:-1.6deg" data-sticker="Lab PDFs scattered on WhatsApp">
+              <small>Health · Pune</small>Medical reports lost in WhatsApp
+            </button>
+            <button class="ob-sticker" type="button" style="--rot:2.2deg" data-sticker="50,000+ Indians answered">
+              <small>Campaign · India</small>10,000+ real problems collected
+            </button>
+          </div>
+        </div>
 
-<!-- ─  NAV    -->
+        <!-- Tactile Arcade Scratch Booth -->
+        <div class="ob-arcade" data-reveal data-delay="120" aria-label="Interactive scratch card arcade">
+          <div class="ob-scratch-box" id="fmiScratchBox">
+            <div class="ob-under">
+              <div class="ob-under-cat" id="fmiCat">Urban Commute · Bengaluru</div>
+              <div class="ob-under-q" id="fmiQuote">"Auto drivers cancel three times in the rain because there's no instant micro-surge lock for short 2km rides."</div>
+              <div class="ob-under-foot">
+                <span id="fmiLoc">Indiranagar · Problem 01/04</span>
+                <button class="ob-upvote-btn" type="button" id="fmiHeroVote">🔥 Me Too (<span class="tnum" id="fmiHeroVotes">142</span>)</button>
+              </div>
+            </div>
+            <canvas id="fmiCanvas" aria-label="Scratch foil surface"></canvas>
+          </div>
 
-<nav id="sticky-nav">
-  <div class="nav-logo"><a href="/#projects" class="cs-back">← Portfolio</a>Fix My Itch · Case Study</div>
-  <div class="nav-links">
-    <a href="#overview">Overview</a>
-    <a href="#process">Process</a>
-    <a href="#results">Results</a>
-  </div>
-  <a href="https://razorpay.com/m/fix-my-itch/" class="nav-live" target="_blank" rel="noopener">View Live ↗</a>
-</nav>
+          <div class="ob-arcade-side">
+            <div class="ob-ring-wrap">
+              <svg class="ob-ring" viewBox="0 0 56 56" aria-hidden="true">
+                <circle class="bg" cx="28" cy="28" r="24"></circle>
+                <circle class="fg" id="fmiRingFg" cx="28" cy="28" r="24"></circle>
+              </svg>
+              <div>
+                <div style="font-family:var(--font-display);font-size:30px;font-weight:900;line-height:1;" class="tnum" id="fmiPct">0%</div>
+                <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--vc-ink-3);letter-spacing:0.1em;text-transform:uppercase;">Foil Cleared · Scratch 45% to Burst</div>
+              </div>
+            </div>
 
-<!-- ═  COVER    -->
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--vc-ink-3);margin-bottom:8px;">Scratch Tool</div>
+              <div class="ob-brush-row">
+                <button class="ob-tool-btn active" type="button" data-brush="26">₹5 Coin</button>
+                <button class="ob-tool-btn" type="button" data-brush="44">Neon Blade</button>
+              </div>
+            </div>
 
-<div class="cover" id="top">
-  <div class="cover-bg"></div>
-  <div class="cover-noise"></div>
-  <div class="cover-grid"></div>
-  <div class="cover-marquee-wrap">
-    <div class="cover-marquee">FIX MY ITCH &nbsp; FIX MY ITCH &nbsp; FIX MY ITCH &nbsp; FIX MY ITCH &nbsp; FIX MY ITCH &nbsp; FIX MY ITCH &nbsp;</div>
-  </div>
-  <div class="cover-tag reveal">Case Study · Razorpay · 2026</div>
-  <div class="cover-title reveal delay-1">
-    FIX<br><span class="blue">MY</span><br>ITCH<span class="dim">.</span>
-  </div>
-  <div class="cover-meta reveal delay-2">
-    <div class="meta-item"><label>Role</label><span>Framer Developer</span></div>
-    <div class="meta-item"><label>Company</label><span>Razorpay</span></div>
-    <div class="meta-item"><label>Launched</label><span>Jan 16, 2026</span></div>
-    <div class="meta-item"><label>Type</label><span>Campaign Microsite</span></div>
-    <div class="meta-item"><label>Built With</label><span>Framer</span></div>
-  </div>
-</div>
-
-<!-- HERO IMAGE -->
-
-<div class="img-full reveal">
-  <img src="/assets/images/fix-my-itch-1.webp" alt="Fix My Itch — Live Site" loading="eager" decoding="async">
-  <div class="img-label">01 — Live Site · Full Page</div>
-</div>
-
-<!-- ═  OVERVIEW    -->
-
-<section id="overview">
-  <div class="section-label reveal">Overview</div>
-  <div class="overview-grid">
-    <div class="reveal-left">
-      <h2>India's wishlist<br/>for founders.</h2>
-      <p>Fix My Itch is an AI-powered campaign microsite by Razorpay, launched on National Startup Day 2026. It surfaces 10,000+ real, AI-curated problems sourced from 50,000+ people across India — built as a free resource for the next generation of founders.</p>
-      <p>The initiative repositioned Razorpay not just as a payments infrastructure company, but as an active stakeholder in shaping what India builds next — tied directly to India's 2047 vision.</p>
-      <div class="quote-block">"What should I build?" <span>→</span> "What needs to be solved?"</div>
-    </div>
-    <div class="reveal-right">
-      <div class="stat-grid">
-        <div class="stat-card"><div class="num"><span class="counter" data-target="81">0</span><span class="unit">K+</span></div><div class="desc">Total sessions within weeks of launch</div><div class="stat-bar-row"><div class="stat-bar" style="--bw:81%"></div></div></div>
-        <div class="stat-card delay-1"><div class="num"><span class="counter" data-target="59">0</span><span class="unit">K+</span></div><div class="desc">Unique users</div><div class="stat-bar-row"><div class="stat-bar" style="--bw:59%"></div></div></div>
-        <div class="stat-card delay-2"><div class="num"><span class="counter-decimal" data-value="5.54">5.54</span><span class="unit">M+</span></div><div class="desc">Social impressions across channels</div></div>
-        <div class="stat-card delay-3"><div class="num"><span class="counter" data-target="700">0</span><span class="unit">+</span></div><div class="desc">Founders actively engaged</div><div class="stat-bar-row"><div class="stat-bar" style="--bw:35%"></div></div></div>
+            <div class="ob-act-stack">
+              <button class="ob-act-pri" type="button" id="fmiNextBtn">Deal Next Itch Card →</button>
+              <button class="ob-act-sec" type="button" id="fmiRevealBtn">Instant Reveal ✨</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat-wide delay-4"><div class="big">3m 07s</div><div class="desc">Average session duration — higher than industry benchmark for new campaign launches</div></div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ═  ROLE BANNER    -->
-
-<div class="role-banner reveal">
-  <h2>I joined Razorpay just days before launch. This was my first project.</h2>
-  <div class="chips">
-    <div class="chip">Framer Development</div>
-    <div class="chip">Figma → Framer</div>
-    <div class="chip">Responsive Build</div>
-    <div class="chip">Interaction Engineering</div>
-  </div>
-</div>
-
-<!-- ═  CONTEXT    -->
-
-<section>
-  <div class="section-label reveal">Context & Brief</div>
-  <div class="reveal">
-    <h2>A movement disguised<br/>as a microsite.</h2>
-    <p>The Razorpay design team had finalized the visual direction in Figma — bold editorial type, stark black-and-blue palette, editorial card layouts, and a distinctive scratch-card entry mechanic. My brief: translate this into a fully live, production-ready Framer site. Responsive. Performant. Pixel-faithful.</p>
-    <p>What made this challenging wasn't just fidelity — it was the nature of the interactions. The scratch card reveal, floating problem-card grid, filterable problems table, and dense scroll animations all needed to feel native, not cobbled together.</p>
-  </div>
-  <div class="img-full reveal" style="margin-top:48px;">
-    <img src="/assets/images/fix-my-itch-2.webp" alt="Framer canvas — 3 breakpoints" loading="lazy" decoding="async">
-    <div class="img-label">02 — Framer Project · Multi-Breakpoint Canvas</div>
-  </div>
-</section>
-
-<!-- ═  PROCESS    -->
-
-<section id="process">
-  <div class="section-label reveal">Development Process</div>
-  <div class="reveal"><h2>Building it, section<br/>by section.</h2></div>
-  <div class="process-list">
-    <div class="process-item reveal delay-1">
-      <div class="process-num">01</div>
-      <div class="process-content">
-        <h3>Scratch Card Reveal</h3>
-        <p>The entry mechanic was the most memorable piece of the site. Built as a custom Framer component using canvas-based scratch logic, requiring precise pointer event handling to feel tactile and responsive across both desktop mouse and mobile touch input.</p>
-        <div class="tech-tags"><span class="tech-tag">Framer Component</span><span class="tech-tag">Canvas API</span><span class="tech-tag">Pointer Events</span><span class="tech-tag">Touch Support</span></div>
-        <div class="process-expand"><p>Canvas compositing in <code style='color:var(--blue-light);background:#0e0e0e;padding:1px 5px;border-radius:2px'>destination-out</code> mode erases the painted surface on pointer drag. Touch events were normalised across iOS Safari and Android Chrome. The reveal threshold uses pixel sampling — not a timer — to fire the full-reveal animation.</p></div>
-      </div><i class="process-toggle">+</i>
-    </div>
-    <div class="process-item reveal delay-2">
-      <div class="process-num">02</div>
-      <div class="process-content">
-        <h3>Hero & Stats Section</h3>
-        <p>Floating typographic cards with parallax motion give the section visual depth. Staggered animation on scroll was tuned so the cards feel alive without becoming distracting.</p>
-        <div class="tech-tags"><span class="tech-tag">Scroll Animation</span><span class="tech-tag">Parallax</span><span class="tech-tag">Stagger Delays</span></div>
-        <div class="process-expand"><p>Each card got a unique parallax multiplier so they shift at different rates on scroll, creating depth without 3D transforms. Stagger delays were tuned empirically: 80ms between cards was the sweet spot.</p></div>
-      </div><i class="process-toggle">+</i>
-    </div>
-    <div class="process-item reveal delay-3">
-      <div class="process-num">03</div>
-      <div class="process-content">
-        <h3>Top 10 Problems — Card Carousel</h3>
-        <p>Swipeable cards on mobile and a horizontal scroll grid on desktop. The swipe gesture needed careful attention to feel native — not like a typical slider plugin.</p>
-        <div class="tech-tags"><span class="tech-tag">Framer Carousel</span><span class="tech-tag">Swipe Gesture</span><span class="tech-tag">CMS Integration</span></div>
-        <div class="process-expand"><p>Framer's gesture system handles velocity and momentum, but snap points needed custom logic to align to card boundaries. Desktop uses CSS scroll-snap for clean keyboard navigation.</p></div>
-      </div><i class="process-toggle">+</i>
-    </div>
-    <div class="process-item reveal delay-4">
-      <div class="process-num">04</div>
-      <div class="process-content">
-        <h3>All Problems — Filterable Database</h3>
-        <p>10,000+ problems filterable by 16 industry categories, sortable by Itch Score. Implemented using Framer's CMS with client-side filtering — fast without page reloads, legible at all breakpoints.</p>
-        <div class="tech-tags"><span class="tech-tag">Framer CMS</span><span class="tech-tag">Client-side Filter</span><span class="tech-tag">Sort Logic</span></div>
-        <div class="process-expand"><p>Framer CMS paginates by default — the filter fetches all entries once into a client-side store. Sort is stable: same Itch Score → alphabetical to prevent jitter. Virtualisation wasn't needed given the DOM node count.</p></div>
-      </div><i class="process-toggle">+</i>
-    </div>
-    <div class="process-item reveal delay-5">
-      <div class="process-num">05</div>
-      <div class="process-content">
-        <h3>Responsive Build · 3 Breakpoints</h3>
-        <p>All three breakpoints ran in parallel on the Framer canvas simultaneously. Every section was adapted, not just scaled — especially the hero type sizing and problem card grid reflow.</p>
-        <div class="tech-tags"><span class="tech-tag">3 Breakpoints</span><span class="tech-tag">Fluid Typography</span><span class="tech-tag">Grid Reflow</span></div>
-        <div class="process-expand"><p>Desktop, tablet, and mobile canvases are visible in Framer simultaneously. Hero type uses fluid <code style='color:var(--blue-light);background:#0e0e0e;padding:1px 5px;border-radius:2px'>clamp()</code> values interpolating between 320px–1440px.</p></div>
-      </div><i class="process-toggle">+</i>
-    </div>
-  </div>
-</section>
-
-<!-- SCRATCH CARD IMAGE -->
-
-<div class="img-full reveal">
-  <img src="/assets/images/fix-my-itch-3.webp" alt="Scratch to Reveal" loading="lazy" decoding="async">
-  <div class="img-label">03 — Scratch Card · Entry Mechanic</div>
-</div>
-
-
-<!-- SCRATCH DEMO -->
-<section>
-  <div class="section-label reveal">Try It Yourself</div>
-  <div class="reveal"><h2>The mechanic,<br/>live in the page.</h2>
-  <p>A working replica of the entry interaction built for Fix My Itch. Scratch away to reveal a real problem from India's dataset.</p></div>
-  <div class="scratch-demo-wrap reveal delay-1">
-    <div class="scratch-demo-label">↓ Drag to Scratch</div>
-    <div class="scratch-canvas-wrap">
-      <div class="scratch-reveal" id="scratch-reveal">
-        <div class="srcat" id="scratch-cat">FinTech</div>
-        <div class="srprob" id="scratch-prob">Small businesses can't get working capital without collateral or a 3-year ITR history.</div>
+    <!-- ── ANIMATED CAMPAIGN METRIC TAPE ──────────────────────────────────── -->
+    <section class="ob-tape" aria-label="Campaign numbers">
+      <div class="cs-wrap">
+        <div class="ob-tape-grid">
+          <div class="ob-stat"><div class="ob-stat-v tnum"><span data-count="81" data-suffix="K+">81K+</span></div><div class="ob-stat-l">Total Sessions</div></div>
+          <div class="ob-stat"><div class="ob-stat-v tnum"><span data-count="59" data-suffix="K+">59K+</span></div><div class="ob-stat-l">Unique Visitors</div></div>
+          <div class="ob-stat"><div class="ob-stat-v tnum"><span data-count="5.54" data-suffix="M+">5.54M+</span></div><div class="ob-stat-l">Impressions</div></div>
+          <div class="ob-stat"><div class="ob-stat-v tnum"><span data-count="700" data-suffix="+">700+</span></div><div class="ob-stat-l">Founders Engaged</div></div>
+          <div class="ob-stat"><div class="ob-stat-v tnum">3m <em>07s</em></div><div class="ob-stat-l">Avg. Dwell Time</div></div>
+        </div>
       </div>
-      <canvas id="scratch-canvas" width="380" height="210"></canvas>
-      <div id="scratch-text-overlay">
-        <span class="sto-main">Scratch to Reveal</span>
-        <span class="sto-sub">drag your cursor across</span>
+    </section>
+
+    <!-- ── 01 · INTERACTIVE OCEAN BEACH ITCH PINBOARD WALL ────────────────── -->
+    <section class="cs-sec" id="overview">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">01 · Interactive Problem Pinboard</div>
+            <h2 class="cs-h2">Drop An Itch. <span>Upvote</span> Real Pain.</h2>
+          </div>
+          <div class="cs-tabs" role="tablist" aria-label="Filter pinboard">
+            <button class="cs-tab active" type="button" role="tab" aria-selected="true" data-wcat="all">All</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-wcat="commute">Commute</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-wcat="housing">Housing</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-wcat="daily">Daily Life</button>
+          </div>
+        </div>
+
+        <form class="ob-composer" id="obComposer" data-reveal>
+          <input class="ob-input" id="obInput" type="text" maxlength="140" placeholder="Got an everyday frustration founders should solve? Type it and pin it live..." aria-label="Your startup problem idea">
+          <select class="ob-select" id="obCatSel" aria-label="Problem category">
+            <option value="daily">Daily Life</option>
+            <option value="commute">Commute</option>
+            <option value="housing">Housing</option>
+          </select>
+          <button class="cs-btn-primary" type="submit">Pin to Wall +</button>
+        </form>
+
+        <div class="ob-wall" id="obWall" data-reveal>
+          <!-- Hydrated cleanly by script -->
+        </div>
+
+        <div class="cs-frame" data-reveal>
+          <div class="cs-dev-chrome">
+            <span class="cs-dev-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="cs-dev-url">razorpay.com/m/fix-my-itch</span>
+            <span>Scroll inside ↓</span>
+          </div>
+          <div class="cs-scroll-vp" tabindex="0" aria-label="Scrollable FixMyItch live homepage capture">
+            <img src="/assets/images/fix-my-itch-1.webp" alt="FixMyItch full live campaign page" loading="lazy">
+          </div>
+          <div class="cs-frame-cap">
+            <strong>Shipped Production Homepage · Desktop 1440px (Scrollable Preview)</strong>
+            <button class="cs-vp-btn" type="button" data-zoom-src="/assets/images/fix-my-itch-1.webp" data-zoom-cap="FixMyItch — Full shipped campaign homepage on razorpay.com/m/fix-my-itch">Inspect Fullscreen ↗</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="scratch-demo-sub"><span id="scratch-pct">0%</span> revealed</div>
-    <button id="scratch-reset">Next Problem →</button>
-  </div>
-</section>
+    </section>
 
-<!-- ═  INTERACTIONS    -->
+    <!-- ── 02 · MORPHING DEVICE BLUEPRINT + 5-LAYER X-RAY ─────────────────── -->
+    <section class="cs-sec" id="craft">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">02 · Interactive Engineering Blueprint</div>
+            <h2 class="cs-h2">Morph The <span>Viewport</span> &amp; X-Ray The Code</h2>
+          </div>
+          <div class="cs-tabs" role="tablist" aria-label="Morph breakpoint frame">
+            <button class="cs-tab active" type="button" role="tab" aria-selected="true" data-bp="canvas">Framer 3-BP Canvas</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-bp="tablet">Tablet · 810px</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-bp="mobile">Mobile · 390px</button>
+          </div>
+        </div>
 
-<section>
-  <div class="section-label reveal">Key Interactions</div>
-  <div class="reveal"><h2>Moments that make<br/>the site feel alive.</h2></div>
-  <div class="interaction-grid">
-    <div class="ic-card reveal delay-1"><span class="ic-icon">✦</span><h3>Scratch to Reveal</h3><p>A canvas-based scratch mechanic greets every visitor. Physically satisfying on desktop mouse and mobile touch — creates a moment of ritual before the content reveals itself.</p></div>
-    <div class="ic-card reveal delay-2"><span class="ic-icon">⟡</span><h3>Floating Problem Cards</h3><p>Typographic cards with real problems float with subtle parallax offset on scroll — communicating the breadth of India's challenges without being overwhelming.</p></div>
-    <div class="ic-card reveal delay-3"><span class="ic-icon">⇌</span><h3>Swipeable Top 10</h3><p>Problem cards are swipeable on mobile with native-feeling momentum — built natively in Framer's interaction system, no janky plugin behaviour.</p></div>
-    <div class="ic-card reveal delay-4"><span class="ic-icon">◫</span><h3>Live Category Filter</h3><p>The All Problems database filters instantly across 16 industry categories with no page reload — keeping the exploration flow fast and uninterrupted.</p></div>
-  </div>
-</section>
+        <div class="ob-bp-layout">
+          <div class="ob-device-stage" data-reveal>
+            <div class="ob-device-bezel" id="obBezel">
+              <div class="cs-dev-chrome">
+                <span class="cs-dev-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="cs-dev-url">razorpay.com/m/fix-my-itch</span>
+                <span class="cs-dev-island" aria-hidden="true"></span>
+                <span id="fmiBpTag">3-BP Canvas</span>
+              </div>
+              <div class="ob-viewport fit-landscape" id="obViewport" tabindex="0" aria-label="Interactive responsive viewport preview">
+                <img id="fmiBpImg" src="/assets/images/fix-my-itch-2.webp" alt="FixMyItch Framer responsive workspace" loading="lazy">
+              </div>
+            </div>
+            <div class="cs-vp-bar">
+              <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--vc-ink-3);" id="fmiBpLabel">Framer Canvas · Desktop 1200 · Tablet 810 · Mobile 390 built in parallel</div>
+              <div class="cs-vp-acts">
+                <button class="cs-vp-btn" type="button" id="fmiAutoBtn" hidden>▶ Auto-Scroll</button>
+                <button class="cs-vp-btn" type="button" id="fmiBpZoom" data-zoom-src="/assets/images/fix-my-itch-2.webp" data-zoom-cap="Framer 3-Breakpoint Canvas">Inspect Fullscreen ↗</button>
+              </div>
+            </div>
+          </div>
 
-<!-- ═  SECTION BREAKDOWN    -->
-
-<section>
-  <div class="section-label reveal">Section Breakdown</div>
-  <div class="reveal"><h2>The site, in full.</h2></div>
-  <div class="img-stack">
-    <div class="img-full reveal"><img src="/assets/images/fix-my-itch-4.webp" alt="Floating cards" loading="lazy" decoding="async"><div class="img-label">04 — Hero · Floating Problem Cards</div></div>
-    <div class="img-full reveal"><img src="/assets/images/fix-my-itch-5.webp" alt="India Spoke" loading="lazy" decoding="async"><div class="img-label">05 — India Spoke. Here's How.</div></div>
-    <div class="img-full reveal"><img src="/assets/images/fix-my-itch-6.webp" alt="Top 10 Problems" loading="lazy" decoding="async"><div class="img-label">06 — Top 10 Problems</div></div>
-    <div class="img-full reveal"><img src="/assets/images/fix-my-itch-7.webp" alt="All Problems" loading="lazy" decoding="async"><div class="img-label">07 — All Problems · Filter Active</div></div>
-    <div class="img-full reveal"><img src="/assets/images/fix-my-itch-8.jpg" alt="Start Building Now" loading="lazy" decoding="async"><div class="img-label">09 — Start Building Now · CTA</div></div>
-  </div>
-</section>
-
-<!-- ═  RESPONSIVE    -->
-
-<section>
-  <div class="section-label reveal">Responsive Design</div>
-  <div class="reveal"><h2>Three breakpoints.<br/>One cohesive experience.</h2>
-  <p>The Framer canvas ran all three breakpoints in parallel — visible simultaneously during development. Every section was adapted, not just scaled. Typography, grid reflow, and gesture interactions all tuned per breakpoint.</p></div>
-    <div class="device-tabs reveal">
-    <button class="dtab active" data-show="both">Both Breakpoints</button>
-    <button class="dtab" data-show="tablet">Tablet Only</button>
-    <button class="dtab" data-show="mobile">Mobile Only</button>
-  </div>
-  <div class="device-row" id="device-row">
-    <div class="device-frame reveal delay-1" id="df-tablet"><img src="/assets/images/fix-my-itch-9.webp" alt="Tablet" loading="lazy" decoding="async"><div class="device-label">Tablet Breakpoint</div></div>
-    <div class="device-frame reveal delay-2" id="df-mobile"><img src="/assets/images/fix-my-itch-10.webp" alt="Mobile" loading="lazy" decoding="async"><div class="device-label">Mobile Breakpoint</div></div>
-  </div>
-</section>
-
-<!-- ═  RESULTS    -->
-
-<section id="results">
-  <div class="section-label reveal">Impact & Results</div>
-  <div class="reveal"><h2>The numbers spoke<br/>as clearly as the problems.</h2>
-  <p>Fix My Itch was submitted to the Shorty Awards — a testament to the campaign's cultural resonance. Engagement metrics significantly exceeded benchmarks for new campaign launches.</p></div>
-  <div class="results-grid">
-    <div class="result-card reveal delay-1"><div class="big-num"><span class="counter" data-target="81">0</span><span class="unit">K+</span></div><div class="label">Total Sessions</div><div class="result-bar-row"><div class="result-bar" style="--bw:81%"></div></div></div>
-    <div class="result-card reveal delay-2"><div class="big-num"><span class="counter" data-target="59">0</span><span class="unit">K+</span></div><div class="label">Unique Users</div><div class="result-bar-row"><div class="result-bar" style="--bw:59%"></div></div></div>
-    <div class="result-card reveal delay-3"><div class="big-num">3m 07s</div><div class="label">Avg. Session Duration</div><div class="result-bar-row"><div class="result-bar" style="--bw:70%"></div></div></div>
-    <div class="result-card reveal delay-4"><div class="big-num"><span class="counter-decimal" data-value="5.54">5.54</span><span class="unit">M+</span></div><div class="label">Social Impressions</div><div class="result-bar-row"><div class="result-bar" style="--bw:100%"></div></div></div>
-    <div class="result-card reveal delay-5"><div class="big-num"><span class="counter" data-target="700">0</span><span class="unit">+</span></div><div class="label">Founders Engaged</div><div class="result-bar-row"><div class="result-bar" style="--bw:35%"></div></div></div>
-    <div class="result-card reveal delay-1"><div class="big-num"><span class="counter" data-target="50">0</span><span class="unit">+</span></div><div class="label">Founders Featured</div><div class="result-bar-row"><div class="result-bar" style="--bw:25%"></div></div></div>
-  </div>
-  <div class="quote-block reveal" style="margin-top:48px;">Fix My Itch <span>didn't just guide founders on what to build</span> — it gave them a place to begin.</div>
-</section>
-
-<!-- ═  LEARNINGS    -->
-
-<section>
-  <div class="section-label reveal">Reflections</div>
-  <div class="reveal"><h2>What this project<br/>taught me.</h2></div>
-  <div class="learnings-grid">
-    <div class="l-card reveal delay-1"><div class="l-num">Lesson 01</div><h3>Interactions are products, not afterthoughts</h3><p>The scratch card wasn't a visual flourish — it was the first emotional beat of the campaign. Getting it to feel right across input types required the same rigour as building any core feature.</p></div>
-    <div class="l-card reveal delay-2"><div class="l-num">Lesson 02</div><h3>Framer at scale is a different discipline</h3><p>Multi-breakpoint, CMS-driven, animation-heavy sites reveal limits small projects don't surface. Performance, component architecture, and state management become real concerns.</p></div>
-    <div class="l-card reveal delay-3"><div class="l-num">Lesson 03</div><h3>Brand fidelity is a form of respect</h3><p>When developing from someone else's design, pixel fidelity is a professional value. The designer's vision deserves to survive the handoff intact.</p></div>
-    <div class="l-card reveal delay-4"><div class="l-num">Lesson 04</div><h3>First projects set the bar</h3><p>This was my first project at Razorpay, days after joining. Shipping it cleanly — live, responsive, and recognised — set the tone for everything that followed.</p></div>
-  </div>
-</section>
-
-<!-- ═  FOOTER / PHOTO    -->
-
-<div class="footer-section">
-  <img src="/assets/images/fix-my-itch-11.webp" alt="Akshat Singh — Razorpay" class="footer-photo" loading="lazy" decoding="async">
-  <div class="footer-content">
-    <div>
-      <div class="fp-tag">The Developer Behind This</div>
-      <h4>Akshat<br/>Singh</h4>
-      <div class="fp-creds">
-        <span class="fp-chip">Communication Designer</span>
-        <span class="fp-chip">Razorpay</span>
-        <span class="fp-chip">Framer Top 1% Global</span>
-        <span class="fp-chip">Awwwards Young Jury</span>
-        <span class="fp-chip">Bangalore</span>
+          <div class="ob-xray-stack" data-reveal data-delay="100">
+            <button class="ob-xray active" type="button">
+              <div class="ob-xray-h"><span>01 · CANVAS 2D</span>HTML5 Scratch Card Override</div>
+              <div class="ob-xray-body">Custom React override using destination-out compositing, locked touch-action for mobile scroll safety, and throttled pixel-alpha sampling that triggers full reveal at 46% cleared.</div>
+            </button>
+            <button class="ob-xray" type="button">
+              <div class="ob-xray-h"><span>02 · MOTION</span>80ms Staggered Floating Cards</div>
+              <div class="ob-xray-body">Spring-choreographed problem cards drifting around the hero display with strict GPU-only transforms (translate3d + opacity) maintaining 60fps across mid-tier Android phones.</div>
+            </button>
+            <button class="ob-xray" type="button">
+              <div class="ob-xray-h"><span>03 · TOUCH</span>Top 10 Swipeable Carousel</div>
+              <div class="ob-xray-body">Momentum-driven horizontal card deck featuring India's ten most upvoted everyday frustrations with snappy magnetic centering and keyboard arrow navigation.</div>
+            </button>
+            <button class="ob-xray" type="button">
+              <div class="ob-xray-h"><span>04 · CMS</span>16-Category Zero-Reload Filter</div>
+              <div class="ob-xray-body">Client-side indexed Framer CMS filtering across 16 everyday domains so founders could jump between Commute, Renting, and Healthcare in 0ms without page reloads.</div>
+            </button>
+            <button class="ob-xray" type="button">
+              <div class="ob-xray-h"><span>05 · QA</span>3-Breakpoint Parallel Shipping</div>
+              <div class="ob-xray-body">Desktop (1200px), Tablet (810px), and Mobile (390px) authored simultaneously so National Startup Day social traffic hit zero layout shifts on launch morning.</div>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="fp-bottom">
-      <p>razorpay.com/m/fix-my-itch · National Startup Day 2026</p>
-      <a href="https://razorpay.com/m/fix-my-itch/" class="live-btn" target="_blank" rel="noopener">View Live Site ↗</a>
-    </div>
-  </div>
-</div>
+    </section>
 
-<nav class="cs-pager" aria-label="Case study navigation">
-  <a href="/#projects">← Back to Portfolio</a>
-  <a href="/magic-checkout/">Next: Magic Checkout →</a>
-</nav>
+    <!-- ── 03 · LIVE SITE FILMSTRIP DECK ──────────────────────────────────── -->
+    <section class="cs-sec" id="gallery">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">03 · Shipped Storyboard</div>
+            <h2 class="cs-h2">Flip Through The <span>Live Microsite</span></h2>
+          </div>
+          <p class="cs-sub">Every chapter below is captured straight from production. Tap any reel chip or click the screen to zoom in fullscreen.</p>
+        </div>
 
-<script>
-// ── CURSOR ──
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px'});
-function animRing(){rx+=(mx-rx)*0.1;ry+=(my-ry)*0.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)}
-animRing();
-document.querySelectorAll('a,.ic-card,.stat-card,.result-card,.l-card,.process-item,.chip,.dtab,.fp-chip').forEach(el=>{
-  el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
-  el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
-});
+        <div class="ob-film-bar" role="tablist" aria-label="Microsite chapters">
+          <button class="ob-film-chip active" type="button" role="tab" aria-selected="true" data-gal="0">01 Scratch Hook</button>
+          <button class="ob-film-chip" type="button" role="tab" aria-selected="false" data-gal="1">02 Floating Hero</button>
+          <button class="ob-film-chip" type="button" role="tab" aria-selected="false" data-gal="2">03 India Spoke</button>
+          <button class="ob-film-chip" type="button" role="tab" aria-selected="false" data-gal="3">04 Top 10 Deck</button>
+          <button class="ob-film-chip" type="button" role="tab" aria-selected="false" data-gal="4">05 16-Category Filter</button>
+          <button class="ob-film-chip" type="button" role="tab" aria-selected="false" data-gal="5">06 Founder CTA</button>
+        </div>
 
-// ── SCROLL PROGRESS ──
-const bar = document.getElementById('progress-bar');
-window.addEventListener('scroll',()=>{
-  const pct = window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;
-  bar.style.width=pct+'%';
-},{ passive:true });
+        <figure class="cs-frame" data-zoom id="fmiGalFrame" data-reveal data-zoom-cap="01 · The Scratch Card Mechanic">
+          <img id="fmiGalImg" src="/assets/images/fix-my-itch-3.webp" alt="FixMyItch shipped section" loading="lazy">
+          <figcaption class="cs-frame-cap">
+            <strong id="fmiGalCap">01 · The Scratch Card Mechanic — Tactile curiosity hook</strong>
+            <span>Click to zoom fullscreen ↗</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
 
-// ── STICKY NAV ──
-const nav = document.getElementById('sticky-nav');
-window.addEventListener('scroll',()=>{
-  nav.classList.toggle('visible', window.scrollY > window.innerHeight * 0.6);
-},{ passive:true });
+    <!-- ── 04 · SHORTY AWARDS TROPHY & FULL-RECTANGLE AKSHAT PORTRAIT ─────── -->
+    <section class="cs-sec" id="results">
+      <div class="cs-wrap">
+        <div class="ob-trophy" data-reveal data-tilt="4">
+          <div>
+            <div class="cs-eyebrow" style="color: var(--vc-gold);">04 · Campaign Outcome</div>
+            <h2 class="cs-h2">First Week At Razorpay.<br><span>Shorty Awards</span> Entry.</h2>
+            <p style="margin-top: 14px; font-size: 15.5px; color: var(--vc-ink-2);">
+              Flipping "What should I build?" into "What needs to be solved?" drew 59K+ unique visitors, 700+ engaged founders, and 50+ featured builders — sustaining 3m 07s average dwell time across mobile and desktop.
+            </p>
+          </div>
+          <div class="ob-trophy-nums">
+            <div class="ob-tstat"><strong class="tnum" data-count="50" data-suffix="+">50+</strong><span>Founders Featured</span></div>
+            <div class="ob-tstat"><strong class="tnum">10,000+</strong><span>Problems Surfaced</span></div>
+            <div class="ob-tstat"><strong class="tnum" data-count="16">16</strong><span>Live Filter Domains</span></div>
+            <div class="ob-tstat"><strong class="tnum">Day 1</strong><span>Zero-Bug Launch</span></div>
+          </div>
+        </div>
 
-// ── REVEAL ON SCROLL ──
-const revealEls = document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
-const revealObs = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revealObs.unobserve(e.target);}});
-},{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
-revealEls.forEach(el=>revealObs.observe(el));
+        <!-- FULL-RECTANGLE EDITORIAL PORTRAIT OF AKSHAT SINGH -->
+        <aside class="cs-creator" data-reveal data-tilt="3" aria-label="Built by Akshat Singh">
+          <div class="cs-creator-photo" data-zoom data-zoom-cap="Akshat Singh — Framer & Interactive Developer for Razorpay FixMyItch">
+            <img src="/assets/images/fix-my-itch-11.webp" alt="Akshat Singh full portrait" width="662" height="1024" loading="lazy">
+          </div>
+          <div class="cs-creator-body">
+            <div class="cs-creator-role">Built By · Framer &amp; Interactive Developer</div>
+            <div class="cs-creator-name">Akshat Singh</div>
+            <p class="cs-creator-bio">
+              My debut launch at Razorpay — owned the full Framer engineering build, custom HTML5 Canvas scratch-card override, 16-category CMS filter, and 3-breakpoint responsive QA from zero to National Startup Day live traffic.
+            </p>
+            <div class="cs-creator-meta">
+              <span><b>District</b> Ocean Beach</span>
+              <span><b>Shipped</b> Jan 16, 2026</span>
+              <span><b>Stack</b> Framer · React Overrides · Canvas 2D</span>
+            </div>
+            <div class="cs-creator-acts">
+              <a class="cs-btn-primary" href="https://razorpay.com/m/fix-my-itch/" target="_blank" rel="noopener">Visit Live Campaign ↗</a>
+              <a class="cs-btn-ghost" href="/#projects">All Projects ←</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
 
-// ── COUNTER ANIMATION (fixed — no prefix hack) ──
-function animateCounter(el){
-  const target = parseInt(el.dataset.target);
-  const duration = 1800;
-  const start = performance.now();
-  function update(now){
-    const elapsed = now-start;
-    const progress = Math.min(elapsed/duration,1);
-    const ease = 1-Math.pow(1-progress,4);
-    const val = Math.round(ease*target);
-    el.textContent = val.toLocaleString();
-    if(progress<1) requestAnimationFrame(update);
-    else el.textContent = target.toLocaleString();
-  }
-  requestAnimationFrame(update);
-}
-const counterObs = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{if(e.isIntersecting){animateCounter(e.target);counterObs.unobserve(e.target);}});
-},{threshold:0.5});
-document.querySelectorAll('.counter').forEach(el=>counterObs.observe(el));
+  <script>
+    (function () {
+      const fx = () => window.ViceFX || { burst() {}, beep() {} };
 
-// ── PARALLAX COVER (disabled) ──
+      /* 1. Playful Hero Stickers pop on click */
+      document.querySelectorAll('.ob-sticker').forEach(btn => {
+        btn.addEventListener('click', e => {
+          btn.classList.toggle('popped');
+          fx().beep('tick');
+          fx().burst(e.clientX, e.clientY, ['#FF2E88', '#21E6D1', '#FFD36B']);
+        });
+      });
 
-// ── SECTION DOTS ──
-const sectionIds = ['top','overview','process','results'];
-const dots = document.querySelectorAll('.s-dot');
-const sectEls = sectionIds.map(id=>document.getElementById(id)).filter(Boolean);
-// also track cover
-const coverEl = document.querySelector('.cover');
-if(coverEl) coverEl.id='top';
+      /* 2. Tactile HTML5 Scratch Arcade with Brush Switch + Spark Burst */
+      const PROBLEMS = [
+        { cat: 'Urban Commute · Bengaluru', q: '"Auto drivers cancel three times in the rain because there is no instant micro-surge lock for short 2km rides."', loc: 'Indiranagar · Problem 01/04', votes: 142 },
+        { cat: 'Healthcare · Pune', q: '"Every clinic asks for paper lab reports because WhatsApp PDFs never organize into one searchable patient timeline."', loc: 'Kothrud · Problem 02/04', votes: 218 },
+        { cat: 'Renting · Mumbai', q: '"Paying six months of security deposit upfront locks young professionals out of decent apartments near work."', loc: 'Andheri West · Problem 03/04', votes: 389 },
+        { cat: 'Small Business · Jaipur', q: '"Tracking UPI payments across 4 counter phones during festival rush still ends with manual notebook tallying."', loc: 'Johari Bazaar · Problem 04/04', votes: 176 }
+      ];
+      let pIdx = 0, brushR = 26, drawing = false, cleared = false, lastSample = 0;
+      const box = document.getElementById('fmiScratchBox');
+      const canvas = document.getElementById('fmiCanvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const catEl = document.getElementById('fmiCat');
+      const qEl = document.getElementById('fmiQuote');
+      const locEl = document.getElementById('fmiLoc');
+      const pctEl = document.getElementById('fmiPct');
+      const ringFg = document.getElementById('fmiRingFg');
+      const voteBtn = document.getElementById('fmiHeroVote');
+      const voteNum = document.getElementById('fmiHeroVotes');
+      const CIRC = 150.8;
 
-const dotSectObs = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      const id = e.target.id;
-      dots.forEach(d=>d.classList.toggle('active', d.dataset.target===id));
-    }
-  });
-},{threshold:0.3,rootMargin:'-15% 0px -15% 0px'});
-document.querySelectorAll('#top,#overview,#process,#results').forEach(s=>{if(s)dotSectObs.observe(s)});
-
-dots.forEach(d=>{
-  d.addEventListener('click',()=>{
-    const el = document.getElementById(d.dataset.target);
-    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-  });
-});
-
-// ── KEYBOARD NAVIGATION ──
-const kbSections = ['top','overview','process','results'];
-let kbIdx = 0;
-function showToast(msg){
-  const t = document.getElementById('toast');
-  if(!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.classList.remove('show'),1600);
-}
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
-  if(e.key==='j'||e.key==='J'){
-    kbIdx=Math.min(kbIdx+1,kbSections.length-1);
-    const el=document.getElementById(kbSections[kbIdx]);
-    if(el){el.scrollIntoView({behavior:'smooth',block:'start'});showToast('↓ '+kbSections[kbIdx].toUpperCase());}
-  }
-  if(e.key==='k'||e.key==='K'){
-    kbIdx=Math.max(kbIdx-1,0);
-    const el=document.getElementById(kbSections[kbIdx]);
-    if(el){el.scrollIntoView({behavior:'smooth',block:'start'});showToast('↑ '+kbSections[kbIdx].toUpperCase());}
-  }
-});
-// Auto-hide kb hint
-setTimeout(()=>{const h=document.getElementById('kb-hint');if(h)h.style.opacity='0';},5000);
-
-// ── PROCESS ACCORDION ──
-document.querySelectorAll('.process-item').forEach(item=>{
-  item.addEventListener('click',()=>{
-    const wasOpen = item.classList.contains('open');
-    document.querySelectorAll('.process-item').forEach(i=>i.classList.remove('open'));
-    if(!wasOpen) item.classList.add('open');
-  });
-});
-
-// ── STAT BARS ──
-const barObs = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('go');barObs.unobserve(e.target);}});
-},{threshold:0.2});
-document.querySelectorAll('.stat-bar,.result-bar').forEach(el=>barObs.observe(el));
-
-// ── DEVICE TABS ──
-const dtabs = document.querySelectorAll('.dtab');
-const dfTablet = document.getElementById('df-tablet');
-const dfMobile = document.getElementById('df-mobile');
-if(dtabs.length && dfTablet && dfMobile){
-  dtabs.forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      dtabs.forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      const show = tab.dataset.show;
-      dfTablet.classList.remove('d-hidden');
-      dfMobile.classList.remove('d-hidden');
-      if(show==='tablet') dfMobile.classList.add('d-hidden');
-      else if(show==='mobile') dfTablet.classList.add('d-hidden');
-    });
-  });
-}
-
-// ── SCRATCH CARD DEMO ──
-const scratchProblems = [
-  {cat:'FinTech',     prob:"Small businesses can't get working capital without collateral or a 3-year ITR history."},
-  {cat:'EdTech',      prob:"Rural students can't afford coaching for competitive exams but free content is unstructured."},
-  {cat:'HealthTech',  prob:"Patients forget follow-up appointments and medication schedules after hospital discharge."},
-  {cat:'AgriTech',    prob:"Farmers have no reliable way to know fair market prices before selling their produce."},
-  {cat:'Logistics',   prob:"Last-mile delivery to Tier 3 towns is 3× more expensive per km than metro delivery."},
-  {cat:'GovTech',     prob:"Senior citizens struggle to navigate government benefit portals with complex CAPTCHAs."},
-  {cat:'CleanTech',   prob:"Household solar installations have no standardised post-install maintenance network."},
-  {cat:'B2B SaaS',    prob:"Small manufacturers manage inventory on WhatsApp because ERP is unaffordable."},
-];
-let spIdx = 0;
-let spDrawing = false;
-let spDone = false;
-
-const sc = document.getElementById('scratch-canvas');
-if(sc){
-  const ctx = sc.getContext('2d');
-  // ── HiDPI / Retina fix ──
-  const DPR = window.devicePixelRatio || 1;
-  const CSS_W = 380, CSS_H = 210;
-  sc.width  = CSS_W * DPR;
-  sc.height = CSS_H * DPR;
-  sc.style.width  = CSS_W + 'px';
-  sc.style.height = CSS_H + 'px';
-  ctx.scale(DPR, DPR);
-  const W = CSS_W, H = CSS_H;
-
-  const overlay = document.getElementById('scratch-text-overlay');
-
-  function paintCover(){
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.clearRect(0,0,W,H);
-    // Vice City sunset gradient foil
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#FF2E88');
-    g.addColorStop(1, '#FF8A2A');
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
-    // dot-grid pattern
-    ctx.fillStyle = 'rgba(20,4,31,0.18)';
-    const spacing = 18;
-    for(let x=spacing;x<W;x+=spacing){
-      for(let y=spacing;y<H;y+=spacing){
-        ctx.beginPath();
-        ctx.arc(x,y,1,0,Math.PI*2);
-        ctx.fill();
+      function setProgress(pct) {
+        pctEl.textContent = pct + '%';
+        ringFg.style.strokeDashoffset = (CIRC * (1 - pct / 100)).toFixed(1);
       }
-    }
-    // show HTML text overlay (perfectly centred by CSS flexbox)
-    if(overlay) overlay.style.display = 'flex';
-    spDone = false;
-    document.getElementById('scratch-pct').textContent = '0%';
-    document.getElementById('scratch-cat').textContent = scratchProblems[spIdx].cat;
-    document.getElementById('scratch-prob').textContent = scratchProblems[spIdx].prob;
-  }
-  paintCover();
 
-  function getPos(e){
-    const r = sc.getBoundingClientRect();
-    // map CSS px → canvas logical px (DPR already baked into ctx.scale)
-    const sx = CSS_W / r.width, sy = CSS_H / r.height;
-    if(e.touches) return {x:(e.touches[0].clientX-r.left)*sx, y:(e.touches[0].clientY-r.top)*sy};
-    return {x:(e.clientX-r.left)*sx, y:(e.clientY-r.top)*sy};
-  }
+      function paintFoil() {
+        const rect = box.getBoundingClientRect();
+        const w = Math.max(260, Math.round(rect.width));
+        const h = Math.max(290, Math.round(rect.height));
+        canvas.width = w; canvas.height = h;
+        canvas.classList.remove('cleared');
+        cleared = false;
+        ctx.globalCompositeOperation = 'source-over';
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, '#FF2E88'); g.addColorStop(0.5, '#8A1BB0'); g.addColorStop(1, '#21E6D1');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 14;
+        for (let x = -h; x < w + h; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + h, h); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(18,5,31,0.28)'; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#FFF5EE'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '900 34px "Big Shoulders Display", sans-serif';
+        ctx.fillText('RUB TO SCRATCH THE FOIL', w / 2, h / 2 - 14);
+        ctx.font = '500 12px "JetBrains Mono", monospace';
+        ctx.fillStyle = 'rgba(255,245,238,0.88)';
+        ctx.fillText('DRAG MOUSE OR FINGER TO UNCOVER A REAL ITCH', w / 2, h / 2 + 18);
+        setProgress(0);
+      }
 
-  function doScratch(e){
-    if(!spDrawing||spDone) return;
-    e.preventDefault();
-    const p = getPos(e);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,26,0,Math.PI*2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-    // sample coverage on the raw pixel buffer
-    const d = ctx.getImageData(0,0,sc.width,sc.height).data;
-    let cleared=0;
-    for(let i=3;i<d.length;i+=4){if(d[i]<100) cleared++;}
-    const pct = Math.round(cleared/(sc.width*sc.height)*100);
-    document.getElementById('scratch-pct').textContent = pct+'%';
-    if(pct>65 && !spDone){
-      spDone=true;
-      ctx.clearRect(0,0,W,H);
-      document.getElementById('scratch-pct').textContent = '100%';
-    }
-  }
+      function renderProblem() {
+        const p = PROBLEMS[pIdx];
+        catEl.textContent = p.cat;
+        qEl.textContent = p.q;
+        locEl.textContent = p.loc;
+        voteNum.textContent = p.votes;
+        paintFoil();
+      }
 
-  sc.addEventListener('mousedown',e=>{spDrawing=true;if(overlay)overlay.style.display='none';doScratch(e);});
-  sc.addEventListener('mousemove',doScratch);
-  sc.addEventListener('mouseup',()=>spDrawing=false);
-  sc.addEventListener('mouseleave',()=>spDrawing=false);
-  sc.addEventListener('touchstart',e=>{spDrawing=true;if(overlay)overlay.style.display='none';doScratch(e);},{passive:false});
-  sc.addEventListener('touchmove',doScratch,{passive:false});
-  sc.addEventListener('touchend',()=>spDrawing=false);
-  sc.addEventListener('mouseenter',()=>document.body.classList.add('cursor-scratch'));
-  sc.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-scratch'));
+      function finishReveal(cx, cy) {
+        if (cleared) return;
+        cleared = true;
+        canvas.classList.add('cleared');
+        setProgress(100);
+        fx().beep('success');
+        fx().burst(cx, cy, ['#FF2E88', '#21E6D1', '#FFD36B', '#FFF5EE']);
+      }
 
-  const resetBtn = document.getElementById('scratch-reset');
-  if(resetBtn){
-    resetBtn.addEventListener('click',()=>{
-      spIdx = (spIdx+1) % scratchProblems.length;
-      ctx.globalCompositeOperation = 'source-over';
-      paintCover();
-    });
-  }
-}
-</script>
+      function scratchAt(clientX, clientY) {
+        if (cleared) return;
+        const r = canvas.getBoundingClientRect();
+        const x = (clientX - r.left) * (canvas.width / r.width);
+        const y = (clientY - r.top) * (canvas.height / r.height);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.arc(x, y, brushR, 0, Math.PI * 2); ctx.fill();
+        const now = performance.now();
+        if (now - lastSample > 85) {
+          lastSample = now;
+          const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let empty = 0, total = 0;
+          for (let i = 3; i < d.length; i += 32) { total++; if (d[i] < 40) empty++; }
+          const pct = Math.min(100, Math.round((empty / total) * 100));
+          setProgress(pct);
+          if (pct >= 45) finishReveal(clientX, clientY);
+        }
+      }
 
-<script>try{const s=new Set(JSON.parse(localStorage.getItem('vc_stamps')||'[]'));s.add('fix-my-itch');localStorage.setItem('vc_stamps',JSON.stringify([...s]));}catch(_){}</script>
+      canvas.addEventListener('pointerdown', e => { drawing = true; canvas.setPointerCapture(e.pointerId); scratchAt(e.clientX, e.clientY); });
+      canvas.addEventListener('pointermove', e => { if (drawing) scratchAt(e.clientX, e.clientY); });
+      const stop = () => { drawing = false; };
+      canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
+
+      document.querySelectorAll('[data-brush]').forEach(btn => btn.addEventListener('click', () => {
+        brushR = Number(btn.dataset.brush);
+        document.querySelectorAll('[data-brush]').forEach(b => b.classList.toggle('active', b === btn));
+        fx().beep('tick');
+      }));
+      document.getElementById('fmiRevealBtn').addEventListener('click', e => finishReveal(e.clientX, e.clientY));
+      document.getElementById('fmiNextBtn').addEventListener('click', () => {
+        pIdx = (pIdx + 1) % PROBLEMS.length;
+        fx().beep('tick');
+        renderProblem();
+      });
+      voteBtn.addEventListener('click', e => {
+        PROBLEMS[pIdx].votes++;
+        voteNum.textContent = PROBLEMS[pIdx].votes;
+        fx().beep('stamp');
+        fx().burst(e.clientX, e.clientY, ['#FF2E88', '#FFD36B']);
+      });
+      renderProblem();
+      let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (!cleared) paintFoil(); }, 180); });
+
+      /* 3. Interactive Ocean Beach Problem Pinboard Wall + Live Submit */
+      const WALL = [
+        { cat: 'commute', city: 'Bengaluru', text: 'Why is there no single pass that seamlessly combines Metro QR, BMTC bus, and last-mile e-auto?', votes: 94 },
+        { cat: 'housing', city: 'Mumbai', text: 'Brokers charge a full month rent every renewal even when zero negotiation happened.', votes: 162 },
+        { cat: 'daily', city: 'Delhi NCR', text: 'Every apartment gate app asks guests to type the same phone number and OTP five times a week.', votes: 128 },
+        { cat: 'commute', city: 'Hyderabad', text: 'Airport cabs cancel after seeing destination traffic — why not lock verified fixed-route shuttles?', votes: 81 },
+        { cat: 'housing', city: 'Pune', text: 'Zero standardized handover checklist makes getting your security deposit back a 3-month battle.', votes: 147 },
+        { cat: 'daily', city: 'Chennai', text: 'Splitting restaurant bills when 2 friends pay via UPI and 3 use different bank cards is still painful.', votes: 73 }
+      ];
+      let wallFilter = 'all';
+      const wallEl = document.getElementById('obWall');
+
+      function renderWall(markFirst) {
+        const list = WALL.filter(item => wallFilter === 'all' || item.cat === wallFilter);
+        wallEl.innerHTML = list.map((item, i) =>
+          '<article class="ob-pin' + (markFirst && i === 0 ? ' fresh' : '') + '" data-tilt="4">' +
+            '<div>' +
+              '<div class="ob-pin-top"><span>' + item.cat + '</span><span>' + item.city + '</span></div>' +
+              '<p style="margin-top:10px;">' + item.text.replace(/</g, '&lt;') + '</p>' +
+            '</div>' +
+            '<div class="ob-pin-foot">' +
+              '<span>Founder Brief Ready</span>' +
+              '<button class="ob-vote' + (item.voted ? ' voted' : '') + '" type="button" data-wi="' + WALL.indexOf(item) + '">🔥 ' + item.votes + '</button>' +
+            '</div>' +
+          '</article>'
+        ).join('');
+        wallEl.querySelectorAll('.ob-vote').forEach(btn => btn.addEventListener('click', e => {
+          const item = WALL[Number(btn.dataset.wi)];
+          item.voted = !item.voted;
+          item.votes += item.voted ? 1 : -1;
+          fx().beep(item.voted ? 'stamp' : 'tick');
+          if (item.voted) fx().burst(e.clientX, e.clientY, ['#FF2E88', '#21E6D1']);
+          renderWall(false);
+        }));
+      }
+      document.querySelectorAll('[data-wcat]').forEach(btn => btn.addEventListener('click', () => {
+        wallFilter = btn.dataset.wcat;
+        document.querySelectorAll('[data-wcat]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+        fx().beep('tick');
+        renderWall(false);
+      }));
+      document.getElementById('obComposer').addEventListener('submit', e => {
+        e.preventDefault();
+        const inp = document.getElementById('obInput');
+        const txt = inp.value.trim();
+        if (!txt) return;
+        WALL.unshift({ cat: document.getElementById('obCatSel').value, city: 'You · Live Pin', text: txt, votes: 1, voted: true });
+        inp.value = '';
+        wallFilter = 'all';
+        document.querySelectorAll('[data-wcat]').forEach(b => b.classList.toggle('active', b.dataset.wcat === 'all'));
+        fx().beep('success');
+        const r = wallEl.getBoundingClientRect();
+        fx().burst(r.left + r.width * 0.3, Math.max(120, r.top + 40), ['#21E6D1', '#FF2E88', '#FFD36B']);
+        renderWall(true);
+      });
+      renderWall(false);
+
+      /* 4. Morphing Breakpoint Stage + Scrollable Viewport + X-Ray Accordion */
+      const BPS = {
+        canvas: { src: '/assets/images/fix-my-itch-2.webp', cls: '', scroll: false, tag: '3-BP Canvas', lbl: 'Framer Canvas · Desktop 1200 · Tablet 810 · Mobile 390 built in parallel' },
+        tablet: { src: '/assets/images/fix-my-itch-9.webp', cls: 'w-tablet', scroll: true, tag: '810px · Scroll ↓', lbl: 'Tablet 810px · Scroll inside tablet bezel to explore full page' },
+        mobile: { src: '/assets/images/fix-my-itch-10.webp', cls: 'w-mobile', scroll: true, tag: '390px', lbl: 'Mobile 390px · Scroll inside phone bezel to explore full page' }
+      };
+      const bezel = document.getElementById('obBezel');
+      const obVp = document.getElementById('obViewport');
+      const bpImg = document.getElementById('fmiBpImg');
+      const bpLbl = document.getElementById('fmiBpLabel');
+      const bpTag = document.getElementById('fmiBpTag');
+      const bpZoom = document.getElementById('fmiBpZoom');
+      const fmiAutoBtn = document.getElementById('fmiAutoBtn');
+      let fmiAutoRaf = 0;
+
+      function stopFmiAuto() {
+        if (!fmiAutoRaf) return;
+        cancelAnimationFrame(fmiAutoRaf);
+        fmiAutoRaf = 0;
+        fmiAutoBtn.classList.remove('active');
+        fmiAutoBtn.textContent = '▶ Auto-Scroll';
+      }
+      fmiAutoBtn.addEventListener('click', () => {
+        fx().beep('tick');
+        if (fmiAutoRaf) { stopFmiAuto(); return; }
+        if (obVp.scrollTop + obVp.clientHeight >= obVp.scrollHeight - 10) obVp.scrollTop = 0;
+        fmiAutoBtn.classList.add('active');
+        fmiAutoBtn.textContent = '⏸ Pause';
+        const step = () => {
+          if (obVp.scrollTop + obVp.clientHeight >= obVp.scrollHeight - 2) { stopFmiAuto(); return; }
+          obVp.scrollTop += 2;
+          fmiAutoRaf = requestAnimationFrame(step);
+        };
+        fmiAutoRaf = requestAnimationFrame(step);
+      });
+      obVp.addEventListener('wheel', stopFmiAuto, { passive: true });
+      obVp.addEventListener('pointerdown', stopFmiAuto, { passive: true });
+
+      document.querySelectorAll('[data-bp]').forEach(btn => btn.addEventListener('click', () => {
+        const d = BPS[btn.dataset.bp];
+        stopFmiAuto();
+        document.querySelectorAll('[data-bp]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+        bezel.className = 'ob-device-bezel ' + d.cls;
+        obVp.className = 'ob-viewport ' + (d.scroll ? 'cs-scroll-vp' : 'fit-landscape');
+        obVp.scrollTop = 0;
+        bpImg.src = d.src; bpLbl.textContent = d.lbl; bpTag.textContent = d.tag;
+        bpZoom.setAttribute('data-zoom-src', d.src);
+        bpZoom.setAttribute('data-zoom-cap', d.lbl);
+        fmiAutoBtn.hidden = !d.scroll;
+        fx().beep('tick');
+      }));
+      document.querySelectorAll('.ob-xray').forEach(card => card.addEventListener('click', () => {
+        document.querySelectorAll('.ob-xray').forEach(c => c.classList.toggle('active', c === card));
+        fx().beep('tick');
+      }));
+
+      /* 5. Filmstrip Switcher */
+      const GAL = [
+        { src: '/assets/images/fix-my-itch-3.webp', cap: '01 · The Scratch Card Mechanic — Tactile curiosity hook' },
+        { src: '/assets/images/fix-my-itch-4.webp', cap: '02 · Floating Problem Cards — 80ms staggered hero motion' },
+        { src: '/assets/images/fix-my-itch-5.webp', cap: '03 · India Spoke — 50,000+ everyday voices' },
+        { src: '/assets/images/fix-my-itch-6.webp', cap: '04 · Top 10 Swipeable Carousel — Touch-first curation' },
+        { src: '/assets/images/fix-my-itch-7.webp', cap: '05 · All Problems Filter — 16 instant categories' },
+        { src: '/assets/images/fix-my-itch-8.jpg', cap: '06 · Founder Call-to-Action — From itch to startup' }
+      ];
+      document.querySelectorAll('[data-gal]').forEach(btn => btn.addEventListener('click', () => {
+        const d = GAL[Number(btn.dataset.gal)];
+        document.querySelectorAll('[data-gal]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+        document.getElementById('fmiGalImg').src = d.src;
+        document.getElementById('fmiGalCap').textContent = d.cap;
+        document.getElementById('fmiGalFrame').setAttribute('data-zoom-cap', d.cap);
+        fx().beep('tick');
+      }));
+    })();
+  </script>
+  <script src="/assets/vice-district.js?v=8"></script>
 </body>
 </html>

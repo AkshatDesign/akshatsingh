@@ -1067,6 +1067,25 @@ html.calm .city svg{filter:none!important}
   .rad{width:min(190px,calc(100vw - 24px))}
   .rad.open{width:calc(100vw - 24px)}
 }
+/* ===== v8: Mainpage Fun Micro-Interactions & Delight Pack ===== */
+.pj{transform-style:preserve-3d;will-change:transform}
+.pj::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .25s ease;background:radial-gradient(360px circle at var(--px,50%) var(--py,50%),color-mix(in srgb,var(--dc,#21E6D1) 28%,transparent),transparent 62%)}
+.pj:hover::before{opacity:1}
+.pj .pj-top,.pj .bot{position:relative;z-index:1}
+.roles i{cursor:pointer;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .18s,background .18s,color .18s}
+.roles i:hover{transform:translateY(-3px) scale(1.06);border-color:var(--teal);color:#fff}
+.roles i.pop{animation:roleJelly .42s cubic-bezier(.34,1.56,.64,1)}
+@keyframes roleJelly{0%{transform:scale(1)}35%{transform:scale(1.18) rotate(-3deg)}70%{transform:scale(.94) rotate(2deg)}100%{transform:scale(1)}}
+.sun{cursor:pointer}
+.sun-ring{position:fixed;border-radius:50%;border:2px solid #FFD36B;box-shadow:0 0 24px rgba(255,46,136,.65);pointer-events:none;z-index:120;animation:sunPulse .85s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes sunPulse{from{width:40px;height:40px;margin:-20px 0 0 -20px;opacity:.95}to{width:340px;height:340px;margin:-170px 0 0 -170px;opacity:0}}
+.vc-star-shoot{position:fixed;height:2.5px;width:130px;border-radius:99px;pointer-events:none;z-index:25;background:linear-gradient(90deg,rgba(255,245,238,0),#21E6D1 55%,#FFF5EE);box-shadow:0 0 12px #21E6D1;transform-origin:right center;animation:starZip .72s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes starZip{0%{opacity:0;transform:rotate(var(--sa,18deg)) translateX(-40px) scaleX(.3)}25%{opacity:1}100%{opacity:0;transform:rotate(var(--sa,18deg)) translateX(340px) scaleX(1.15)}}
+.rec-l li{cursor:pointer;transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s}
+.rec-l li:hover{transform:translateX(5px)}
+.wc.sk-pop{animation:wcBounce .42s cubic-bezier(.34,1.56,.64,1)}
+@keyframes wcBounce{0%{transform:scale(1)}40%{transform:scale(1.03) translateY(-4px)}100%{transform:scale(1)}}
+.calm .pj::before,.calm .vc-star-shoot,.calm .sun-ring{display:none!important}
 </style>
 </head>
 <body>
@@ -1295,7 +1314,7 @@ html.calm .city svg{filter:none!important}
           </div>
         </a>
         <a class="pj" data-cs="journey" href="/journey/" style="--g:linear-gradient(150deg,#21E6D1,#3A0F5E 55%,#12051F);--dc:#FF8A2A">
-          <img class="pj-bg" src="/assets/images/journey-cover.webp" alt="Journey multi-destination travel app mobile UI preview" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+          <img class="pj-bg" src="/assets/images/journey-cover-v2.jpg" alt="Journey multi-destination travel app mobile UI preview with India route map" loading="lazy" decoding="async" referrerpolicy="no-referrer">
           <span class="no" aria-hidden="true">05</span>
           <div class="pj-top"><span class="pj-zone">Little Havana</span><span class="tag">Product Design · Mobile UX</span><span class="pj-cleared">Cleared ✓</span></div>
           <div class="bot">
@@ -2809,7 +2828,7 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
     {id:'magic-checkout',code:'MGC',title:'Magic Checkout',zone:'Starfish Island · Razorpay',desc:'Multi-device interactive experience across 12 product islands for 1-click checkout.',stat:'5× faster checkout · −36.4% RTO',img:'/assets/images/mockup-magic-checkout-v3.webp',url:'/magic-checkout/'},
     {id:'razorpay-agentic-payments',code:'AGP',title:'Agentic Payments',zone:'Downtown · Razorpay',desc:"India's first AI agentic payments launch site built across 5 breakpoints.",stat:'5 breakpoints · 13+ launch partners',img:'/assets/images/mockup-agentic-payments.webp',url:'/razorpay-agentic-payments/'},
     {id:'razorpay-ai-launches',code:'AIS',title:'India AI Impact',zone:'Vice Point · Razorpay Summit',desc:'Event launchpad unveiling 4 AI payment products live at Bharat Mandapam.',stat:'4 AI launches · 5 breakpoints',img:'/assets/images/mockup-ai-launches.webp',url:'/razorpay-ai-launches/'},
-    {id:'journey',code:'JRN',title:'Journey',zone:'Little Havana · Mobile UX',desc:'Multi-destination trip planner that catches itinerary conflicts in real time.',stat:'3 legs · 1 connected itinerary',img:'/assets/images/journey-cover.webp',url:'/journey/'}
+    {id:'journey',code:'JRN',title:'Journey',zone:'Little Havana · Mobile UX',desc:'Multi-destination trip planner that catches itinerary conflicts in real time.',stat:'3 legs · 1 connected itinerary',img:'/assets/images/journey-cover-v2.jpg',url:'/journey/'}
   ];
 
   const SECRETS=[
@@ -2973,6 +2992,148 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
     if(!e.metaKey && !e.ctrlKey && !e.altKey && e.shiftKey){
       if(e.key==='M'){ e.preventDefault(); syncStamps(); selectPin('fix-my-itch'); openOv('vcMap'); }
       else if(e.key==='R'){ e.preventDefault(); openOv('dossier'); }
+    }
+  });
+})();
+
+/* ===== v8: Mainpage Fun Micro-Interactions & Delight Pack ===== */
+(function(){
+  const noMotion = () => RM || root.classList.contains('calm');
+  let marimbaAc = null;
+  function playNote(freq, dur, type){
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      if(!marimbaAc) marimbaAc = new AC();
+      if(marimbaAc.state === 'suspended') marimbaAc.resume();
+      const t = marimbaAc.currentTime, o = marimbaAc.createOscillator(), g = marimbaAc.createGain();
+      o.type = type || 'triangle';
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.065, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.22));
+      o.connect(g); g.connect(marimbaAc.destination);
+      o.start(t); o.stop(t + (dur || 0.22) + 0.03);
+    }catch(_){}
+  }
+
+  /* 1. 3D Holographic Tilt & District Spotlight on all 5 Vice City Project Cards */
+  if(matchMedia('(hover:hover) and (pointer:fine)').matches){
+    $$('.pj').forEach(card=>{
+      card.addEventListener('pointermove',e=>{
+        if(noMotion()) return;
+        const r=card.getBoundingClientRect();
+        const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+        card.style.setProperty('--px',(px*100).toFixed(1)+'%');
+        card.style.setProperty('--py',(py*100).toFixed(1)+'%');
+        const rx=(0.5-py)*8, ry=(px-0.5)*10;
+        card.style.transform=`perspective(950px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-6px)`;
+      });
+      card.addEventListener('pointerleave',()=>{ card.style.transform=''; });
+      card.addEventListener('click',e=>{
+        if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,18);
+      });
+    });
+  }
+
+  /* 2. Playable 5-Note Synthwave Marimba on Hero Role Tags */
+  const PENT=[329.63, 392.00, 440.00, 523.25, 659.25];
+  $$('.roles i').forEach((tag,i)=>{
+    tag.title='Tap to play synth note';
+    tag.addEventListener('click',e=>{
+      tag.classList.remove('pop'); void tag.offsetWidth; tag.classList.add('pop');
+      playNote(PENT[i%PENT.length], 0.26, 'triangle');
+      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,14);
+    });
+  });
+
+  /* 3. Interactive Glowing Sunset Sun & 4. Hero Convertible Turbo Nitro + Night-Sky Shooting Stars */
+  const sun=$('#sun'), tod=$('#tod'), hero=$('#hero'), car=$('#car');
+  const VIBES=[
+    {v:18, name:'Tropical Sunrise'},
+    {v:50, name:'Golden Hour'},
+    {v:76, name:'Hotline Dusk'},
+    {v:96, name:'Neon Midnight'}
+  ];
+  let vibeIdx=1;
+  if(hero){
+    hero.addEventListener('pointerdown',e=>{
+      if(e.target.closest('a,button,input,label,.idc,.stk,.modes,.roles')) return;
+      /* Check Hero Convertible hit-box first */
+      if(car && !noMotion()){
+        const r=car.getBoundingClientRect();
+        if(e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top-14 && e.clientY<=r.bottom+14){
+          if(typeof sparkle==='function') sparkle(r.left+12, r.top+r.height*0.64, 32);
+          const carSvg=car.querySelector('svg');
+          if(carSvg){
+            carSvg.animate([
+              {transform:'translateX(0) scale(1)', filter:'drop-shadow(0 0 0 rgba(255,46,136,0))'},
+              {transform:'translateX(22px) skewX(-5deg) scale(1.06)', filter:'drop-shadow(-14px 2px 16px rgba(255,46,136,.95))'},
+              {transform:'translateX(-4px) scale(0.99)'},
+              {transform:'translateX(0) scale(1)', filter:'drop-shadow(0 0 0 rgba(255,46,136,0))'}
+            ],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'});
+          }
+          playNote(220, 0.14, 'sawtooth');
+          setTimeout(()=>playNote(330, 0.22, 'sawtooth'), 70);
+          return;
+        }
+      }
+      /* Check Glowing Sunset Sun circular hit-area */
+      if(sun && tod){
+        const sr=sun.getBoundingClientRect();
+        const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2, rad=sr.width/2;
+        if(Math.hypot(e.clientX-cx, e.clientY-cy) <= rad){
+          vibeIdx=(vibeIdx+1)%VIBES.length;
+          const v=VIBES[vibeIdx];
+          tod.value=v.v;
+          tod.dispatchEvent(new Event('input',{bubbles:true}));
+          playNote(440+vibeIdx*75, 0.3, 'sine');
+          if(!noMotion()){
+            const ring=document.createElement('span');
+            ring.className='sun-ring';
+            ring.style.left=e.clientX+'px'; ring.style.top=e.clientY+'px';
+            document.body.appendChild(ring);
+            setTimeout(()=>ring.remove(), 900);
+            if(typeof sparkle==='function') sparkle(e.clientX,e.clientY,24);
+          }
+          if(typeof toast==='function') toast('Sky Vibe: '+v.name, 'Tap the sun again to shift time', 1800);
+          return;
+        }
+      }
+      /* Open sky tap -> spawn a Vice City shooting star */
+      if(noMotion()) return;
+      const star=document.createElement('span');
+      star.className='vc-star-shoot';
+      star.style.left=e.clientX+'px';
+      star.style.top=e.clientY+'px';
+      star.style.setProperty('--sa', (8 + Math.random()*22).toFixed(1)+'deg');
+      document.body.appendChild(star);
+      playNote(880+Math.random()*320, 0.14, 'sine');
+      setTimeout(()=>star.remove(), 760);
+    });
+  }
+
+  /* 5. Joyful Feedback on Skill Chips, Recognition Medals & Copy Email */
+  document.addEventListener('click',e=>{
+    const sk=e.target.closest('.sk');
+    if(sk){
+      playNote(523.25, 0.12, 'triangle');
+      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,10);
+      setTimeout(()=>{
+        $$('.wc.hi').forEach(c=>{ c.classList.remove('sk-pop'); void c.offsetWidth; c.classList.add('sk-pop'); });
+      },20);
+      return;
+    }
+    const rec=e.target.closest('.rec-l li');
+    if(rec){
+      playNote(659.25, 0.18, 'triangle');
+      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,22);
+      return;
+    }
+    const cp=e.target.closest('[data-copy]');
+    if(cp){
+      playNote(587.33, 0.16, 'sine');
+      if(typeof sparkle==='function' && !noMotion()) sparkle(e.clientX,e.clientY,26);
     }
   });
 })();

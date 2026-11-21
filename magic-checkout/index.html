@@ -1,1142 +1,791 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Magic Checkout — Case Study · Akshat Singh · 2026</title>
-<meta name="description" content="Case study of Razorpay Magic Checkout built in Framer across 12 product islands — driving 5x faster checkout and 36.4% lower RTO.">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Magic Checkout — Case Study · Akshat Singh">
-<meta property="og:description" content="Multi-device interactive Framer build for Razorpay's fastest-growing 1-click checkout product.">
-<meta property="og:image" content="/assets/images/mockup-magic-checkout-v3.webp">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#12051F">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:focus-visible{outline:2px solid #12bfb0;outline-offset:3px}
-@media (hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){body{cursor:auto!important}#cur,#cur-ring,#cursor,#cursor-ring{display:none!important}}
-.cs-back{color:rgba(255,255,255,.65);text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-right:16px;transition:color .2s}
-.cs-back:hover{color:#fff}
-.cs-pager{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:32px clamp(20px,5vw,64px);border-top:1px solid rgba(255,255,255,.08);background:#070d12;flex-wrap:wrap}
-.cs-pager a{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#f3f8f8;padding:12px 20px;border:1px solid rgba(255,255,255,.16);border-radius:6px;transition:border-color .2s,background .2s}
-.cs-pager a:hover{border-color:#12bfb0;background:rgba(18,191,176,.12)}
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  font-family:'Inter',system-ui,sans-serif;
-  background:#070C18;color:#EEE8FF;
-  overflow-x:hidden;line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
-:root{
-  --bg:#070C18;--bg2:#0C1220;--bg3:#0A1028;
-  --blue:#2B6EF5;--blue-l:#5B9BFF;
-  --teal:#12BFB0;--teal-l:#3FE0D0;
-  --gold:#B8922B;--gold-l:#D4AC52;
-  --ochre:#C4892A;--terra:#8B4513;
-  --fresco-sky:#C8D4E0;--fresco-warm:#E8DCC8;--fresco-cream:#F2EDE4;
-  --white:#FFFFFF;--ink:#EEE8FF;
-  --muted:rgba(238,232,255,.45);--muted2:rgba(238,232,255,.2);
-  --border:rgba(238,232,255,.08);--border-b:rgba(43,110,245,.25);
-  --serif:'Cormorant Garamond',Georgia,serif;
-  --sans:'Inter',system-ui,sans-serif;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Checkout — Starfish Island · Akshat Singh</title>
+  <meta name="description" content="Razorpay Magic Checkout case study by Akshat Singh — Mobile & Tablet Lead (<1024px) & Desktop Co-Build for India's 1-click checkout trusted by 100M+ shoppers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Big+Shoulders+Display:wght@700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/vice-theme.css?v=8">
+  <style>
+    /* =====================================================================
+       STARFISH ISLAND — LUXURY SPEED-RACE LAB + PRESERVED DAYLIGHT SKY
+       ===================================================================== */
+    .si-hero {
+      padding: clamp(32px, 5.5vh, 62px) 0 clamp(44px, 6.5vh, 72px);
+    }
+    .si-hero-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: clamp(22px, 4vw, 48px);
+      align-items: end;
+      margin-bottom: clamp(28px, 4vw, 42px);
+    }
 
-/* ── SCROLL PROGRESS ── */
-#scroll-bar{
-  position:fixed;top:0;left:0;height:2px;
-  background:linear-gradient(90deg,var(--blue),var(--teal));
-  z-index:1001;width:0%;transition:width .1s linear;
-}
+    /* Signature Interactive Toy: Dual-Phone Checkout Speed Race */
+    .si-race {
+      border-radius: 22px;
+      border: 1px solid rgba(33, 230, 209, 0.36);
+      background:
+        radial-gradient(500px 260px at 80% 0%, rgba(33, 230, 209, 0.14), transparent 68%),
+        linear-gradient(165deg, rgba(28, 12, 50, 0.94), rgba(11, 3, 21, 0.98));
+      padding: clamp(18px, 2.8vw, 28px);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.56);
+    }
+    .si-race-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--vc-line);
+    }
+    .si-race-title {
+      font-family: var(--font-cond);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--vc-teal);
+    }
+    .si-race-btn {
+      padding: 11px 20px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--vc-teal), #0DA697);
+      color: #0A0214;
+      font-family: var(--font-cond);
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 24px rgba(33, 230, 209, 0.34);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+    .si-race-btn:hover { transform: translateY(-2px) scale(1.02); filter: brightness(1.06); }
+    .si-race-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .si-lane {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--vc-line);
+      background: rgba(11, 3, 21, 0.78);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .si-lane.magic {
+      border-color: rgba(33, 230, 209, 0.44);
+      background: linear-gradient(160deg, rgba(16, 42, 48, 0.42), rgba(11, 3, 21, 0.88));
+    }
+    .si-lane-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .si-lane-clock {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .si-track {
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255, 245, 238, 0.1);
+      overflow: hidden;
+    }
+    .si-track i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.25s linear;
+    }
+    .si-lane.legacy .si-track i { background: var(--vc-pink); }
+    .si-lane.magic .si-track i { background: linear-gradient(90deg, var(--vc-teal), var(--vc-gold)); }
+    .si-feed {
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--vc-ink-2);
+    }
+    .si-feed div {
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: rgba(255, 245, 238, 0.04);
+      border: 1px solid var(--vc-line);
+    }
+    .si-feed .ok { border-color: rgba(33, 230, 209, 0.42); color: var(--vc-teal); background: rgba(33, 230, 209, 0.1); }
+    .si-feed .stuck { border-color: rgba(255, 46, 136, 0.36); color: #FF87B9; }
 
-/* ── SIDE DOTS ── */
-#side-dots{
-  position:fixed;right:24px;top:50%;transform:translateY(-50%);
-  z-index:200;display:flex;flex-direction:column;gap:10px;
-}
-.sd{
-  width:6px;height:6px;border-radius:50%;
-  background:var(--muted2);border:1px solid var(--muted2);
-  cursor:pointer;transition:all .3s;
-}
-.sd.on{background:var(--teal);border-color:var(--teal);transform:scale(1.5);}
-@media(max-width:768px){#side-dots{display:none;}}
+    /* Interactive ROI & Conversion Lab */
+    .si-roi-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 30px;
+    }
+    .si-calc {
+      padding: clamp(22px, 3vw, 30px);
+      border-radius: 18px;
+      border: 1px solid rgba(33, 230, 209, 0.3);
+      background: rgba(18, 5, 31, 0.86);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .si-slider-row label {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--vc-ink-2);
+      margin-bottom: 8px;
+    }
+    .si-slider-row label b { color: var(--vc-teal); font-size: 13px; }
+    .si-range {
+      width: 100%;
+      accent-color: var(--vc-teal);
+      cursor: pointer;
+    }
+    .si-out-pair {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: auto;
+    }
+    .si-out-box {
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.8);
+    }
+    .si-out-box strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.6vw, 38px);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--vc-teal);
+    }
+    .si-out-box span {
+      display: block;
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--vc-ink-3);
+    }
 
-/* ── NAV ── */
-#nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  height:56px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 40px;
-  background:rgba(7,12,24,.94);backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-}
-.nav-logo{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--ink);}
-.nav-links{display:flex;gap:2px;}
-.nav-a{
-  font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);padding:6px 12px;border-radius:4px;
-  text-decoration:none;transition:color .2s;white-space:nowrap;
-}
-.nav-a:hover,.nav-a.on{color:var(--ink);}
+    /* 12-Island Interactive Flip Deck */
+    .si-islands {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .si-isl {
+      perspective: 900px;
+      min-height: 176px;
+      cursor: pointer;
+    }
+    .si-isl[hidden] { display: none; }
+    .si-isl-in {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 176px;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .si-isl.flipped .si-isl-in { transform: rotateY(180deg); }
+    .si-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 14px;
+      padding: 18px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.74);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .si-isl:hover .si-face.front { border-color: var(--vc-teal); }
+    .si-face.back {
+      transform: rotateY(180deg);
+      border-color: var(--vc-teal);
+      background: linear-gradient(145deg, rgba(16, 48, 52, 0.92), rgba(18, 5, 31, 0.96));
+    }
+    .si-isl-n {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--vc-teal); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .si-face h3 {
+      font-family: var(--font-cond); font-size: 19px; font-weight: 700; text-transform: uppercase; line-height: 1.15; color: var(--vc-ink);
+    }
+    .si-face p { font-size: 13.5px; line-height: 1.5; color: var(--vc-ink-2); }
+    .si-tap-hint { font-family: var(--font-mono); font-size: 10px; color: var(--vc-ink-3); }
 
-/* ── ANIMATIONS ── */
-@keyframes shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
-@keyframes reach{0%,100%{transform:translateX(0);}50%{transform:translateX(6px);}}
-@keyframes fadein{from{opacity:0;}to{opacity:1;}}
-@keyframes mq{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-@keyframes sky-drift{
-  0%{transform:translateX(0) translateY(0);}
-  50%{transform:translateX(-20px) translateY(-10px);}
-  100%{transform:translateX(0) translateY(0);}
-}
+    /* Interactive SVG RTO Risk Radar Dial */
+    .si-radar-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 24px;
+      align-items: center;
+    }
+    .si-gauge-card {
+      padding: 26px 22px;
+      border-radius: 18px;
+      border: 1px solid var(--vc-line-hi);
+      background: rgba(11, 3, 21, 0.86);
+      text-align: center;
+    }
+    .si-gauge-svg { width: 100%; max-width: 300px; margin: 0 auto; overflow: visible; }
+    .si-needle {
+      transform-origin: 150px 140px;
+      transition: transform 0.6s cubic-bezier(0.34, 1.45, 0.64, 1);
+    }
+    .si-signals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .si-sig-btn {
+      text-align: left;
+      padding: 14px 15px;
+      border-radius: 12px;
+      border: 1px solid var(--vc-line);
+      background: rgba(27, 10, 46, 0.68);
+      transition: all 0.18s ease;
+    }
+    .si-sig-btn.on { border-color: var(--vc-pink); background: rgba(255, 46, 136, 0.16); }
+    .si-sig-btn.good.on { border-color: var(--vc-teal); background: rgba(33, 230, 209, 0.14); }
+    .si-sig-btn small { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vc-ink-3); }
+    .si-sig-btn b { display: block; margin-top: 3px; font-family: var(--font-cond); font-size: 16px; text-transform: uppercase; color: var(--vc-ink); }
+    .si-verdict {
+      margin-top: 14px;
+      padding: 16px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--vc-teal);
+      background: rgba(33, 230, 209, 0.1);
+      font-size: 14.5px;
+      color: var(--vc-ink);
+      transition: all 0.25s ease;
+    }
 
-/* ── REVEAL ── */
-.rev{opacity:0;transform:translateY(36px);transition:opacity .8s cubic-bezier(.2,.8,.3,1),transform .8s cubic-bezier(.2,.8,.3,1);}
-.rev.in{opacity:1;transform:none;}
-.rev-l{opacity:0;transform:translateX(-48px);transition:opacity .8s cubic-bezier(.2,.8,.3,1),transform .8s cubic-bezier(.2,.8,.3,1);}
-.rev-l.in{opacity:1;transform:none;}
-.rev-r{opacity:0;transform:translateX(48px);transition:opacity .8s cubic-bezier(.2,.8,.3,1),transform .8s cubic-bezier(.2,.8,.3,1);}
-.rev-r.in{opacity:1;transform:none;}
-.rev-s{opacity:0;transform:scale(.92);transition:opacity .9s cubic-bezier(.2,.8,.3,1),transform .9s cubic-bezier(.2,.8,.3,1);}
-.rev-s.in{opacity:1;transform:none;}
-.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
-.d4{transition-delay:.32s}.d5{transition-delay:.40s}.d6{transition-delay:.48s}
-.count-up{display:inline;}
+    /* =====================================================================
+       100% PRESERVED SUNLIT CLOUDS SKY SECTION (#sky-section)
+       ===================================================================== */
+    #sky-section {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #5BA4CF 0%, #89C4E1 30%, #C8E3F2 62%, #E8DFC8 86%, #DFC9A6 100%);
+      color: #1A1208;
+      padding: clamp(76px, 11vh, 128px) 0;
+      border-top: 1px solid rgba(255, 245, 238, 0.22);
+      border-bottom: 1px solid rgba(255, 245, 238, 0.22);
+    }
+    .sky-cloud {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.46) 45%, rgba(255, 255, 255, 0) 75%);
+      filter: blur(18px);
+      pointer-events: none;
+    }
+    .sky-c1 { width: 540px; height: 210px; top: 6%; left: -8%; animation: skyDrift 34s ease-in-out infinite alternate; }
+    .sky-c2 { width: 640px; height: 230px; top: 18%; right: -10%; animation: skyDrift 42s ease-in-out infinite alternate-reverse; }
+    .sky-c3 { width: 480px; height: 180px; bottom: 12%; left: 26%; animation: skyDrift 38s ease-in-out infinite alternate; }
+    @keyframes skyDrift { from { transform: translateX(-26px); } to { transform: translateX(38px); } }
+    .sky-hands { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.14; pointer-events: none; }
+    .sky-in { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+    .sky-eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(26, 18, 8, 0.68); text-align: center; margin-bottom: 12px; }
+    .sky-h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(2.5rem, 5.5vw, 4.5rem); font-weight: 600; line-height: 1.04; text-align: center; color: #1A1208; max-width: 18ch; margin: 0 auto 16px; }
+    .sky-h2 em { font-style: italic; font-weight: 400; }
+    .sky-lead { text-align: center; max-width: 56ch; margin: 0 auto clamp(36px, 5vw, 56px); font-size: 16px; color: rgba(26, 18, 8, 0.78); }
+    .sky-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+    .sky-card {
+      padding: 28px 22px; border-radius: 16px;
+      background: rgba(255, 252, 245, 0.70); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(26, 18, 8, 0.12); box-shadow: 0 14px 34px rgba(45, 76, 102, 0.12); text-align: center;
+      transition: transform 0.24s ease;
+    }
+    .sky-card:hover { transform: translateY(-4px); }
+    .sky-num { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: clamp(2.9rem, 4.8vw, 4.2rem); font-weight: 600; line-height: 0.95; color: #1A1208; font-variant-numeric: tabular-nums; }
+    .sky-brand { margin-top: 12px; font-family: var(--font-cond); font-size: 16px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1A1208; }
+    .sky-desc { margin-top: 6px; font-size: 13.5px; line-height: 1.5; color: rgba(26, 18, 8, 0.72); }
 
-/* ── TYPE ── */
-.display{
-  font-family:var(--serif);font-style:italic;
-  font-size:clamp(4rem,12vw,9.5rem);
-  line-height:.88;letter-spacing:-.02em;
-  color:var(--white);font-weight:300;
-}
-h2.st{
-  font-family:var(--serif);font-style:italic;
-  font-size:clamp(2.8rem,5.5vw,5rem);
-  line-height:.97;font-weight:300;color:var(--white);
-}
-.eyebrow{
-  font-size:.65rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--gold-l);display:block;margin-bottom:18px;
-}
-.body-copy{font-size:.975rem;line-height:1.88;color:var(--muted);font-weight:300;}
-.body-copy strong{color:var(--ink);font-weight:500;}
-.rule-h{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 20%,var(--gold) 80%,transparent);opacity:.18;display:block;}
-.rule-short{width:44px;height:1px;background:var(--gold);opacity:.45;margin-bottom:22px;display:block;}
-.orn{display:inline-block;width:5px;height:5px;background:var(--gold-l);transform:rotate(45deg);opacity:.55;flex-shrink:0;}
-.chap{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
-.chap span{font-size:.63rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-l);opacity:.65;}
-.chap::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,146,43,.35),transparent);}
+    /* Voices */
+    .si-voices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 
-/* ── HERO ── */
-#hero{
-  min-height:100vh;padding:56px 40px 80px;
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
-  overflow:hidden;position:relative;
-  background:var(--bg);
-}
-/* subtle grid */
-.hero-grid-bg{
-  position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(rgba(238,232,255,.022) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(238,232,255,.022) 1px,transparent 1px);
-  background-size:80px 80px;
-}
-/* gradient glow */
-.hero-glow{
-  position:absolute;pointer-events:none;
-  top:10%;right:5%;width:680px;height:680px;
-  background:radial-gradient(ellipse, rgba(43,110,245,.09) 0%,transparent 65%);
-}
-.hero-glow2{
-  position:absolute;pointer-events:none;
-  bottom:5%;left:0%;width:500px;height:400px;
-  background:radial-gradient(ellipse, rgba(18,191,176,.06) 0%,transparent 65%);
-}
-/* Creation of Adam hands SVG — hero bg */
-.adam-hands{
-  position:absolute;bottom:0;right:0;width:55%;
-  opacity:.055;pointer-events:none;
-}
-.hero-content{max-width:1100px;width:100%;margin:0 auto;position:relative;z-index:2;}
-.hero-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:24px;}
-.hero-meta-col{display:flex;flex-direction:column;gap:12px;align-items:flex-end;}
-.hmeta{display:flex;flex-direction:column;gap:2px;align-items:flex-end;}
-.hmeta-label{font-size:.6rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-l);opacity:.5;}
-.hmeta-val{font-size:.85rem;font-weight:400;color:var(--muted);}
-.hero-foot{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:22px;}
-.hero-desc{max-width:500px;font-size:1.05rem;font-weight:300;line-height:1.82;color:var(--muted);}
-.hero-desc em{color:var(--teal-l);font-style:normal;font-weight:400;}
-.scroll-lbl{font-size:.62rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2);display:flex;align-items:center;gap:8px;}
-.scroll-lbl::before{content:'';width:1px;height:32px;background:linear-gradient(to bottom,transparent,var(--muted2));}
-
-/* ── MARQUEE ── */
-#marquee{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;}
-.mq-inner{display:flex;animation:mq 28s linear infinite;width:max-content;}
-.mq-chip{display:flex;align-items:center;gap:10px;padding:16px 48px;border-right:1px solid var(--border);white-space:nowrap;}
-.mq-n{font-family:var(--serif);font-style:italic;font-size:1.3rem;font-weight:400;color:var(--white);}
-.mq-l{font-size:.74rem;color:var(--muted);}
-.mq-sep{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.35;flex-shrink:0;}
-
-/* ── PADDED SECTION ── */
-.sec{padding:120px 40px;}
-.sec-inner{max-width:1100px;margin:0 auto;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
-.two-col.flip{direction:rtl;}.two-col.flip>*{direction:ltr;}
-
-/* ── OVERVIEW ── */
-#overview{background:var(--bg);}
-.role-stack{display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.role-item{padding:22px 24px;background:rgba(238,232,255,.02);border-bottom:1px solid var(--border);transition:background .2s;}
-.role-item:last-child{border-bottom:none;}
-.role-item:hover{background:rgba(238,232,255,.04);}
-.ri-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.ri-badge{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:4px;border:1px solid var(--border-b);color:var(--blue-l);background:rgba(43,110,245,.06);}
-.ri-title{font-size:.87rem;font-weight:600;color:var(--ink);}
-.ri-body{font-size:.83rem;line-height:1.72;color:var(--muted);font-weight:300;}
-
-/* ── ISLANDS ── */
-#islands{background:var(--bg2);border-top:1px solid var(--border);}
-.islands-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.isl{background:var(--bg2);padding:30px 26px;position:relative;transition:background .25s,transform .25s;}
-.isl:hover{background:rgba(43,110,245,.04);transform:translateY(-2px);}
-.isl::before{content:'';position:absolute;top:0;left:0;bottom:0;width:2px;background:var(--ia,transparent);opacity:.6;}
-.isl-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.isl-icon{font-size:1.2rem;}
-.isl-num{font-family:var(--serif);font-style:italic;font-size:1.5rem;font-weight:300;color:var(--muted2);line-height:1;}
-.isl-title{font-family:var(--serif);font-weight:500;font-size:1.05rem;color:var(--ink);margin-bottom:7px;}
-.isl-body{font-size:.78rem;line-height:1.65;color:var(--muted);font-weight:300;}
-.isl:nth-child(1){--ia:var(--blue)}.isl:nth-child(2){--ia:var(--teal)}.isl:nth-child(3){--ia:var(--gold)}
-.isl:nth-child(4){--ia:var(--teal)}.isl:nth-child(5){--ia:var(--blue)}.isl:nth-child(6){--ia:var(--gold)}
-.isl:nth-child(7){--ia:var(--blue)}.isl:nth-child(8){--ia:var(--teal)}.isl:nth-child(9){--ia:var(--gold)}
-.isl:nth-child(10){--ia:var(--blue)}.isl:nth-child(11){--ia:var(--teal)}.isl:nth-child(12){--ia:var(--gold)}
-
-/* ── FRAMER CANVAS MOCKUP ── */
-.framer-canvas{
-  background:#1C1C28;border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;overflow:hidden;
-  box-shadow:0 40px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05);
-  font-family:var(--sans);
-}
-.fc-toolbar{
-  background:#141420;border-bottom:1px solid rgba(255,255,255,.07);
-  padding:0 14px;height:44px;display:flex;align-items:center;justify-content:space-between;
-  position:relative;
-}
-.fc-title{position:absolute;left:50%;transform:translateX(-50%);font-size:.68rem;color:rgba(255,255,255,.55);font-weight:500;white-space:nowrap;}
-.fc-tb-left{display:flex;align-items:center;gap:8px;}
-.fc-icon{width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.6rem;cursor:pointer;}
-.fc-icon:hover{background:rgba(255,255,255,.12);}
-.fc-sep{width:1px;height:14px;background:rgba(255,255,255,.08);}
-.fc-tool-label{font-size:.58rem;color:rgba(255,255,255,.3);font-weight:500;cursor:pointer;}
-.fc-tool-label:hover{color:rgba(255,255,255,.55);}
-.fc-tb-right{display:flex;align-items:center;gap:6px;}
-.fc-btn{font-size:.6rem;padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);cursor:pointer;}
-.fc-btn.pub{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
-.fc-main{display:flex;height:400px;}
-/* Left pages panel */
-.fc-pages-panel{
-  width:185px;border-right:1px solid rgba(255,255,255,.06);
-  background:#141420;flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;
-}
-.fc-panel-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.06);}
-.fc-ptab{flex:1;text-align:center;padding:7px 0;font-size:.57rem;font-weight:600;letter-spacing:.04em;color:rgba(255,255,255,.3);cursor:pointer;border-bottom:2px solid transparent;}
-.fc-ptab.on{color:#5B9BFF;border-bottom-color:#5B9BFF;}
-.fc-search-bar{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
-.fc-search-inp{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:4px 8px;font-size:.55rem;color:rgba(255,255,255,.25);font-family:var(--sans);}
-.fc-section-hd{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 3px;font-size:.57rem;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.4);}
-.fc-section-plus{color:rgba(255,255,255,.25);font-size:.8rem;line-height:1;}
-.fc-page-item{display:flex;align-items:center;gap:7px;padding:5px 12px;font-size:.6rem;color:rgba(255,255,255,.4);cursor:pointer;border-radius:0;}
-.fc-page-item.active{background:rgba(43,110,245,.14);color:#EEE8FF;border-left:2px solid #2B6EF5;}
-.fc-page-icon{font-size:.65rem;opacity:.7;}
-/* Main canvas area */
-.fc-bp-canvas{
-  flex:1;
-  background:#0F0F18;
-  background-image:radial-gradient(rgba(238,232,255,.05) 1px,transparent 1px);
-  background-size:22px 22px;
-  display:flex;align-items:flex-start;
-  gap:10px;padding:22px 14px 44px;
-  overflow:hidden;position:relative;
-}
-/* bottom toolbar bar */
-.fc-bottom-toolbar{
-  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
-  background:#1C1C28;border:1px solid rgba(255,255,255,.1);border-radius:8px;
-  padding:5px 12px;display:flex;gap:10px;align-items:center;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);
-}
-.fc-bt-icon{font-size:.62rem;color:rgba(255,255,255,.75);cursor:pointer;}
-.fc-bt-icon.dim{color:rgba(255,255,255,.3);}
-.fc-bt-div{width:1px;height:12px;background:rgba(255,255,255,.1);}
-.fc-bt-zoom{font-size:.58rem;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:3px;}
-/* Individual breakpoint frame column */
-.fc-bp-col{flex-shrink:0;display:flex;flex-direction:column;}
-.fc-bp-col-label{display:flex;align-items:center;gap:4px;margin-bottom:6px;}
-.fc-bp-play{width:9px;height:9px;border-radius:50%;background:rgba(43,110,245,.75);display:inline-flex;align-items:center;justify-content:center;font-size:.28rem;color:#fff;flex-shrink:0;}
-.fc-bp-name{font-size:.52rem;color:rgba(255,255,255,.4);white-space:nowrap;}
-.fc-bp-plus{font-size:.6rem;color:rgba(255,255,255,.2);margin-left:auto;}
-.fc-bp-page-frame{border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
-/* Mini page sections inside frames */
-.fc-page-hero{background:linear-gradient(160deg,#F0F2F5 0%,#E8EBF0 100%);}
-.fc-page-nav{background:rgba(255,255,255,.96);border-bottom:1px solid rgba(0,0,0,.07);display:flex;align-items:center;}
-.fc-page-islands{background:linear-gradient(180deg,#0D9FA0 0%,#0ABFB0 50%,#14D4C6 100%);position:relative;overflow:hidden;}
-.fc-page-section3{background:linear-gradient(180deg,#0C1220 0%,#0F1828 100%);position:relative;overflow:hidden;}
-
-/* old compat */
-.fc-layers{
-  width:160px;border-right:1px solid rgba(255,255,255,.06);
-  background:#141420;flex-shrink:0;overflow:hidden;
-}
-.fc-layers-h{font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:10px 12px 6px;border-bottom:1px solid rgba(255,255,255,.05);}
-.fc-layer{padding:5px 12px;font-size:.62rem;color:rgba(255,255,255,.45);cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:3px;margin:1px 4px;}
-.fc-layer:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.75);}
-.fc-layer.sel{background:rgba(43,110,245,.15);color:#5B9BFF;}
-.fc-layer-dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.6;flex-shrink:0;}
-.fc-canvas{
-  flex:1;background:#0F0F18;
-  background-image:radial-gradient(rgba(238,232,255,.06) 1px,transparent 1px);
-  background-size:20px 20px;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
-}
-.fc-canvas-label{position:absolute;top:8px;left:12px;font-size:.55rem;color:rgba(255,255,255,.2);font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
-.fc-frame{
-  background:#fff;border-radius:18px;overflow:hidden;
-  width:145px;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  position:relative;
-}
-.fc-frame-label{
-  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
-  font-size:.52rem;color:rgba(255,255,255,.3);white-space:nowrap;
-  font-weight:600;letter-spacing:.08em;
-}
-.fc-phone-inner{
-  background:#070C18;padding:0;overflow:hidden;
-}
-.fc-topbar{background:rgba(43,110,245,.15);padding:7px 10px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(43,110,245,.2);}
-.fc-brand{font-size:.5rem;font-weight:600;color:rgba(238,232,255,.85);}
-.fc-sec{font-size:.45rem;color:var(--teal-l);}
-.fc-pbody{padding:8px;}
-.fc-pstep{background:rgba(238,232,255,.04);border:1px solid rgba(238,232,255,.08);border-radius:5px;padding:6px 8px;margin-bottom:4px;}
-.fc-plbl{font-size:.42rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(43,110,245,.7);margin-bottom:2px;}
-.fc-pval{font-size:.5rem;font-weight:600;color:rgba(238,232,255,.85);}
-.fc-psub{font-size:.4rem;color:rgba(238,232,255,.35);margin-top:1px;}
-.fc-tag{display:inline-block;background:rgba(18,191,176,.1);border:1px solid rgba(18,191,176,.25);color:var(--teal-l);font-size:.38rem;padding:1px 5px;border-radius:2px;margin-top:3px;}
-.fc-ppay{width:100%;background:var(--blue);border:none;border-radius:4px;padding:6px;font-size:.5rem;font-weight:700;color:#fff;font-family:var(--sans);margin-top:4px;}
-.fc-props{
-  width:170px;border-left:1px solid rgba(255,255,255,.06);
-  background:#141420;flex-shrink:0;overflow:hidden;
-}
-.fc-props-h{font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:10px 12px 6px;border-bottom:1px solid rgba(255,255,255,.05);}
-.fc-prop-group{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);}
-.fc-prop-label{font-size:.55rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-bottom:6px;}
-.fc-prop-row{display:flex;gap:4px;margin-bottom:4px;}
-.fc-prop-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:3px 6px;font-size:.55rem;color:rgba(255,255,255,.5);}
-.fc-prop-input.wide{flex:2;}
-.fc-bp-mobile-badge{
-  position:absolute;bottom:8px;right:8px;
-  background:rgba(43,110,245,.15);border:1px solid rgba(43,110,245,.3);
-  border-radius:4px;padding:2px 6px;font-size:.5rem;color:var(--blue-l);font-weight:600;
-}
-
-/* ── SKY SECTION (Creation of Adam inspired) ── */
-#sky-section{
-  position:relative;overflow:hidden;
-  padding:120px 40px;
-}
-.sky-bg{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 100% 60% at 50% 0%, var(--fresco-sky) 0%, #8FB0C8 40%, transparent 65%),
-    radial-gradient(ellipse 80% 60% at 20% 100%, #D4C8B0 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, #C8B898 0%, transparent 50%),
-    linear-gradient(180deg, #B4C8D8 0%, #C8D4C0 30%, #D8CCAC 60%, #E4D4B0 100%);
-}
-/* fresco crack texture overlay */
-.sky-cracks{
-  position:absolute;inset:0;opacity:.06;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cpath d='M50 0 Q55 40 48 80 Q52 120 45 160' stroke='%23000' stroke-width='0.5' fill='none' opacity='0.8'/%3E%3Cpath d='M150 50 Q145 90 155 130 Q148 170 152 210' stroke='%23000' stroke-width='0.4' fill='none' opacity='0.6'/%3E%3Cpath d='M280 20 Q275 65 285 100 Q278 140 282 180' stroke='%23000' stroke-width='0.5' fill='none' opacity='0.7'/%3E%3Cpath d='M100 200 Q140 195 180 205 Q220 198 260 202' stroke='%23000' stroke-width='0.3' fill='none' opacity='0.5'/%3E%3Cpath d='M350 80 Q345 110 355 145 Q348 175 352 210' stroke='%23000' stroke-width='0.4' fill='none' opacity='0.6'/%3E%3C/svg%3E");
-}
-/* drifting cloud shapes */
-.sky-cloud{position:absolute;border-radius:50%;animation:sky-drift 12s ease-in-out infinite;pointer-events:none;}
-.sc1{width:500px;height:200px;background:rgba(255,255,255,.18);top:5%;left:-100px;animation-delay:0s;}
-.sc2{width:380px;height:150px;background:rgba(255,255,255,.12);top:15%;right:-60px;animation-delay:4s;}
-.sc3{width:300px;height:120px;background:rgba(255,255,255,.08);top:30%;left:30%;animation-delay:7s;}
-/* Adam hands SVG in sky */
-.sky-hands{
-  position:absolute;bottom:0;right:0;width:60%;height:100%;
-  opacity:.08;pointer-events:none;
-}
-.sky-content{position:relative;z-index:2;}
-/* sky section text overrides — dark text on light sky */
-.sky-section .st{color:#1A1208 !important;}
-.sky-section .eyebrow{color:#8B6820 !important;}
-.sky-section .body-copy{color:rgba(26,18,8,.55) !important;}
-.sky-section .body-copy strong{color:rgba(26,18,8,.85) !important;}
-.sky-section .chap span{color:#8B6820 !important;}
-.sky-section .chap::after{background:linear-gradient(90deg,rgba(139,104,32,.35),transparent) !important;}
-.sky-section .orn{background:#8B6820 !important;}
-.sky-section .rule-short{background:#8B6820 !important;}
-
-/* sky results grid */
-.sky-results{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:60px;}
-.sky-rc{
-  padding:40px 28px;
-  border-right:1px solid rgba(26,18,8,.1);
-  transition:background .25s;
-}
-.sky-rc:last-child{border-right:none;}
-.sky-rc:hover{background:rgba(255,255,255,.25);}
-.sky-rc-num{
-  font-family:var(--serif);font-style:italic;
-  font-size:clamp(2.5rem,4.5vw,4rem);
-  font-weight:300;line-height:1;margin-bottom:8px;
-  color:#1A1208;
-}
-.sky-rc-hi{color:#1B5E8A;}
-.sky-rc-lbl{font-size:.83rem;line-height:1.55;color:rgba(26,18,8,.55);font-weight:300;}
-.sky-rc-brand{font-size:.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ochre);opacity:.7;margin-top:12px;}
-
-/* ── TESTIMONIALS ── */
-#testimonials{background:var(--bg2);border-top:1px solid var(--border);}
-.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.tc{background:var(--bg2);padding:34px 26px;transition:background .25s;position:relative;}
-.tc:hover{background:rgba(238,232,255,.025);}
-.tc::before{content:'"';font-family:var(--serif);font-style:italic;font-size:4.5rem;position:absolute;top:-8px;left:20px;color:var(--gold);opacity:.12;line-height:1;}
-.tc-q{font-family:var(--serif);font-style:italic;font-size:.98rem;line-height:1.75;color:var(--muted);margin-bottom:22px;font-weight:300;}
-.tc-stat{font-family:var(--serif);font-style:italic;font-size:2.5rem;font-weight:300;color:var(--white);line-height:1;margin-bottom:4px;}
-.tc-stat .hi{color:var(--teal-l);}
-.tc-sl{font-size:.75rem;color:var(--muted);margin-bottom:16px;}
-.tc-author{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding-top:16px;}
-.tc-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;background:rgba(43,110,245,.1);border:1px solid var(--border-b);color:var(--blue-l);}
-.tc-name{font-size:.83rem;font-weight:600;color:var(--ink);}
-.tc-co{font-size:.7rem;color:var(--muted);}
-
-/* ── DEEP-DIVE SECTIONS ── */
-.ddive{background:var(--bg);border-top:1px solid var(--border);}
-
-/* ── PHONE MOCKUP ── */
-.phone{
-  background:var(--bg2);border:1px solid var(--border-b);border-radius:28px;
-  overflow:hidden;max-width:300px;margin:0 auto;font-family:var(--sans);
-  box-shadow:0 40px 80px rgba(0,0,0,.4);
-}
-.p-bar{background:rgba(43,110,245,.12);border-bottom:1px solid var(--border-b);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
-.p-brand{font-size:.83rem;font-weight:600;color:var(--ink);}
-.p-lock{font-size:.67rem;color:var(--teal-l);}
-.p-body{padding:16px;}
-.p-offers{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;}
-.p-offers::-webkit-scrollbar{display:none;}
-.ofc{background:rgba(184,146,43,.07);border:1px solid rgba(184,146,43,.2);border-radius:6px;padding:6px 10px;flex-shrink:0;}
-.ofc strong{display:block;font-size:.75rem;color:var(--gold-l);}
-.ofc span{font-size:.6rem;color:var(--muted);}
-.p-step{background:rgba(238,232,255,.03);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:8px;}
-.p-lbl{font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-l);opacity:.7;margin-bottom:4px;}
-.p-val{font-size:.87rem;font-weight:500;color:var(--ink);}
-.p-sub{font-size:.71rem;color:var(--muted);margin-top:2px;}
-.magic-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(18,191,176,.07);border:1px solid rgba(18,191,176,.2);color:var(--teal-l);font-size:.6rem;font-weight:600;padding:2px 8px;border-radius:3px;margin-top:5px;}
-.p-pay{width:100%;background:var(--blue);border:none;border-radius:7px;padding:12px;font-size:.88rem;font-weight:600;color:#fff;font-family:var(--sans);cursor:pointer;margin-top:7px;transition:background .2s;}
-.p-pay:hover{background:var(--blue-l);}
-
-/* risk/prefill/intent panels */
-.data-panel{background:rgba(238,232,255,.02);border:1px solid var(--border);border-radius:12px;padding:26px;}
-.dp-h{font-family:var(--serif);font-style:italic;font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:22px;}
-.rbar-row{margin-bottom:14px;}
-.rbar-top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:.78rem;font-weight:500;}
-.rbar-track{height:3px;border-radius:2px;background:var(--border);overflow:hidden;}
-.rbar-fill{height:100%;border-radius:2px;background:var(--fc,var(--blue));width:0;transition:width 1.5s cubic-bezier(.2,.8,.3,1);}
-.rbar-verd{margin-top:18px;background:rgba(18,191,176,.05);border:1px solid rgba(18,191,176,.16);border-radius:8px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;}
-.rbar-badge{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-l);}
-.rbar-cta{font-size:.77rem;color:var(--muted);}
-.rbar-cta strong{color:var(--gold-l);font-weight:500;}
-.pp-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
-.pp-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;}
-.pp-name{font-size:.88rem;font-weight:600;color:var(--ink);}
-.pp-sub{font-size:.7rem;color:var(--teal-l);font-weight:300;}
-.pp-row{background:rgba(238,232,255,.02);border:1px solid var(--border);border-radius:7px;padding:10px 13px;margin-bottom:6px;}
-.pp-row label{font-size:.57rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);display:block;margin-bottom:3px;}
-.pp-row .v{font-size:.84rem;color:var(--ink);}
-.pp-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(43,110,245,.07);border:1px solid var(--border-b);color:var(--blue-l);font-size:.66rem;font-weight:600;padding:4px 11px;border-radius:4px;margin-top:11px;}
-.ip-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-radius:6px;margin-bottom:5px;background:rgba(238,232,255,.02);border:1px solid var(--border);}
-.ip-k{font-size:.79rem;color:var(--muted);}
-.ip-v{font-size:.83rem;font-weight:600;color:var(--ink);}
-.ip-score{margin-top:14px;padding:16px;background:rgba(43,110,245,.06);border:1px solid var(--border-b);border-radius:8px;display:flex;align-items:center;justify-content:space-between;}
-.ips-lbl{font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-l);opacity:.65;}
-.ips-val{font-family:var(--serif);font-style:italic;font-size:2rem;font-weight:300;color:var(--white);}
-
-/* ── REFLECTION ── */
-#reflection{background:var(--bg2);border-top:1px solid var(--border);}
-.ref-center{max-width:700px;margin:0 auto;text-align:center;}
-.learn-list{list-style:none;margin:44px 0;display:flex;flex-direction:column;gap:1px;}
-.li{display:flex;gap:18px;padding:20px 22px;background:rgba(238,232,255,.02);border:1px solid var(--border);transition:background .2s;text-align:left;}
-.li:first-child{border-radius:8px 8px 0 0;}.li:last-child{border-radius:0 0 8px 8px;}
-.li:hover{background:rgba(238,232,255,.04);}
-.li-n{font-family:var(--serif);font-style:italic;font-size:1.4rem;font-weight:300;color:var(--muted2);flex-shrink:0;line-height:1.4;min-width:26px;}
-.li-txt{font-size:.89rem;line-height:1.78;color:var(--muted);font-weight:300;}
-.li-txt strong{color:var(--ink);font-weight:500;}
-
-/* ── FOOTER ── */
-#footer{background:var(--bg);border-top:1px solid var(--border);padding:100px 40px 54px;}
-.ft-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:end;}
-.portrait-frame{border-radius:12px;overflow:hidden;max-width:340px;border:1px solid var(--border);}
-.portrait-frame img{width:100%;display:block;filter:grayscale(15%) contrast(1.05);}
-.portrait-caption{margin-top:11px;font-size:.76rem;color:var(--muted2);font-style:italic;}
-.ft-name{font-family:var(--serif);font-style:italic;font-size:clamp(3rem,5vw,4.5rem);font-weight:300;line-height:1.0;margin-bottom:11px;color:var(--white);}
-.ft-role{font-size:.65rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-l);opacity:.45;margin-bottom:24px;}
-.ft-bio{font-size:.92rem;line-height:1.9;color:var(--muted);font-weight:300;margin-bottom:12px;}
-.ft-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px;}
-.ftl{padding:10px 22px;border-radius:6px;font-size:.71rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;text-decoration:none;transition:all .2s;}
-.ftl.p{background:var(--blue);color:#fff;}.ftl.p:hover{background:var(--blue-l);}
-.ftl.g{border:1px solid var(--border);color:var(--muted);}.ftl.g:hover{border-color:rgba(238,232,255,.2);color:var(--ink);}
-.ft-copy{max-width:1100px;margin:52px auto 0;padding-top:22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted2);flex-wrap:wrap;gap:8px;}
-
-/* ── RESPONSIVE ── */
-@media(max-width:1024px){
-  .two-col,.ft-inner{grid-template-columns:1fr;}
-  .two-col.flip{direction:ltr;}
-  .sky-results{grid-template-columns:repeat(2,1fr);}
-  .tgrid{grid-template-columns:1fr;}
-  .islands-grid{grid-template-columns:repeat(2,1fr);}
-  .fc-layers,.fc-props{display:none;}
-}
-@media(max-width:768px){
-  .sec{padding:80px 20px;}
-  #hero{padding:56px 20px 60px;}
-  #footer{padding:80px 20px 46px;}
-  .islands-grid{grid-template-columns:1fr;}
-  .sky-results{grid-template-columns:repeat(2,1fr);}
-  .nav-links{display:none;}
-  .adam-hands{width:80%;opacity:.03;}
-}
-@media(max-width:480px){.sky-results{grid-template-columns:1fr;}}
-</style>
-<link rel="stylesheet" href="/assets/vice-theme.css?v=4">
-<script src="/assets/vice-district.js?v=4" defer></script>
+    @media (max-width: 1024px) {
+      .si-hero-head, .si-roi-grid, .si-radar-grid { grid-template-columns: 1fr; }
+      .si-islands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sky-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .si-voices { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .si-race-grid, .si-islands, .si-signals, .sky-grid, .si-out-pair { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body data-project="magic-checkout">
+  <main>
+    <!-- ── HERO: STARFISH ISLAND HEAD-TO-HEAD CHECKOUT SPEED RACE ─────────── -->
+    <section class="si-hero">
+      <div class="cs-wrap">
+        <div class="si-hero-head" data-reveal>
+          <div>
+            <div class="cs-kicker">District 02 · Starfish Island · 100M+ Shoppers</div>
+            <h1 class="vc-hero-title">
+              <span class="vc-hero-row vc-pink">MAGIC</span>
+              <span class="vc-hero-row vc-teal">CHECKOUT</span>
+            </h1>
+          </div>
+          <div>
+            <p class="cs-lead" style="margin-top:0;">
+              India's fastest 1-click D2C checkout. I owned every Mobile &amp; Tablet breakpoint (&lt;1024px) end-to-end and co-built the Desktop architecture inside Framer.
+            </p>
+            <div class="cs-meta-line">
+              <strong>Ownership</strong> Mobile &amp; Tablet Lead (&lt;1024px) · <strong>Co-Build</strong> Desktop · <strong>Company</strong> Razorpay · <strong>Year</strong> 2026
+            </div>
+          </div>
+        </div>
 
-<div id="scroll-bar"></div>
+        <!-- Live Interactive Speed-Race Duel -->
+        <div class="si-race" data-reveal data-delay="100" aria-label="Checkout speed race simulator">
+          <div class="si-race-bar">
+            <div>
+              <div class="si-race-title">Live Speed Race · Guest Checkout vs. Magic Checkout</div>
+              <div style="font-size:13.5px;color:var(--vc-ink-2);margin-top:2px;">Hit Start Race to see why 100M+ Indian shoppers convert 5× faster.</div>
+            </div>
+            <button class="si-race-btn" type="button" id="siStartRace">▶ Start 1-Click Race</button>
+          </div>
 
-<!-- SIDE DOTS -->
-<div id="side-dots">
-  <div class="sd" data-sec="hero" title="Hero"></div>
-  <div class="sd" data-sec="overview" title="Overview"></div>
-  <div class="sd" data-sec="islands" title="Islands"></div>
-  <div class="sd" data-sec="conversion" title="Conversion"></div>
-  <div class="sd" data-sec="cod" title="COD"></div>
-  <div class="sd" data-sec="prefill" title="Prefill"></div>
-  <div class="sd" data-sec="sky-section" title="Results"></div>
-  <div class="sd" data-sec="testimonials" title="Testimonials"></div>
-  <div class="sd" data-sec="reflection" title="Reflection"></div>
-</div>
+          <div class="si-race-grid">
+            <div class="si-lane legacy">
+              <div class="si-lane-top">
+                <span style="color:#FF87B9;">Old 5-Step Checkout</span>
+                <span class="si-lane-clock" id="siOldClock" style="color:#FF87B9;">00.0s</span>
+              </div>
+              <div class="si-track"><i id="siOldBar"></i></div>
+              <div class="si-feed" id="siOldFeed">
+                <div>Waiting at Step 1: Enter email &amp; create password...</div>
+              </div>
+            </div>
 
-<!-- NAV -->
-<nav id="nav">
-  <span class="nav-logo"><a href="/#projects" class="cs-back">← Portfolio</a>Magic Checkout</span>
-  <div class="nav-links">
-    <a href="#overview" class="nav-a">Overview</a>
-    <a href="#islands" class="nav-a">Islands</a>
-    <a href="#conversion" class="nav-a">Conversion</a>
-    <a href="#sky-section" class="nav-a">Results</a>
-    <a href="#reflection" class="nav-a">Reflection</a>
-    <a href="https://razorpay.com/magic-checkout/" target="_blank" rel="noopener" class="nav-a" style="color:var(--teal-l);border:1px solid rgba(18,191,176,.25);border-radius:4px;margin-left:8px;">Live Site ↗</a>
-  </div>
-</nav>
-
-<!-- ══════════════════════
-     HERO
-══════════════════════ -->
-<section id="hero">
-  <div class="hero-grid-bg"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-glow2"></div>
-
-  <!-- Creation of Adam hands — faint background art -->
-  <svg class="adam-hands" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-    <!-- Adam's arm — reclining, reaching right -->
-    <g stroke="var(--gold-l)" stroke-width="1.2" fill="none">
-      <!-- upper arm -->
-      <path d="M80 260 Q150 240 220 230 Q280 222 350 218"/>
-      <!-- forearm -->
-      <path d="M350 218 Q400 215 440 210 Q470 207 500 202"/>
-      <!-- hand outline -->
-      <path d="M500 202 Q510 200 518 196 Q524 192 522 186"/>
-      <!-- index finger extended toward gap -->
-      <path d="M518 196 Q530 188 544 182 Q556 178 564 174"/>
-      <!-- other fingers relaxed -->
-      <path d="M522 186 Q530 182 536 180"/>
-      <path d="M518 196 Q524 196 528 198"/>
-      <path d="M500 202 Q504 208 506 214"/>
-      <!-- arm muscle contour -->
-      <path d="M80 260 Q140 280 200 265 Q260 250 320 240 Q370 232 400 228"/>
-    </g>
-    <!-- God's arm — dynamic, reaching left from right -->
-    <g stroke="var(--blue-l)" stroke-width="1.2" fill="none">
-      <!-- upper arm + shoulder -->
-      <path d="M820 180 Q770 186 720 190 Q680 194 640 198 Q610 202 590 206"/>
-      <!-- forearm -->
-      <path d="M590 206 Q570 208 555 208 Q542 208 532 206"/>
-      <!-- hand -->
-      <path d="M532 206 Q524 202 520 196 Q518 190 520 184"/>
-      <!-- index finger — reaching toward gap, almost touching Adam's -->
-      <path d="M520 184 Q516 178 512 174 Q508 170 505 168"/>
-      <!-- other fingers -->
-      <path d="M532 206 Q528 212 524 216"/>
-      <path d="M532 206 Q538 208 542 212"/>
-      <!-- arm drapery lines -->
-      <path d="M820 180 Q790 195 760 205 Q730 212 700 216 Q670 220 650 222"/>
-      <path d="M820 185 Q800 198 775 208"/>
-    </g>
-    <!-- The gap — represented by a gentle arc of light -->
-    <path d="M505 168 Q504 166 505 164 Q506 162 507 160" stroke="var(--teal-l)" stroke-width="0.8" opacity="0.7"/>
-    <path d="M564 174 Q562 170 561 166 Q560 162 560 158" stroke="var(--teal-l)" stroke-width="0.8" opacity="0.7"/>
-    <!-- The spark in the gap -->
-    <circle cx="532" cy="162" r="2" fill="var(--teal-l)" opacity="0.5"/>
-    <circle cx="532" cy="162" r="6" stroke="var(--teal-l)" stroke-width="0.4" fill="none" opacity="0.25"/>
-    <!-- figure silhouettes — very minimal -->
-    <ellipse cx="60" cy="280" rx="60" ry="40" stroke="var(--gold-l)" stroke-width="0.6" opacity="0.3"/>
-    <ellipse cx="840" cy="200" rx="70" ry="50" stroke="var(--blue-l)" stroke-width="0.6" opacity="0.3"/>
-  </svg>
-
-  <div class="hero-content">
-    <div class="hero-top">
-      <div>
-        <span class="eyebrow rev">Case Study &nbsp;·&nbsp; 2026</span>
-        <h1 class="display rev d1">Magic<br>Checkout</h1>
+            <div class="si-lane magic">
+              <div class="si-lane-top">
+                <span style="color:var(--vc-teal);">Razorpay Magic Checkout</span>
+                <span class="si-lane-clock" id="siMagClock" style="color:var(--vc-teal);">00.0s</span>
+              </div>
+              <div class="si-track"><i id="siMagBar"></i></div>
+              <div class="si-feed" id="siMagFeed">
+                <div>Ready · 100M+ shopper network prefill standing by...</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="hero-meta-col rev d2">
-        <div class="hmeta"><span class="hmeta-label">Role</span><span class="hmeta-val">Framer Developer</span></div>
-        <div class="hmeta"><span class="hmeta-label">Company</span><span class="hmeta-val">Razorpay</span></div>
-        <div class="hmeta"><span class="hmeta-label">Scope</span><span class="hmeta-val">Mobile · Tablet · Desktop</span></div>
-        <div class="hmeta"><span class="hmeta-label">Year</span><span class="hmeta-val">2026</span></div>
+    </section>
+
+    <!-- ── 01 · INTERACTIVE D2C ROI CALCULATOR + FRAMER CANVAS ────────────── -->
+    <section class="cs-sec" id="overview">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">01 · Interactive Conversion Lab</div>
+            <h2 class="cs-h2">Slide Your Store Numbers.<br>Watch <span>Magic</span> Scale.</h2>
+          </div>
+          <p class="cs-sub">
+            Over 75% of Indian D2C traffic shops by thumb. Play with real store volume below to estimate checkout uplift using Magic Checkout's published benchmarks, then inspect the 4-breakpoint Framer canvas.
+          </p>
+        </div>
+
+        <div class="si-roi-grid">
+          <div class="si-calc" data-reveal>
+            <div class="si-slider-row">
+              <label for="siOrders"><span>Monthly Store Orders</span><b class="tnum" id="siOrdersVal">10,000</b></label>
+              <input class="si-range" id="siOrders" type="range" min="1000" max="50000" step="1000" value="10000">
+            </div>
+            <div class="si-slider-row">
+              <label for="siCod"><span>Current COD Share</span><b class="tnum" id="siCodVal">65%</b></label>
+              <input class="si-range" id="siCod" type="range" min="20" max="90" step="5" value="65">
+            </div>
+            <div class="si-out-pair">
+              <div class="si-out-box">
+                <strong class="tnum" id="siExtraOrders">+2,000</strong>
+                <span>Est. Extra Orders / Mo (+20%)</span>
+              </div>
+              <div class="si-out-box">
+                <strong class="tnum" id="siSavedRto" style="color:var(--vc-gold);">2,340</strong>
+                <span>RTO Orders Prevented (−36%)</span>
+              </div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--vc-ink-3);">
+              My Role: Owned 390px &amp; 810px Mobile/Tablet layouts end-to-end + co-built 1280px &amp; 1440px Desktop.
+            </div>
+          </div>
+
+          <figure class="cs-frame" data-zoom data-reveal data-delay="100" data-zoom-cap="Magic Checkout — 4-Breakpoint Framer production canvas">
+            <img src="/assets/images/magic-checkout-1.webp" alt="Magic Checkout Framer 4-breakpoint architecture canvas" loading="lazy">
+            <figcaption class="cs-frame-cap">
+              <strong>Framer 4-Breakpoint Canvas · 1440 · 1280 · 810 · 390</strong>
+              <span>Click to inspect fullscreen ↗</span>
+            </figcaption>
+          </figure>
+        </div>
       </div>
-    </div>
-    <span class="rule-h"></span>
-    <div class="hero-foot">
-      <p class="hero-desc rev d3">How I shaped the checkout experience that converts millions of Indian shoppers — building every mobile and tablet interaction for <em>Razorpay's fastest-growing product.</em></p>
-      <span class="scroll-lbl rev d4">Scroll to read</span>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- MARQUEE -->
-<div id="marquee" aria-hidden="true">
-  <div class="mq-inner">
-    <div class="mq-chip"><span class="mq-n">+70%</span><span class="mq-l">Prepaid · Borosil</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">−36.36%</span><span class="mq-l">RTO Reduction</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">+7.3%</span><span class="mq-l">Conversion · Nappa Dori</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">5×</span><span class="mq-l">Faster Checkout</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">+14%</span><span class="mq-l">Conversion · Uberlyfe</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">12</span><span class="mq-l">Product Islands</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">+70%</span><span class="mq-l">Prepaid · Borosil</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">−36.36%</span><span class="mq-l">RTO Reduction</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">+7.3%</span><span class="mq-l">Conversion · Nappa Dori</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">5×</span><span class="mq-l">Faster Checkout</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">+14%</span><span class="mq-l">Conversion · Uberlyfe</span><span class="mq-sep"></span></div>
-    <div class="mq-chip"><span class="mq-n">12</span><span class="mq-l">Product Islands</span><span class="mq-sep"></span></div>
-  </div>
-</div>
+    <!-- ── 02 · THE 12 ISLANDS 3D FLIP DECK ───────────────────────────────── -->
+    <section class="cs-sec" id="islands">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">02 · Tap Any Card To Flip In 3D</div>
+            <h2 class="cs-h2">The Twelve <span>Islands</span> of Magic</h2>
+          </div>
+          <div class="cs-tabs" role="tablist" aria-label="Filter 12 islands">
+            <button class="cs-tab active" type="button" role="tab" aria-selected="true" data-cat="all">All 12</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-cat="speed">Speed</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-cat="risk">RTO Risk</button>
+            <button class="cs-tab" type="button" role="tab" aria-selected="false" data-cat="merchant">Merchant</button>
+          </div>
+        </div>
 
-<!-- ══════════════════════
-     REMOVED — HANDS SECTION
-══════════════════════ -->
-<section id="adam-hands-REMOVED" style="display:none">
-  <span class="ah-label">The Connection</span>
-  <div class="ah-stage">
-    <!-- ambient glow at the gap -->
-    <div class="ah-glow" id="ah-glow"></div>
-    <div class="ah-spark" id="ah-spark"></div>
+        <div class="si-islands" id="siIslandGrid" data-reveal>
+          <!-- Populated cleanly with 3D flip cards by script -->
+        </div>
+      </div>
+    </section>
 
-    <!-- ADAM'S ARM (left side, amber/ochre, relaxed hand, full arm) -->
-    <div class="ah-arm ah-arm-adam" id="ah-adam">
-      <svg width="480" height="180" viewBox="0 0 480 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="adamSkin" x1="0" y1="0" x2="480" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#6B3A1F" stop-opacity="0.7"/>
-            <stop offset="35%" stop-color="#C4892A"/>
-            <stop offset="65%" stop-color="#D4A030"/>
-            <stop offset="85%" stop-color="#E8C060"/>
-            <stop offset="100%" stop-color="#F0CE78"/>
-          </linearGradient>
-          <linearGradient id="adamSkinDark" x1="0" y1="0" x2="480" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#4A2510" stop-opacity="0.5"/>
-            <stop offset="50%" stop-color="#8B5B1A"/>
-            <stop offset="100%" stop-color="#C4892A"/>
-          </linearGradient>
-          <linearGradient id="adamDrape" x1="0" y1="0" x2="200" y2="180" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#3D1F0A" stop-opacity="0.8"/>
-            <stop offset="100%" stop-color="#6B3820" stop-opacity="0.4"/>
-          </linearGradient>
-          <filter id="adamBlur"><feGaussianBlur stdDeviation="1.5"/></filter>
-        </defs>
-        <!-- drapery / fabric behind shoulder -->
-        <path d="M0 100 Q30 80 60 95 Q80 105 90 118 Q100 130 85 145 Q70 158 40 155 Q15 150 0 140 Z" fill="url(#adamDrape)" opacity="0.65"/>
-        <path d="M0 80 Q25 60 55 70 Q75 78 82 92 Q70 82 45 88 Q20 95 0 100 Z" fill="#2A1208" opacity="0.4"/>
-        <!-- upper arm — reclining, thick, muscular -->
-        <path d="M20 118 Q80 105 140 100 Q200 96 260 95 Q310 94 355 95 Q385 96 410 98" stroke="url(#adamSkin)" stroke-width="28" stroke-linecap="round" fill="none"/>
-        <!-- upper arm shadow/underside -->
-        <path d="M20 122 Q80 112 140 108 Q200 104 260 104 Q310 103 355 104 Q385 106 410 108" stroke="url(#adamSkinDark)" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <!-- forearm — narrowing -->
-        <path d="M410 98 Q428 98 442 100 Q456 102 464 106" stroke="url(#adamSkin)" stroke-width="20" stroke-linecap="round" fill="none"/>
-        <path d="M410 108 Q428 110 442 112 Q456 114 464 116" stroke="url(#adamSkinDark)" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.55"/>
-        <!-- wrist -->
-        <path d="M460 100 Q468 100 474 103 Q478 106 478 110" stroke="url(#adamSkin)" stroke-width="16" stroke-linecap="round" fill="none"/>
-        <!-- hand back / palm -->
-        <path d="M464 98 Q471 95 476 97 Q480 100 479 106 Q478 112 474 116 Q470 120 464 120 Q458 118 455 113 Q454 108 457 103 Z" fill="url(#adamSkin)"/>
-        <!-- INDEX FINGER — drooping slightly, limp, reaching toward gap (right edge) -->
-        <path d="M476 97 Q479 90 479 84 Q479 78 476 74 Q473 70 469 70 Q465 71 463 75 Q461 80 462 86 Q463 92 466 97" stroke="#D4A030" stroke-width="8" stroke-linecap="round" fill="none"/>
-        <path d="M476 74 Q474 70 470 69 Q466 69 464 73" stroke="#8B5B1A" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <!-- fingertip glow hint -->
-        <ellipse cx="471" cy="69" rx="5" ry="4" fill="#F0CE78" opacity="0.7"/>
-        <!-- middle finger — curled down -->
-        <path d="M470 120 Q472 128 470 134 Q467 138 463 137 Q459 136 458 131 Q457 126 460 122" stroke="#C4892A" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <!-- ring finger — more curled -->
-        <path d="M462 118 Q462 126 459 130 Q456 133 452 131 Q448 129 448 124 Q449 119 453 117" stroke="#C4892A" stroke-width="6.5" stroke-linecap="round" fill="none"/>
-        <!-- pinky — tucked -->
-        <path d="M453 116 Q452 122 449 125 Q446 127 443 125 Q440 122 441 118" stroke="#C4892A" stroke-width="5.5" stroke-linecap="round" fill="none"/>
-        <!-- thumb -->
-        <path d="M456 102 Q452 96 450 90 Q449 84 452 80 Q455 77 458 80 Q461 84 460 92" stroke="#C4892A" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <!-- knuckle lines -->
-        <path d="M463 89 Q466 87 469 88" stroke="#8B5B1A" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-        <path d="M463 82 Q466 80 468 81" stroke="#8B5B1A" stroke-width="1.2" fill="none" opacity="0.5"/>
-        <!-- fresco crack lines — very subtle -->
-        <path d="M120 98 Q122 94 121 90" stroke="#6B3A1F" stroke-width="0.5" fill="none" opacity="0.35"/>
-        <path d="M240 96 Q243 92 241 88" stroke="#6B3A1F" stroke-width="0.4" fill="none" opacity="0.25"/>
-        <path d="M350 96 Q352 100 350 105" stroke="#6B3A1F" stroke-width="0.4" fill="none" opacity="0.2"/>
-        <!-- shoulder highlight -->
-        <path d="M40 102 Q80 96 120 95" stroke="#E8C060" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.3"/>
+    <!-- ── 03 · INTERACTIVE LIVE SVG RTO RISK RADAR DIAL ──────────────────── -->
+    <section class="cs-sec" id="craft">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">03 · Interactive Risk Telemetry</div>
+            <h2 class="cs-h2">Test The Live <span>RTO Radar</span></h2>
+          </div>
+          <p class="cs-sub">Toggle real buyer signals on the right to swing Magic Checkout's AI RTO needle and watch the checkout action adapt live.</p>
+        </div>
+
+        <div class="si-radar-grid">
+          <div class="si-gauge-card" data-reveal>
+            <svg class="si-gauge-svg" viewBox="0 0 300 175" aria-hidden="true">
+              <defs>
+                <linearGradient id="rtoGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#21E6D1"/>
+                  <stop offset="50%" stop-color="#FFD36B"/>
+                  <stop offset="100%" stop-color="#FF2E88"/>
+                </linearGradient>
+              </defs>
+              <path d="M 35 140 A 115 115 0 0 1 265 140" fill="none" stroke="rgba(255,245,238,0.12)" stroke-width="16" stroke-linecap="round"/>
+              <path d="M 35 140 A 115 115 0 0 1 265 140" fill="none" stroke="url(#rtoGrad)" stroke-width="16" stroke-linecap="round" opacity="0.9"/>
+              <g class="si-needle" id="siNeedle" style="transform: rotate(-68deg);">
+                <line x1="150" y1="140" x2="150" y2="42" stroke="#FFF5EE" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="150" cy="140" r="9" fill="#21E6D1"/>
+              </g>
+            </svg>
+            <div style="font-family:var(--font-display);font-size:46px;font-weight:900;line-height:1;" class="tnum" id="siRiskPct">14%</div>
+            <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--vc-ink-3);margin-top:4px;">Predicted COD Return-To-Origin Risk</div>
+          </div>
+
+          <div data-reveal data-delay="100">
+            <div class="si-signals">
+              <button class="si-sig-btn good on" type="button" data-delta="-18" data-interactive>
+                <small>Positive Signal</small><b>14+ Delivered D2C Orders</b>
+              </button>
+              <button class="si-sig-btn" type="button" data-delta="36" data-interactive>
+                <small>Risk Flag</small><b>3 Prior COD Refusals</b>
+              </button>
+              <button class="si-sig-btn" type="button" data-delta="24" data-interactive>
+                <small>Risk Flag</small><b>Incomplete Flat / Landmark</b>
+              </button>
+              <button class="si-sig-btn" type="button" data-delta="22" data-interactive>
+                <small>Risk Flag</small><b>High-RTO Tier-3 Pincode</b>
+              </button>
+            </div>
+            <div class="si-verdict" id="siVerdict">
+              <strong>Low Risk (14%):</strong> Unlock 1-Tap Express COD + Instant UPI with 0.3s address prefill.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 04 · 100% PRESERVED SUNLIT CLOUDS SKY SECTION (#sky-section) ───── -->
+    <section id="sky-section" aria-label="Verified merchant impact">
+      <div class="sky-cloud sky-c1" aria-hidden="true"></div>
+      <div class="sky-cloud sky-c2" aria-hidden="true"></div>
+      <div class="sky-cloud sky-c3" aria-hidden="true"></div>
+      <svg class="sky-hands" viewBox="0 0 1440 640" fill="none" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path d="M-40 430 C 140 400, 290 365, 430 330 C 510 310, 580 302, 650 318 C 672 323, 688 320, 698 312" stroke="#1A1208" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M520 338 C 575 344, 622 340, 668 332" stroke="#1A1208" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M1480 230 C 1290 252, 1120 278, 975 304 C 892 318, 818 322, 756 312 C 742 310, 732 313, 724 316" stroke="#1A1208" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M908 292 C 845 294, 792 299, 744 304" stroke="#1A1208" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="711" cy="314" r="22" stroke="#1A1208" stroke-width="1.2" stroke-dasharray="4 6"/>
       </svg>
-    </div>
 
-    <!-- GOD'S ARM (right side, index finger pointing, terracotta drapery) -->
-    <div class="ah-arm ah-arm-god" id="ah-god">
-      <svg width="480" height="180" viewBox="0 0 480 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="godSkin" x1="480" y1="0" x2="0" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#5A2810" stop-opacity="0.7"/>
-            <stop offset="30%" stop-color="#B87820"/>
-            <stop offset="60%" stop-color="#CC9030"/>
-            <stop offset="80%" stop-color="#E0B848"/>
-            <stop offset="100%" stop-color="#F0CE78"/>
-          </linearGradient>
-          <linearGradient id="godSkinDark" x1="480" y1="0" x2="0" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#3A1808" stop-opacity="0.5"/>
-            <stop offset="50%" stop-color="#804A10"/>
-            <stop offset="100%" stop-color="#B87820"/>
-          </linearGradient>
-          <linearGradient id="terraDrape" x1="480" y1="0" x2="300" y2="180" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7A2810" stop-opacity="0.85"/>
-            <stop offset="50%" stop-color="#9B3A18" stop-opacity="0.7"/>
-            <stop offset="100%" stop-color="#6B2A14" stop-opacity="0.4"/>
-          </linearGradient>
-          <linearGradient id="terraFold" x1="480" y1="30" x2="300" y2="160" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#5A1E0C" stop-opacity="0.9"/>
-            <stop offset="100%" stop-color="#8B3820" stop-opacity="0.5"/>
-          </linearGradient>
-        </defs>
-        <!-- TERRACOTTA DRAPERY — behind the arm, flowing fabric -->
-        <path d="M480 20 Q440 10 400 22 Q370 32 355 52 Q340 72 345 95 Q350 118 370 130 Q395 145 430 148 Q460 150 480 145 Z" fill="url(#terraDrape)"/>
-        <!-- drapery folds -->
-        <path d="M480 25 Q450 18 415 28 Q390 36 380 55 Q370 74 378 98" stroke="#5A1E0C" stroke-width="2.5" fill="none" opacity="0.6"/>
-        <path d="M480 40 Q455 35 428 44 Q405 52 398 72 Q392 90 400 112" stroke="#8B3820" stroke-width="2" fill="none" opacity="0.4"/>
-        <path d="M480 60 Q460 55 440 62 Q420 70 415 88 Q410 105 418 122" stroke="#7A2810" stroke-width="1.5" fill="none" opacity="0.35"/>
-        <!-- drapery highlight -->
-        <path d="M460 18 Q430 14 405 26 Q385 36 378 58" stroke="#C45A28" stroke-width="1.5" fill="none" opacity="0.45"/>
-        <!-- drapery shadow edge -->
-        <path d="M345 95 Q350 120 368 132 Q388 144 415 147" stroke="#3A1208" stroke-width="3" fill="none" opacity="0.5"/>
-        <!-- upper arm — strong, foreshortened, pointing forward -->
-        <path d="M460 95 Q400 98 340 98 Q280 98 220 98 Q170 98 130 97 Q90 97 60 98" stroke="url(#godSkin)" stroke-width="30" stroke-linecap="round" fill="none"/>
-        <!-- underside shadow -->
-        <path d="M460 106 Q400 108 340 108 Q280 108 220 108 Q170 108 130 107 Q90 107 60 107" stroke="url(#godSkinDark)" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <!-- forearm — narrowing at wrist -->
-        <path d="M60 97 Q42 97 28 99 Q16 102 8 107" stroke="url(#godSkin)" stroke-width="22" stroke-linecap="round" fill="none"/>
-        <path d="M60 107 Q42 109 28 112 Q16 115 8 118" stroke="url(#godSkinDark)" stroke-width="11" stroke-linecap="round" fill="none" opacity="0.55"/>
-        <!-- wrist -->
-        <path d="M12 103 Q5 104 2 107 Q0 110 1 113" stroke="url(#godSkin)" stroke-width="18" stroke-linecap="round" fill="none"/>
-        <!-- hand / palm area -->
-        <path d="M16 97 Q9 95 4 98 Q0 101 0 107 Q0 113 4 117 Q8 121 14 121 Q20 118 22 113 Q23 108 21 102 Z" fill="url(#godSkin)"/>
-        <!-- INDEX FINGER — the famous pointing finger, extended and slightly raised -->
-        <path d="M4 97 Q1 90 1 83 Q1 76 4 71 Q7 67 11 67 Q15 67 17 71 Q19 76 18 83 Q17 89 14 97" stroke="#D4A030" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M4 71 Q6 67 10 66 Q14 66 17 70" stroke="#8B5B1A" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <!-- fingertip — the divine touch point -->
-        <ellipse cx="9" cy="65" rx="5.5" ry="4" fill="#F0CE78" opacity="0.85"/>
-        <ellipse cx="9" cy="65" rx="8" ry="6" fill="none" stroke="#F0CE78" stroke-width="1" opacity="0.3"/>
-        <!-- middle finger — curled, natural -->
-        <path d="M10 120 Q8 128 10 134 Q13 138 17 137 Q21 136 22 131 Q23 126 20 122" stroke="#C4892A" stroke-width="7.5" stroke-linecap="round" fill="none"/>
-        <!-- ring finger -->
-        <path d="M18 119 Q18 127 21 131 Q24 134 28 133 Q32 131 32 126 Q31 121 27 118" stroke="#C4892A" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <!-- pinky -->
-        <path d="M27 117 Q28 123 31 126 Q34 128 37 126 Q40 124 39 119" stroke="#C4892A" stroke-width="6" stroke-linecap="round" fill="none"/>
-        <!-- thumb — extended, powerful -->
-        <path d="M24 103 Q28 96 30 90 Q31 84 28 79 Q25 75 22 77 Q19 80 19 86 Q19 93 21 100" stroke="#C4892A" stroke-width="8" stroke-linecap="round" fill="none"/>
-        <!-- knuckle definition on index -->
-        <path d="M16 86 Q13 84 10 85" stroke="#8B5B1A" stroke-width="1.5" fill="none" opacity="0.7"/>
-        <path d="M17 78 Q14 76 11 77" stroke="#8B5B1A" stroke-width="1.2" fill="none" opacity="0.5"/>
-        <!-- nail on index finger -->
-        <path d="M6 67 Q9 64 12 66" stroke="#E8C060" stroke-width="1.2" fill="none" opacity="0.6"/>
-        <!-- fresco cracks -->
-        <path d="M360 98 Q358 94 360 89" stroke="#6B3A1F" stroke-width="0.5" fill="none" opacity="0.3"/>
-        <path d="M240 97 Q237 101 239 106" stroke="#6B3A1F" stroke-width="0.4" fill="none" opacity="0.22"/>
-        <path d="M130 98 Q128 93 129 88" stroke="#6B3A1F" stroke-width="0.4" fill="none" opacity="0.18"/>
-        <!-- highlight across shoulder/upper arm -->
-        <path d="M440 95 Q400 93 360 94" stroke="#E8C060" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.28"/>
-      </svg>
-    </div>
-  </div>
-
-  <!-- caption -->
-  <div class="ah-caption" id="ah-caption">
-    <p class="ah-cap-line">The gap between buyer and checkout.<br><em style="color:var(--teal-l)">Closed by Magic.</em></p>
-    <p class="ah-cap-sub">Inspired by Michelangelo's <em>Creation of Adam</em>, 1512</p>
-  </div>
-</section>
-
-<!-- ══════════════════════
-     OVERVIEW
-══════════════════════ -->
-<section id="overview" class="sec">
-  <div class="sec-inner">
-    <div class="two-col">
-      <div>
-        <div class="chap rev"><div class="orn"></div><span>The Product</span></div>
-        <h2 class="st rev d1">A checkout built<br>for a billion<br>Indian shoppers</h2>
-        <span class="rule-short rev d2"></span>
-        <p class="body-copy rev d3" style="margin-bottom:13px;">Magic Checkout is Razorpay's flagship consumer product — a <strong>one-click intelligent checkout</strong> that prefills buyer details, reduces COD fraud, surfaces personalised offers, and makes purchase feel effortless.</p>
-        <p class="body-copy rev d4">Live on thousands of D2C brands across India, handling address resolution, payment selection, intent prediction, and RTO risk scoring — all invisibly, in milliseconds. The marketing site is where merchants discover and activate it. That's where I came in.</p>
+      <div class="sky-in">
+        <div class="sky-eyebrow">04 · Verified Merchant Impact</div>
+        <h2 class="sky-h2">When friction vanishes, <em>commerce takes flight.</em></h2>
+        <p class="sky-lead">Real production outcomes measured across leading Indian D2C brands running Razorpay Magic Checkout at scale.</p>
+        <div class="sky-grid">
+          <article class="sky-card">
+            <div class="sky-num" data-count="70" data-prefix="+" data-suffix="%">+70%</div>
+            <div class="sky-brand">Borosil</div>
+            <p class="sky-desc">Lift in checkout conversion rate after replacing multi-step forms with 1-click prefill.</p>
+          </article>
+          <article class="sky-card">
+            <div class="sky-num" data-count="5" data-suffix="×">5×</div>
+            <div class="sky-brand">Nappa Dori</div>
+            <p class="sky-desc">Faster checkout completion speed for luxury shoppers on mobile and desktop.</p>
+          </article>
+          <article class="sky-card">
+            <div class="sky-num" data-count="36" data-prefix="−" data-suffix="%">−36%</div>
+            <div class="sky-brand">Industry Avg</div>
+            <p class="sky-desc">Reduction in Cash-on-Delivery Return-to-Origin losses through AI risk scoring.</p>
+          </article>
+          <article class="sky-card">
+            <div class="sky-num" data-count="14" data-prefix="+" data-suffix="%">+14%</div>
+            <div class="sky-brand">Uberlyfe</div>
+            <p class="sky-desc">Increase in overall prepaid order share driven by smart checkout nudges.</p>
+          </article>
+        </div>
       </div>
-      <div>
-        <div class="role-stack">
-          <div class="role-item rev-r d1">
-            <div class="ri-head"><span class="ri-badge">Primary</span><span class="ri-title">Mobile &amp; Tablet Ownership</span></div>
-            <p class="ri-body">Full ownership of all breakpoints below 1024px — layout decisions, responsive interactions, Framer architecture, and scroll behaviour. Every mobile experience was mine to design and build.</p>
-          </div>
-          <div class="role-item rev-r d2">
-            <div class="ri-head"><span class="ri-badge" style="border-color:rgba(18,191,176,.3);color:var(--teal-l);background:rgba(18,191,176,.05);">Collaborative</span><span class="ri-title">Desktop Breakpoint</span></div>
-            <p class="ri-body">Partnered with the senior Framer developer on desktop — component specs, interaction logic, visual QA. Mobile patterns I established influenced the desktop direction.</p>
-          </div>
-          <div class="role-item rev-r d3">
-            <div class="ri-head"><span class="ri-badge" style="border-color:rgba(184,146,43,.3);color:var(--gold-l);background:rgba(184,146,43,.05);">Stack</span><span class="ri-title">Tools &amp; Craft</span></div>
-            <p class="ri-body">Framer, Figma, custom CSS overrides, code components, scroll-linked animations, performance testing on real Android devices.</p>
+    </section>
+
+    <!-- ── 05 · MERCHANT VOICES & FULL-RECTANGLE AKSHAT PORTRAIT ──────────── -->
+    <section class="cs-sec" id="reflection">
+      <div class="cs-wrap">
+        <div class="cs-sec-head" data-reveal>
+          <div>
+            <div class="cs-eyebrow">05 · Merchant Voices</div>
+            <h2 class="cs-h2">Proof From India's <span>Category Leaders</span></h2>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<span class="rule-h" style="display:block;"></span>
-
-<!-- ══════════════════════
-     ISLANDS
-══════════════════════ -->
-<section id="islands" class="sec">
-  <div class="sec-inner">
-    <div style="text-align:center;margin-bottom:60px;">
-      <div class="chap rev" style="justify-content:center;"><div class="orn"></div><span>The Platform</span></div>
-      <h2 class="st rev d1">12 Islands of Magic</h2>
-      <p class="body-copy rev d2" style="max-width:480px;margin:14px auto 0;">Every capability of Magic Checkout — researched from the live product, brought to life in the marketing experience.</p>
-    </div>
-    <div class="islands-grid rev-s">
-      <div class="isl"><div class="isl-top"><span class="isl-icon">⚡</span><span class="isl-num">01</span></div><div class="isl-title">One-Click Checkout</div><p class="isl-body">Returning network buyers get a single-tap checkout. Cart to confirmation in under 30 seconds.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🏠</span><span class="isl-num">02</span></div><div class="isl-title">Smart Address Prefill</div><p class="isl-body">Verified addresses pulled from the Razorpay network. Zero typing on mobile.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">💳</span><span class="isl-num">03</span></div><div class="isl-title">Saved Cards &amp; Wallets</div><p class="isl-body">Most-used card or UPI pre-selected. Payment collapses to a single authentication tap.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🎯</span><span class="isl-num">04</span></div><div class="isl-title">Personalised Offers Engine</div><p class="isl-body">Real-time eligibility scoring surfaces discounts at the right moment, not buried in a promo tab.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🛡</span><span class="isl-num">05</span></div><div class="isl-title">COD Intelligence</div><p class="isl-body">ML-powered RTO risk scoring before order placement. Reduces returns by up to 36%.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🔮</span><span class="isl-num">06</span></div><div class="isl-title">Purchase Intent Prediction</div><p class="isl-body">Scroll velocity, session depth, cart views — combined to trigger nudges at the optimal moment.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">📦</span><span class="isl-num">07</span></div><div class="isl-title">Order Review &amp; Upsell</div><p class="isl-body">Order summary becomes an active conversion surface — upsell and trust signals at decision point.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🔔</span><span class="isl-num">08</span></div><div class="isl-title">Abandoned Cart Recovery</div><p class="isl-body">SMS/WhatsApp re-engagement with deep-linked session restore — back to exactly where they left.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">📊</span><span class="isl-num">09</span></div><div class="isl-title">Merchant Analytics</div><p class="isl-body">Real-time dashboard: funnel, payment mix, offer redemption, RTO trends.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🌐</span><span class="isl-num">10</span></div><div class="isl-title">Cross-Merchant Identity</div><p class="isl-body">100M+ unique buyers. Recognises returning shoppers instantly on first visit to a new brand.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🚚</span><span class="isl-num">11</span></div><div class="isl-title">Shipping &amp; EDD</div><p class="isl-body">Estimated delivery dates from pincode, warehouse, and SLAs — displayed inline to reduce anxiety.</p></div>
-      <div class="isl"><div class="isl-top"><span class="isl-icon">🧩</span><span class="isl-num">12</span></div><div class="isl-title">No-Code Integration</div><p class="isl-body">One plugin activates the full suite on Shopify and WooCommerce in under 5 minutes.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════
-     CONVERSION — FRAMER CANVAS
-══════════════════════ -->
-<section id="conversion" class="sec ddive">
-  <div class="sec-inner">
-    <div class="two-col">
-      <div>
-        <div class="chap rev-l"><div class="orn"></div><span>Challenge I · Conversion</span></div>
-        <h2 class="st rev-l d1" style="font-size:clamp(2.2rem,4.2vw,3.8rem);">The checkout that doesn't feel like one</h2>
-        <span class="rule-short rev-l d2"></span>
-        <p class="body-copy rev-l d3">A single Framer project, four breakpoints — <strong>Desktop, Desktop sm, Phone, and Tablet</strong> — all live at the same time. Every layout decision I made on mobile had to hold up across every viewport simultaneously.</p>
-        <p class="body-copy rev-l d4" style="margin-top:12px;">Framer's breakpoint system let me iterate on mobile interactions without breaking desktop — custom scroll animations, conditional component states, and layout grids all responded to the active breakpoint. Nothing was ported; it was all designed in context.</p>
-      </div>
-      <div class="rev-r d2">
-        <!-- FRAMER CANVAS SCREENSHOT -->
-        <div class="framer-canvas" style="border-radius:12px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);">
-<img src="/assets/images/magic-checkout-1.webp" style="width:100%;display:block;border-radius:8px;" alt="Framer canvas — Magic Checkout all breakpoints" loading="eager" decoding="async">
+        <div class="si-voices" data-reveal>
+          <blockquote class="cs-card" data-tilt="5">
+            <div style="font-family:var(--font-display);font-size:34px;color:var(--vc-teal);line-height:0.7;">“</div>
+            <p style="margin:12px 0 18px;font-size:15.5px;color:var(--vc-ink);">Switching to Razorpay Magic Checkout drove a 70% jump in our checkout conversions while making mobile buying feel effortless.</p>
+            <div style="padding-top:12px;border-top:1px solid var(--vc-line);font-family:var(--font-mono);font-size:11.5px;color:var(--vc-ink-3);">
+              <strong style="display:block;color:var(--vc-ink);font-family:var(--font-cond);font-size:16px;text-transform:uppercase;">Borosil</strong>+70% Conversion Lift · Home &amp; Kitchen
+            </div>
+          </blockquote>
+          <blockquote class="cs-card" data-tilt="5">
+            <div style="font-family:var(--font-display);font-size:34px;color:var(--vc-teal);line-height:0.7;">“</div>
+            <p style="margin:12px 0 18px;font-size:15.5px;color:var(--vc-ink);">Checkout speed improved 5× and our order conversion climbed +7.3% without compromising the luxury feel of our storefront.</p>
+            <div style="padding-top:12px;border-top:1px solid var(--vc-line);font-family:var(--font-mono);font-size:11.5px;color:var(--vc-ink-3);">
+              <strong style="display:block;color:var(--vc-ink);font-family:var(--font-cond);font-size:16px;text-transform:uppercase;">Nappa Dori</strong>5× Faster · +7.3% Conversion
+            </div>
+          </blockquote>
+          <blockquote class="cs-card" data-tilt="5">
+            <div style="font-family:var(--font-display);font-size:34px;color:var(--vc-teal);line-height:0.7;">“</div>
+            <p style="margin:12px 0 18px;font-size:15.5px;color:var(--vc-ink);">Magic Checkout cut our COD friction and boosted prepaid share by +14%, directly protecting our unit economics on bulky deliveries.</p>
+            <div style="padding-top:12px;border-top:1px solid var(--vc-line);font-family:var(--font-mono);font-size:11.5px;color:var(--vc-ink-3);">
+              <strong style="display:block;color:var(--vc-ink);font-family:var(--font-cond);font-size:16px;text-transform:uppercase;">Uberlyfe</strong>+14% Prepaid Share · Furnishings
+            </div>
+          </blockquote>
         </div>
+
+        <!-- FULL-RECTANGLE EDITORIAL PORTRAIT OF AKSHAT SINGH -->
+        <aside class="cs-creator" data-reveal data-tilt="3" aria-label="Built by Akshat Singh">
+          <div class="cs-creator-photo" data-zoom data-zoom-cap="Akshat Singh — Mobile & Tablet Lead for Razorpay Magic Checkout">
+            <img src="/assets/images/magic-checkout-2.webp" alt="Akshat Singh full portrait" width="662" height="1024" loading="lazy">
+          </div>
+          <div class="cs-creator-body">
+            <div class="cs-creator-role">Built By · Mobile &amp; Tablet Lead (&lt;1024px) · Desktop Co-Build</div>
+            <div class="cs-creator-name">Akshat Singh</div>
+            <p class="cs-creator-bio">
+              Owned responsive execution below 1024px end-to-end and partnered with Razorpay's web engineering team on desktop choreography — crafting a thumb-first flagship page worthy of India's 100M+ shopper checkout network.
+            </p>
+            <div class="cs-creator-meta">
+              <span><b>District</b> Starfish Island</span>
+              <span><b>Ownership</b> &lt;1024px Lead + Desktop Co-Build</span>
+              <span><b>Stack</b> Framer · React · Motion</span>
+            </div>
+            <div class="cs-creator-acts">
+              <a class="cs-btn-primary" href="https://razorpay.com/magic-checkout/" target="_blank" rel="noopener">Explore Magic Checkout ↗</a>
+              <a class="cs-btn-ghost" href="/#projects">All Projects ←</a>
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
+  </main>
 
-<!-- ══════════════════════
-     COD
-══════════════════════ -->
-<section id="cod" class="sec ddive">
-  <div class="sec-inner">
-    <div class="two-col flip">
-      <div>
-        <div class="chap rev-r"><div class="orn"></div><span>Challenge II · COD Intelligence</span></div>
-        <h2 class="st rev-r d1" style="font-size:clamp(2.2rem,4.2vw,3.8rem);">Turning returns into revenue</h2>
-        <span class="rule-short rev-r d2"></span>
-        <p class="body-copy rev-r d3">COD carries 3–4× the return rate of prepaid. Magic Checkout scores every order using <strong>200+ signals</strong> before placement. My role: build UI that communicates risk <strong>without creating distrust</strong>.</p>
-        <p class="body-copy rev-r d4" style="margin-top:12px;">Framer's conditional rendering let me personalise the nudge based on risk tier — right incentive, right moment. The result: a 36.36% drop in RTO rates across activated merchants.</p>
-      </div>
-      <div class="rev-l d2">
-        <div class="data-panel">
-          <div class="dp-h">Order Risk Analysis</div>
-          <div class="rbar-row"><div class="rbar-top"><span style="color:var(--muted)">Address Confidence</span><span style="color:var(--teal-l)">High</span></div><div class="rbar-track"><div class="rbar-fill" style="--fc:var(--teal)" data-w="85"></div></div></div>
-          <div class="rbar-row"><div class="rbar-top"><span style="color:var(--muted)">Purchase History Signal</span><span style="color:var(--teal-l)">Strong</span></div><div class="rbar-track"><div class="rbar-fill" style="--fc:var(--teal)" data-w="78"></div></div></div>
-          <div class="rbar-row"><div class="rbar-top"><span style="color:var(--muted)">COD Fraud Probability</span><span style="color:rgba(255,150,150,.9)">Low Risk</span></div><div class="rbar-track"><div class="rbar-fill" style="--fc:rgba(255,100,100,.55)" data-w="12"></div></div></div>
-          <div class="rbar-row"><div class="rbar-top"><span style="color:var(--muted)">Return Likelihood</span><span style="color:var(--gold-l)">Moderate</span></div><div class="rbar-track"><div class="rbar-fill" style="--fc:var(--gold)" data-w="28"></div></div></div>
-          <div class="rbar-verd"><span class="rbar-badge">✓ COD Approved</span><span class="rbar-cta">Save ₹50 with prepaid <strong>→</strong></span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+  <script>
+    (function () {
+      const fx = () => window.ViceFX || { burst() {}, beep() {} };
 
-<!-- ══════════════════════
-     PREFILL
-══════════════════════ -->
-<section id="prefill" class="sec ddive">
-  <div class="sec-inner">
-    <div class="two-col">
-      <div>
-        <div class="chap rev-l"><div class="orn"></div><span>Challenge III · Identity &amp; Prefill</span></div>
-        <h2 class="st rev-l d1" style="font-size:clamp(2.2rem,4.2vw,3.8rem);">Recognising 100 million shoppers on first visit</h2>
-        <span class="rule-short rev-l d2"></span>
-        <p class="body-copy rev-l d3">First-time visitor sees their own name and address already filled in. Instant trust. Checkout drops from 4 minutes to under 30 seconds. I built this as a <strong>progressive reveal</strong> in Framer — phone entry → OTP → instant prefill — using the timeline API for precision.</p>
-      </div>
-      <div class="rev-r d2">
-        <div class="data-panel">
-          <div class="pp-hdr"><div class="pp-av">P</div><div><div class="pp-name">Priya Sharma</div><div class="pp-sub">✦ Recognised from Razorpay Network</div></div></div>
-          <div class="pp-row"><label>Mobile</label><div class="v">+91 XXXXX XXXXX</div></div>
-          <div class="pp-row"><label>Delivery Address</label><div class="v">A-12, Hauz Khas Village, New Delhi 110016</div></div>
-          <div class="pp-row"><label>Preferred Payment</label><div class="v">HDFC Visa •••• 4242</div></div>
-          <div class="pp-row"><label>Network History</label><div class="v">47 past orders · 12 brands</div></div>
-          <span class="pp-chip">✦ Prefilled in 0.3 seconds</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      /* 1. Dual-Phone Live Speed Race */
+      let raceTimer = 0;
+      const raceBtn = document.getElementById('siStartRace');
+      const oldClock = document.getElementById('siOldClock');
+      const magClock = document.getElementById('siMagClock');
+      const oldBar = document.getElementById('siOldBar');
+      const magBar = document.getElementById('siMagBar');
+      const oldFeed = document.getElementById('siOldFeed');
+      const magFeed = document.getElementById('siMagFeed');
 
-<!-- ══════════════════════
-     SKY SECTION (Creation of Adam Sky)
-══════════════════════ -->
-<section id="sky-section">
-  <div class="sky-bg"></div>
-  <div class="sky-cracks"></div>
-  <div class="sky-cloud sc1"></div>
-  <div class="sky-cloud sc2"></div>
-  <div class="sky-cloud sc3"></div>
-  <!-- hands echoed in the sky -->
-  <svg class="sky-hands" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-    <g stroke="#1A1208" stroke-width="1.5" fill="none">
-      <path d="M80 260 Q150 240 220 230 Q280 222 350 218 Q400 215 440 210 Q470 207 500 202 Q510 200 518 196 Q524 192 522 186 Q530 188 544 182 Q556 178 564 174"/>
-      <path d="M820 180 Q770 186 720 190 Q680 194 640 198 Q610 202 590 206 Q570 208 555 208 Q542 208 532 206 Q524 202 520 196 Q518 190 520 184 Q516 178 512 174 Q508 170 505 168"/>
-      <circle cx="532" cy="162" r="3" fill="#8B6820" opacity="0.6"/>
-      <ellipse cx="60" cy="280" rx="55" ry="35" stroke="#1A1208" stroke-width="0.8" opacity="0.25"/>
-      <ellipse cx="840" cy="200" rx="65" ry="45" stroke="#1A1208" stroke-width="0.8" opacity="0.25"/>
-    </g>
-  </svg>
+      raceBtn.addEventListener('click', e => {
+        clearInterval(raceTimer);
+        fx().beep('tick');
+        raceBtn.textContent = 'Racing...';
+        let t = 0;
+        let finished = false;
+        oldFeed.innerHTML = '<div>Typing email + creating account password...</div>';
+        magFeed.innerHTML = '<div>0.3s: Matched Priya Sharma (100M+ Network)</div>';
 
-  <div class="sky-content sec-inner sec" style="padding-top:120px;padding-bottom:120px;">
-    <div style="text-align:center;margin-bottom:0;">
-      <div class="chap rev sky-section" style="justify-content:center;"><div class="orn" style="background:#8B6820;"></div><span style="color:#8B6820;">Measured Impact</span></div>
-      <h2 class="st rev d1 sky-section" style="color:#1A1208;">The numbers<br><em style="color:#1B5E8A;font-style:italic;">don't lie.</em></h2>
-      <p class="body-copy rev d2 sky-section" style="max-width:460px;margin:14px auto 0;color:rgba(26,18,8,.55);">Real outcomes from real merchants. Measured, verified, and still growing.</p>
-    </div>
-    <div class="sky-results rev-s d2">
-      <div class="sky-rc"><div class="sky-rc-num">+<span class="count-up" data-t="70">0</span><span class="sky-rc-hi">%</span></div><p class="sky-rc-lbl">Increase in prepaid conversion within 60 days of activation</p><div class="sky-rc-brand">Borosil</div></div>
-      <div class="sky-rc"><div class="sky-rc-num"><span class="count-up" data-t="5">0</span><span class="sky-rc-hi">×</span></div><p class="sky-rc-lbl">Faster checkout completion vs. the standard Razorpay flow</p><div class="sky-rc-brand">Nappa Dori</div></div>
-      <div class="sky-rc"><div class="sky-rc-num">−<span class="count-up" data-t="36">0</span><span class="sky-rc-hi">%</span></div><p class="sky-rc-lbl">Reduction in Cash-on-Delivery return-to-origin rate</p><div class="sky-rc-brand">Industry Avg</div></div>
-      <div class="sky-rc"><div class="sky-rc-num">+<span class="count-up" data-t="14">0</span><span class="sky-rc-hi">%</span></div><p class="sky-rc-lbl">Overall checkout-to-purchase conversion improvement</p><div class="sky-rc-brand">Uberlyfe</div></div>
-    </div>
-  </div>
-</section>
+        raceTimer = setInterval(() => {
+          t += 100;
+          const sec = (t / 1000).toFixed(1);
+          const magPct = Math.min(100, Math.round((t / 2400) * 100));
+          const oldPct = Math.min(34, Math.round((t / 2400) * 34));
 
-<!-- ══════════════════════
-     TESTIMONIALS
-══════════════════════ -->
-<section id="testimonials" class="sec">
-  <div class="sec-inner">
-    <div style="margin-bottom:52px;">
-      <div class="chap rev"><div class="orn"></div><span>Merchant Voices</span></div>
-      <h2 class="st rev d1">In their<br>own words</h2>
-    </div>
-    <div class="tgrid">
-      <div class="tc rev">
-        <p class="tc-q">"Magic Checkout transformed our prepaid conversion overnight. Our operations team couldn't believe the numbers in the first week."</p>
-        <div class="tc-stat">+<span class="count-up" data-t="70">0</span><span class="hi">%</span></div>
-        <div class="tc-sl">Increase in prepaid orders</div>
-        <div class="tc-author"><div class="tc-dot">B</div><div><div class="tc-name">Borosil</div><div class="tc-co">Kitchen &amp; Glassware · D2C</div></div></div>
-      </div>
-      <div class="tc rev d2">
-        <p class="tc-q">"7.3% lift in conversion within 30 days. Customers love how fast it is — five times faster than anything we had before."</p>
-        <div class="tc-stat">+<span class="count-up" data-t="7.3">0</span><span class="hi">%</span></div>
-        <div class="tc-sl">Checkout conversion lift</div>
-        <div class="tc-author"><div class="tc-dot" style="border-color:rgba(18,191,176,.3);color:var(--teal-l);background:rgba(18,191,176,.05);">N</div><div><div class="tc-name">Nappa Dori</div><div class="tc-co">Luxury Leather · D2C</div></div></div>
-      </div>
-      <div class="tc rev d3">
-        <p class="tc-q">"The RTO reduction alone paid for the integration many times over. From 1 in 3 COD returns to 1 in 5 — real bottom-line impact."</p>
-        <div class="tc-stat">+<span class="count-up" data-t="14">0</span><span class="hi">%</span></div>
-        <div class="tc-sl">Overall conversion improvement</div>
-        <div class="tc-author"><div class="tc-dot" style="border-color:rgba(184,146,43,.3);color:var(--gold-l);background:rgba(184,146,43,.05);">U</div><div><div class="tc-name">Uberlyfe</div><div class="tc-co">Fitness &amp; Lifestyle · D2C</div></div></div>
-      </div>
-    </div>
-  </div>
-</section>
+          magBar.style.width = magPct + '%';
+          oldBar.style.width = oldPct + '%';
+          oldClock.textContent = sec + 's';
+          if (!finished) magClock.textContent = Math.min(2.4, t / 1000).toFixed(1) + 's';
 
-<!-- ══════════════════════
-     REFLECTION
-══════════════════════ -->
-<section id="reflection" class="sec">
-  <div class="sec-inner">
-    <div class="ref-center">
-      <div class="chap rev" style="justify-content:center;"><div class="orn"></div><span>Reflection</span></div>
-      <h2 class="st rev d1">What the work<br>taught me</h2>
-      <p class="body-copy rev d2" style="margin-top:18px;">Magic Checkout was the most technically demanding Framer project I'd taken on — responsive complexity, animation precision, real-world performance constraints.</p>
-      <ul class="learn-list">
-        <li class="li rev d1"><span class="li-n">01</span><p class="li-txt"><strong>Performance is a design decision.</strong> Perceived speed — skeleton states, optimistic UI, animation timing — is as real a discipline as visual design.</p></li>
-        <li class="li rev d2"><span class="li-n">02</span><p class="li-txt"><strong>Framer's real power is conditional state.</strong> Variables and conditionals let me build demos that genuinely responded to user behaviour in real time.</p></li>
-        <li class="li rev d3"><span class="li-n">03</span><p class="li-txt"><strong>Breakpoints aren't just layout.</strong> Mobile users interact with thumbs, not cursors — every interaction pattern needed to be rethought, not just reflowed.</p></li>
-        <li class="li rev d4"><span class="li-n">04</span><p class="li-txt"><strong>Marketing sites sell through demonstration.</strong> The live checkout demo created the "aha moment" that copywriting alone never could.</p></li>
-      </ul>
-    </div>
-  </div>
-</section>
+          if (t === 800) {
+            magFeed.innerHTML += '<div>Address + HDFC •••• 4242 auto-filled · ₹50 Prepaid Nudge</div>';
+            oldFeed.innerHTML += '<div class="stuck">Typing street address line 1 &amp; pincode...</div>';
+          }
+          if (t === 1700) {
+            magFeed.innerHTML += '<div>1-Tap UPI Intent authorized...</div>';
+          }
+          if (t >= 2400 && !finished) {
+            finished = true;
+            magClock.textContent = '24s ✓';
+            oldClock.textContent = '2m 18s...';
+            magFeed.innerHTML = '<div class="ok">ORDER PAID IN 24s · 5× FASTER THAN GUEST CHECKOUT ✓</div>';
+            oldFeed.innerHTML = '<div class="stuck">Still stuck at Step 2: "Please enter billing landmark..." (62% drop-off)</div>';
+            raceBtn.textContent = '↻ Race Again';
+            clearInterval(raceTimer);
+            fx().beep('success');
+            const r = magBar.getBoundingClientRect();
+            fx().burst(r.right - 20, r.top, ['#21E6D1', '#FFD36B', '#FFF5EE']);
+          }
+        }, 100);
+      });
 
-<!-- ══════════════════════
-     FOOTER
-══════════════════════ -->
-<section id="footer">
-  <div class="ft-inner">
-    <div class="rev-l">
-      <div class="portrait-frame"><img src="/assets/images/magic-checkout-2.webp" alt="Akshat Singh — Razorpay" class="footer-photo" loading="lazy" decoding="async"></div>
-      <p class="portrait-caption">Akshat Singh · Framer Developer · Razorpay, 2026</p>
-    </div>
-    <div class="rev-r d2">
-      <p class="ft-role">Framer Developer · Razorpay</p>
-      <h2 class="ft-name">Akshat<br>Singh</h2>
-      <p class="ft-bio">I build high-fidelity interactive prototypes and production-ready Framer sites for fintech and D2C brands. Specialising in responsive design systems, scroll-linked animations, and the craft of making complex products feel effortless.</p>
-      <p class="ft-bio">Magic Checkout is one of a series of case studies documenting my work at Razorpay in 2026 — where design, code, and product thinking converge.</p>
-      <div class="ft-links">
-        <a href="/#projects" class="ftl p">← Back to Portfolio</a>
-        <a href="/razorpay-agentic-payments/" class="ftl g">Next: Agentic Payments →</a>
-        <a href="https://www.linkedin.com/in/akshatdesign/" target="_blank" rel="noopener" class="ftl g">LinkedIn</a>
-        <a href="https://razorpay.com/magic-checkout/" target="_blank" rel="noopener" class="ftl g">Magic Checkout ↗</a>
-        <a href="mailto:akshat018singh@gmail.com" class="ftl g">Email</a>
-      </div>
-    </div>
-  </div>
-  <div class="ft-copy">
-    <span>© 2026 Akshat Singh. All case study content reflects personal contributions.</span>
-    <span>Magic Checkout · Razorpay · 2026</span>
-  </div>
-</section>
-<nav class="cs-pager" aria-label="Case study navigation">
-  <a href="/#projects">← Back to Portfolio</a>
-  <a href="/razorpay-agentic-payments/">Next: Agentic Payments →</a>
-</nav>
+      /* 2. Interactive D2C ROI Calculator */
+      const ordIn = document.getElementById('siOrders');
+      const codIn = document.getElementById('siCod');
+      function updateCalc() {
+        const orders = Number(ordIn.value);
+        const cod = Number(codIn.value);
+        document.getElementById('siOrdersVal').textContent = orders.toLocaleString('en-IN');
+        document.getElementById('siCodVal').textContent = cod + '%';
+        const extra = Math.round(orders * 0.20);
+        const rtoSaved = Math.round(orders * (cod / 100) * 0.36);
+        document.getElementById('siExtraOrders').textContent = '+' + extra.toLocaleString('en-IN');
+        document.getElementById('siSavedRto').textContent = rtoSaved.toLocaleString('en-IN');
+      }
+      ordIn.addEventListener('input', updateCalc);
+      codIn.addEventListener('input', updateCalc);
+      updateCalc();
 
-<script>
-// ─── SCROLL PROGRESS BAR ───
-const scrollBar = document.getElementById('scroll-bar');
-window.addEventListener('scroll',()=>{
-  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
-  scrollBar.style.width = Math.min(pct,100)+'%';
-},{passive:true});
+      /* 3. 12 Islands 3D Flip Deck */
+      const ISLANDS = [
+        ['01', 'speed', '0.3s Network Prefill', 'Recognizes 100M+ returning Indian shoppers to auto-fill address and contact details instantly.'],
+        ['02', 'speed', 'Truecaller & Auto-OTP', 'Zero-typing verification removes step-one drop-off on Instagram and Google Shopping clicks.'],
+        ['03', 'speed', '1-Tap UPI Intent', 'Deep-links straight into GPay, PhonePe, or Paytm without typing a single VPA.'],
+        ['04', 'speed', 'Tokenized Saved Cards', 'RBI-compliant cross-merchant card tokens turn repeat buyers into one-tap checkouts.'],
+        ['05', 'risk', 'AI RTO Intelligence', 'Scores every COD checkout in real time using network return history across thousands of D2C stores.'],
+        ['06', 'risk', 'Dynamic Prepaid Nudges', 'Surfaces targeted ₹50–₹100 prepaid incentives to convert risky COD buyers into upfront UPI.'],
+        ['07', 'risk', 'Smart COD Blocking', 'Selectively suppresses COD on repeat fake-order signals while keeping genuine buyers untouched.'],
+        ['08', 'risk', 'Address Hygiene AI', 'Catches gibberish addresses and broken pincodes before dispatch fees are burned.'],
+        ['09', 'merchant', 'Smart Coupon Drawer', 'Surfaces brand promos and bank offers in-modal so buyers never leave tab to hunt coupon sites.'],
+        ['10', 'merchant', 'Cart Recovery Capture', 'Verified phone capture at step one powers instant WhatsApp recovery for dropped carts.'],
+        ['11', 'merchant', 'Shopify & Woo Native', 'Live sync with storefront inventory, GST rules, and real-time courier shipping slabs.'],
+        ['12', 'merchant', 'Brand-Native Theming', 'Inherits merchant logo, accents, and tone so checkout feels seamlessly native to every brand.']
+      ];
+      const grid = document.getElementById('siIslandGrid');
+      grid.innerHTML = ISLANDS.map(d =>
+        '<div class="si-isl" data-group="' + d[1] + '" data-interactive tabindex="0" role="button" aria-label="Flip ' + d[2] + '">' +
+          '<div class="si-isl-in">' +
+            '<div class="si-face front">' +
+              '<div class="si-isl-n"><span>' + d[0] + '</span><span>' + d[1] + '</span></div>' +
+              '<h3>' + d[2] + '</h3>' +
+              '<div class="si-tap-hint">Tap to flip ↻</div>' +
+            '</div>' +
+            '<div class="si-face back">' +
+              '<div class="si-isl-n"><span>MECHANIC</span><span>' + d[0] + '</span></div>' +
+              '<p>' + d[3] + '</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      ).join('');
+      grid.querySelectorAll('.si-isl').forEach(card => {
+        const flip = () => { card.classList.toggle('flipped'); fx().beep('tick'); };
+        card.addEventListener('click', flip);
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+      });
+      document.querySelectorAll('[data-cat]').forEach(btn => btn.addEventListener('click', () => {
+        const c = btn.dataset.cat;
+        document.querySelectorAll('[data-cat]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+        grid.querySelectorAll('.si-isl').forEach(el => { el.hidden = c !== 'all' && el.dataset.group !== c; });
+        fx().beep('tick');
+      }));
 
-// ─── REVEAL (IntersectionObserver — all types) ───
-const io = new IntersectionObserver(es=>{
-  es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);} });
-},{threshold:.08});
-document.querySelectorAll('.rev,.rev-l,.rev-r,.rev-s').forEach(el=>io.observe(el));
-
-// ─── SIDE DOTS ───
-const secs = document.querySelectorAll('section[id]');
-const dots = document.querySelectorAll('.sd');
-const navAs = document.querySelectorAll('.nav-a');
-function updateActive(){
-  const mid = window.innerHeight/2;
-  let cur = null;
-  secs.forEach(s=>{ const r=s.getBoundingClientRect(); if(r.top<=mid&&r.bottom>=mid) cur=s.id; });
-  dots.forEach(d=>d.classList.toggle('on', d.dataset.sec===cur));
-  navAs.forEach(a=>a.classList.toggle('on', a.getAttribute('href')==='#'+cur));
-}
-window.addEventListener('scroll',updateActive,{passive:true});
-updateActive();
-dots.forEach(d=>{ d.addEventListener('click',()=>{ document.getElementById(d.dataset.sec)?.scrollIntoView({behavior:'smooth',block:'start'}); }); });
-
-// ─── RISK BARS ───
-const rIO = new IntersectionObserver(es=>{
-  es.forEach(e=>{
-    if(e.isIntersecting){
-      e.target.querySelectorAll('.rbar-fill').forEach(b=>{ setTimeout(()=>b.style.width=(b.dataset.w||50)+'%',280); });
-      rIO.unobserve(e.target);
-    }
-  });
-},{threshold:.3});
-document.querySelectorAll('.data-panel').forEach(el=>rIO.observe(el));
-
-// ─── COUNTERS ───
-function animCount(el){
-  const t=parseFloat(el.dataset.t), dec=t%1!==0, dur=1800, s=performance.now();
-  (function step(n){ const p=Math.min((n-s)/dur,1), e=1-Math.pow(1-p,4);
-    el.textContent=dec?(t*e).toFixed(1):Math.round(t*e);
-    if(p<1) requestAnimationFrame(step); else el.textContent=dec?t.toFixed(1):t;
-  })(performance.now());
-}
-const cIO = new IntersectionObserver(es=>{
-  es.forEach(e=>{ if(e.isIntersecting){ e.target.querySelectorAll('.count-up').forEach(animCount); cIO.unobserve(e.target); } });
-},{threshold:.2});
-document.querySelectorAll('.sky-rc,.tc').forEach(el=>cIO.observe(el));
-
-// ─── SMOOTH ANCHOR SCROLL ───
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-  a.addEventListener('click',e=>{
-    const el=document.getElementById(a.getAttribute('href').slice(1));
-    if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth',block:'start'});}
-  });
-});
-
-// ─── PARALLAX ON HERO GLOW ───
-const hg = document.querySelector('.hero-glow');
-const hg2 = document.querySelector('.hero-glow2');
-window.addEventListener('scroll',()=>{
-  const y = window.scrollY;
-  if(hg) hg.style.transform = `translateY(${y*0.15}px)`;
-  if(hg2) hg2.style.transform = `translateY(${y*0.08}px)`;
-},{passive:true});
-
-// ─── PARALLAX ON SKY CLOUDS ───
-const clouds = document.querySelectorAll('.sky-cloud');
-window.addEventListener('scroll',()=>{
-  const skySec = document.getElementById('sky-section');
-  if(!skySec) return;
-  const skyTop = skySec.offsetTop;
-  const rel = window.scrollY - skyTop;
-  clouds.forEach((c,i)=>{ c.style.transform = `translateX(${rel*(i===0?-0.04:i===1?0.06:-0.03)}px) translateY(${rel*-0.02}px)`; });
-},{passive:true});
-</script>
-<script>try{const s=new Set(JSON.parse(localStorage.getItem('vc_stamps')||'[]'));s.add('magic-checkout');localStorage.setItem('vc_stamps',JSON.stringify([...s]));}catch(_){}</script>
+      /* 4. Interactive SVG RTO Risk Radar Dial */
+      const sigBtns = Array.from(document.querySelectorAll('.si-sig-btn'));
+      const needle = document.getElementById('siNeedle');
+      const riskPct = document.getElementById('siRiskPct');
+      const verdict = document.getElementById('siVerdict');
+      function updateRadar() {
+        let score = 32;
+        sigBtns.forEach(b => { if (b.classList.contains('on')) score += Number(b.dataset.delta); });
+        score = Math.max(8, Math.min(96, score));
+        const deg = -90 + (score / 100) * 180;
+        needle.style.transform = 'rotate(' + deg.toFixed(1) + 'deg)';
+        riskPct.textContent = score + '%';
+        if (score < 35) {
+          riskPct.style.color = 'var(--vc-teal)';
+          verdict.style.borderColor = 'var(--vc-teal)';
+          verdict.style.background = 'rgba(33,230,209,0.1)';
+          verdict.innerHTML = '<strong>Low Risk (' + score + '%):</strong> Unlock 1-Tap Express COD + Instant UPI with 0.3s address prefill.';
+        } else if (score < 65) {
+          riskPct.style.color = 'var(--vc-gold)';
+          verdict.style.borderColor = 'var(--vc-gold)';
+          verdict.style.background = 'rgba(255,211,107,0.12)';
+          verdict.innerHTML = '<strong>Medium Risk (' + score + '%):</strong> Surface ₹50 Prepaid UPI Nudge + OTP COD verification step.';
+        } else {
+          riskPct.style.color = 'var(--vc-pink)';
+          verdict.style.borderColor = 'var(--vc-pink)';
+          verdict.style.background = 'rgba(255,46,136,0.14)';
+          verdict.innerHTML = '<strong>High RTO Signal (' + score + '%):</strong> Suppress COD automatically and route buyer to Prepaid UPI / Card.';
+        }
+      }
+      sigBtns.forEach(b => b.addEventListener('click', () => {
+        b.classList.toggle('on');
+        fx().beep(b.classList.contains('good') ? 'tick' : 'warn');
+        updateRadar();
+      }));
+      updateRadar();
+    })();
+  </script>
+  <script src="/assets/vice-district.js?v=8"></script>
 </body>
 </html>
