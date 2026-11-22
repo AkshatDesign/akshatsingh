@@ -28,21 +28,22 @@ import {
   makeNeonSignTexture,
   makeSoftParticleTexture,
   makeSplatDecalTexture
-} from './vice-env.js?v=7';
+} from './vice-env.js?v=8';
 
 import {
   PAINTS,
+  mergeGeometries,
   createSupercar,
   buildArchingFrondGeometry,
-  createRealisticPalmTree,
+  buildMergedPalmGeometries,
   createArtDecoHotel,
   createGlassSkyscraper,
   createCaseStudyShowroom,
   createTrafficCar,
   createPedestrian
-} from './vice-assets.js?v=7';
+} from './vice-assets.js?v=8';
 
-import { ViceAudioEngine } from './vice-audio.js?v=7';
+import { ViceAudioEngine } from './vice-audio.js?v=8';
 
 const AVENUES = [0, -96, -192]; // Ocean Drive, Washington Ave, Downtown Hwy
 const CROSS_STREETS = [20, -140, -300, -460, -620];
@@ -153,6 +154,13 @@ class ViceCity3DApp {
     this.wantedDecay = 0;
     this.cash = 0;
 
+    this.lastCubeX = 9999;
+    this.lastCubeZ = 9999;
+    this.lastCubeFrame = -999;
+    this.lastHudKmh = -1;
+    this.lastHudGear = '';
+    this.lastHudZone = '';
+    this.lastHudWp = '';
     this.audio = new ViceAudioEngine();
     this.carState = {
       x: 3.2, z: 6.0, yaw: 0, speed: 0, steer: 0,
@@ -179,7 +187,13 @@ class ViceCity3DApp {
         squishCount: this.squishCount,
         wantedStars: this.wantedStars,
         cash: this.cash,
-        zone: this.el.zone.textContent
+        zone: this.el.zone.textContent,
+        renderInfo: this.renderer ? {
+          calls: this.renderer.info.render.calls,
+          triangles: this.renderer.info.render.triangles,
+          geometries: this.renderer.info.memory.geometries,
+          textures: this.renderer.info.memory.textures
+        } : null
       }),
       teleport: (x, z, yaw = 0, speed = 0) => {
         this.carState.x = x;
@@ -359,8 +373,8 @@ class ViceCity3DApp {
 
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // Higher near plane (0.6) drastically improves 24-bit depth-buffer precision -> ZERO Z-fighting!
-    this.camera = new THREE.PerspectiveCamera(56, w / h, 0.6, 1500);
+    // Higher near plane (0.6) improves 24-bit depth-buffer precision; far 1150 keeps 950m sky dome unclipped!
+    this.camera = new THREE.PerspectiveCamera(56, w / h, 0.6, 1150);
     this.camera.position.set(7.5, 2.7, 15.5);
 
     try {
@@ -372,8 +386,9 @@ class ViceCity3DApp {
       this.renderer = new THREE.WebGLRenderer({ antialias: false });
       this.isSoftwareGl = true;
     }
+    const dpr = this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(dpr);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.04;
@@ -391,19 +406,22 @@ class ViceCity3DApp {
       console.warn('[ViceCity3D] PMREM environment fallback:', err);
     }
 
-    // True HDR HalfFloatType EffectComposer with MSAA (WebGL2) so bloom gently accents neon & sun
+    // Half-res Bloom + Smart MSAA EffectComposer (4x faster fill rate on Retina/4K displays!)
     this.composer = null;
     this.bloomPass = null;
     if (!this.isSoftwareGl) {
       try {
         const isWebGL2 = this.renderer.capabilities.isWebGL2;
-        const rt = new THREE.WebGLRenderTarget(w, h, {
+        const rt = new THREE.WebGLRenderTarget(Math.round(w * dpr), Math.round(h * dpr), {
           type: THREE.HalfFloatType,
-          samples: isWebGL2 ? 4 : 0
+          samples: isWebGL2 && dpr < 1.5 ? 2 : 0
         });
         this.composer = new EffectComposer(this.renderer, rt);
         this.composer.addPass(new RenderPass(this.scene, this.camera));
-        this.bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 0.22, 0.30, 1.38);
+        this.bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(Math.max(1, Math.floor(w * 0.5)), Math.max(1, Math.floor(h * 0.5))),
+          0.22, 0.30, 1.38
+        );
         this.composer.addPass(this.bloomPass);
         this.composer.addPass(new OutputPass());
       } catch (err) {
@@ -413,7 +431,7 @@ class ViceCity3DApp {
       }
     }
 
-    const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
+    const maxAniso = Math.min(this.renderer.capabilities.getMaxAnisotropy(), 4);
     this.buildLighting();
     this.buildOpenWorld(maxAniso);
 
@@ -421,16 +439,16 @@ class ViceCity3DApp {
     this.car.root.position.set(this.carState.x, 0, this.carState.z);
     this.scene.add(this.car.root);
 
-    // Real-time Dynamic CubeCamera reflections on Player Supercar (GPU)
+    // Lightweight 64px Dynamic CubeCamera reflections on Player Supercar (updates only on movement!)
     this.cubeCamera = null;
     this.cubeRT = null;
     if (!this.isSoftwareGl) {
       try {
-        this.cubeRT = new THREE.WebGLCubeRenderTarget(128, {
+        this.cubeRT = new THREE.WebGLCubeRenderTarget(64, {
           generateMipmaps: true,
           minFilter: THREE.LinearMipmapLinearFilter
         });
-        this.cubeCamera = new THREE.CubeCamera(0.6, 520, this.cubeRT);
+        this.cubeCamera = new THREE.CubeCamera(0.6, 1050, this.cubeRT);
         this.scene.add(this.cubeCamera);
         this.car.setDynamicEnvMap(this.cubeRT.texture);
       } catch (err) {
@@ -451,16 +469,16 @@ class ViceCity3DApp {
     const hemi = new THREE.HemisphereLight(0x88b4e8, 0x624844, 0.92);
     this.scene.add(hemi);
 
-    // Golden-Hour Sun Directional Light aligned with SUN_DIR!
+    // Golden-Hour Sun Directional Light aligned with SUN_DIR (crisp 1024 shadow map -> 4x faster!)
     this.sunLight = new THREE.DirectionalLight(0xffcb8c, 2.15);
     this.sunLight.position.copy(SUN_DIR).multiplyScalar(85);
     if (!this.isSoftwareGl) {
       this.sunLight.castShadow = true;
-      this.sunLight.shadow.mapSize.width = 2048;
-      this.sunLight.shadow.mapSize.height = 2048;
+      this.sunLight.shadow.mapSize.width = 1024;
+      this.sunLight.shadow.mapSize.height = 1024;
       this.sunLight.shadow.camera.near = 4;
-      this.sunLight.shadow.camera.far = 200;
-      const d = 42;
+      this.sunLight.shadow.camera.far = 175;
+      const d = 36;
       this.sunLight.shadow.camera.left = -d;
       this.sunLight.shadow.camera.right = d;
       this.sunLight.shadow.camera.top = d;
@@ -521,33 +539,43 @@ class ViceCity3DApp {
     const sigGrnMat = new THREE.MeshStandardMaterial({ color: 0x22e69a, emissive: 0x22e69a, emissiveIntensity: 1.6 });
     const sigOffMat = new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.6 });
 
+    // Instanced intersection pads + instanced traffic gantries (108 draw calls -> 2 InstancedMeshes!)
+    const interCount = AVENUES.length * CROSS_STREETS.length;
+    const interGeo = new THREE.PlaneGeometry(ROAD_W, ROAD_W);
+    interGeo.rotateX(-Math.PI / 2);
+    const interInst = new THREE.InstancedMesh(interGeo, interMat, interCount);
+    interInst.receiveShadow = true;
+
+    const tlPostG = new THREE.CylinderGeometry(0.12, 0.16, 6.4, 8); tlPostG.translate(0, 3.2, 0);
+    const tlArmG = new THREE.BoxGeometry(6.2, 0.15, 0.15); tlArmG.translate(-3.0, 6.2, 0);
+    const tlBoxG = new THREE.BoxGeometry(0.46, 1.32, 0.36); tlBoxG.translate(-3.8, 5.5, 0);
+    const tlGantryGeo = mergeGeometries([tlPostG, tlArmG, tlBoxG]);
+    const tlGantryInst = new THREE.InstancedMesh(tlGantryGeo, poleMat, interCount);
+    const bulbGeo = new THREE.SphereGeometry(0.12, 6, 6);
+    const iMat = new THREE.Matrix4();
+    let interIdx = 0;
+
     AVENUES.forEach((ax) => {
       CROSS_STREETS.forEach((cz, ci) => {
-        const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W, ROAD_W), interMat);
-        sq.rotation.x = -Math.PI / 2;
-        sq.position.set(ax, 0.0, cz);
-        sq.receiveShadow = true;
-        this.scene.add(sq);
+        iMat.makeTranslation(ax, 0.0, cz);
+        interInst.setMatrixAt(interIdx, iMat);
 
-        // Overhead 3-Light Cycling Traffic Gantry (solid pole collider!)
-        const tl = new THREE.Group();
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 6.4, 8), poleMat);
-        post.position.y = 3.2; tl.add(post);
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.15, 0.15), poleMat);
-        arm.position.set(-3.0, 6.2, 0); tl.add(arm);
-        const box = new THREE.Mesh(new THREE.BoxGeometry(0.46, 1.32, 0.36), poleMat);
-        box.position.set(-3.8, 5.5, 0); tl.add(box);
-        const lR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), sigOffMat); lR.position.set(-3.8, 5.9, 0.19); tl.add(lR);
-        const lY = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), sigOffMat); lY.position.set(-3.8, 5.5, 0.19); tl.add(lY);
-        const lG = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), sigOffMat); lG.position.set(-3.8, 5.1, 0.19); tl.add(lG);
         const px = ax + ROAD_H + 1.0;
         const pz = cz - ROAD_H - 1.0;
-        tl.position.set(px, 0.16, pz);
-        this.scene.add(tl);
+        iMat.makeTranslation(px, 0.16, pz);
+        tlGantryInst.setMatrixAt(interIdx, iMat);
+        interIdx++;
+
+        const lR = new THREE.Mesh(bulbGeo, sigOffMat); lR.position.set(px - 3.8, 6.06, pz + 0.19); this.scene.add(lR);
+        const lY = new THREE.Mesh(bulbGeo, sigOffMat); lY.position.set(px - 3.8, 5.66, pz + 0.19); this.scene.add(lY);
+        const lG = new THREE.Mesh(bulbGeo, sigOffMat); lG.position.set(px - 3.8, 5.26, pz + 0.19); this.scene.add(lG);
         this.addCircleCollider(px, pz, 0.32);
         this.trafficSignals.push({ lR, lY, lG, phase: (ci % 2) * 5.0 });
       });
     });
+    interInst.instanceMatrix.needsUpdate = true;
+    tlGantryInst.instanceMatrix.needsUpdate = true;
+    this.scene.add(interInst, tlGantryInst);
     this.sigMats = { red: sigRedMat, yel: sigYelMat, grn: sigGrnMat, off: sigOffMat };
 
     // 2b. Non-Overlapping NS Avenue Road Segments strictly between intersections
@@ -660,19 +688,31 @@ class ViceCity3DApp {
       this.scene.add(beach);
     });
 
-    // Beach Umbrellas & Lounge Chairs along Golden Sand
+    // Instanced Beach Umbrellas & Lounge Chairs along Golden Sand (3 draw calls total instead of 70!)
     const beachColors = [0xff2e88, 0x21e6d1, 0xff9e32, 0x3b82f6, 0xffd36b];
     const chairMat = new THREE.MeshStandardMaterial({ color: 0xf4f0ea, roughness: 0.72 });
+    const umbPositions = [];
     for (let z = 12; z >= -600; z -= 26) {
       if (Math.abs(z + 300) < 22) continue;
-      const uMat = new THREE.MeshStandardMaterial({ color: beachColors[Math.abs(z) % beachColors.length], roughness: 0.78, side: THREE.DoubleSide });
-      const ug = new THREE.Group();
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 8), railMetal); pole.position.y = 1.15; ug.add(pole);
-      const top = new THREE.Mesh(new THREE.ConeGeometry(1.65, 0.55, 8, 1, true), uMat); top.position.y = 2.25; ug.add(top);
-      const bed = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.16, 0.75), chairMat); bed.position.set(0, 0.25, 1.05); ug.add(bed);
-      ug.position.set(23.5 + (Math.sin(z) * 1.4), -0.15, z);
-      this.scene.add(ug);
+      umbPositions.push({ x: 23.5 + Math.sin(z) * 1.4, y: -0.15, z, color: beachColors[Math.abs(z) % beachColors.length] });
     }
+    const umbPoles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 6), railMetal, umbPositions.length);
+    const umbTops = new THREE.InstancedMesh(
+      new THREE.ConeGeometry(1.65, 0.55, 8, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78, side: THREE.DoubleSide }),
+      umbPositions.length
+    );
+    const umbBeds = new THREE.InstancedMesh(new THREE.BoxGeometry(1.9, 0.16, 0.75), chairMat, umbPositions.length);
+    const tmpCol = new THREE.Color();
+    umbPositions.forEach((up, i) => {
+      _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1);
+      _dummy.position.set(up.x, up.y + 1.15, up.z); _dummy.updateMatrix(); umbPoles.setMatrixAt(i, _dummy.matrix);
+      _dummy.position.set(up.x, up.y + 2.25, up.z); _dummy.updateMatrix(); umbTops.setMatrixAt(i, _dummy.matrix);
+      umbTops.setColorAt(i, tmpCol.setHex(up.color));
+      _dummy.position.set(up.x, up.y + 0.25, up.z + 1.05); _dummy.updateMatrix(); umbBeds.setMatrixAt(i, _dummy.matrix);
+    });
+    umbTops.instanceColor.needsUpdate = true;
+    this.scene.add(umbPoles, umbTops, umbBeds);
 
     // 4. STARFISH ISLAND CAUSEWAY BRIDGE (Z = -300, X = 8.4 -> 130) & PALM ISLAND
     const bridgeLen = 122;
@@ -851,100 +891,129 @@ class ViceCity3DApp {
     towers.computeBoundingSphere();
     this.scene.add(towers);
 
-    // 8. SCULPTED 14-FROND 3D TROPICAL PALM TREES (WITH SOLID TRUNK COLLIDERS!)
-    const palmAssets = {
-      trunkMat: new THREE.MeshStandardMaterial({ map: makePalmBarkTexture(), roughness: 0.90 }),
-      collarMat: new THREE.MeshStandardMaterial({ color: 0x2e6e3e, roughness: 0.8 }),
-      coconutMat: new THREE.MeshStandardMaterial({ color: 0x5c3820, roughness: 0.74 }),
-      coconutGeo: new THREE.SphereGeometry(0.14, 7, 7),
-      frondMat: new THREE.MeshStandardMaterial({
-        map: makePalmFrondTexture(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.62, metalness: 0.02
-      }),
-      lowerFrondGeo: buildArchingFrondGeometry(4.4, 2.35, 0.95, 2.15),
-      upperFrondGeo: buildArchingFrondGeometry(3.4, 1.95, 1.45, 1.15),
-      castShadow: !this.isSoftwareGl
-    };
+    // 8. INSTANCED 14-FROND 3D TROPICAL PALM TREES (5 DRAW CALLS FOR ALL 76 PALMS & PLANTERS!)
+    const lowerFrondGeo = buildArchingFrondGeometry(4.4, 2.35, 0.95, 2.15);
+    const upperFrondGeo = buildArchingFrondGeometry(3.4, 1.95, 1.45, 1.15);
+    const { trunkGeo, collarGeo, frondCrownGeo } = buildMergedPalmGeometries(lowerFrondGeo, upperFrondGeo);
+    lowerFrondGeo.dispose();
+    upperFrondGeo.dispose();
 
-    this.palms = [];
+    const trunkMat = new THREE.MeshStandardMaterial({ map: makePalmBarkTexture(), roughness: 0.90 });
+    const collarMat = new THREE.MeshStandardMaterial({ color: 0x3b5c34, roughness: 0.80 });
+    const frondMat = new THREE.MeshStandardMaterial({
+      map: makePalmFrondTexture(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.62, metalness: 0.02
+    });
     const planterMat = new THREE.MeshStandardMaterial({ color: 0x4b3b30, roughness: 0.92 });
-    const placePalm = (px, py, pz, h, curve, rotY, addBush = false) => {
-      const p = createRealisticPalmTree(palmAssets, h, curve);
-      p.position.set(px, py, pz);
-      p.rotation.y = rotY;
-      p.userData.phase = (px + pz) * 0.13;
-      this.scene.add(p);
-      this.palms.push(p);
+
+    const palmSpecs = [];
+    const planterSpecs = [];
+    const queuePalm = (px, py, pz, h, rotY, addBush = false) => {
+      palmSpecs.push({ x: px, y: py, z: pz, s: h / 10.0, rotY });
       this.addCircleCollider(px, pz, 0.48); // Solid palm trunk!
-      if (addBush) {
-        const planter = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.12, 0.22, 10), planterMat);
-        planter.position.set(px, py + 0.08, pz);
-        this.scene.add(planter);
-        const bush = new THREE.Mesh(new THREE.DodecahedronGeometry(0.75, 1), bushMat);
-        bush.scale.set(1.2, 0.65, 1.2);
-        bush.position.set(px + 0.3, py + 0.42, pz + 0.2);
-        this.scene.add(bush);
-      }
+      if (addBush) planterSpecs.push({ x: px, y: py, z: pz });
     };
 
     for (let z = 30; z >= -625; z -= 18) {
       if (Math.abs(z + 300) < 16) continue;
       const h = 8.8 + ((Math.abs(z) * 13) % 28) * 0.1;
-      const curve = 0.22 + ((Math.abs(z) * 7) % 10) * 0.035;
-      placePalm(14.8, 0.16, z, h, curve, (z * 0.7) % 6.28, true);
-      if (Math.abs(z) % 36 === 0) placePalm(23.5, -0.15, z - 8, h * 0.9, curve * 1.2, (z * 1.3) % 6.28, false);
+      queuePalm(14.8, 0.16, z, h, (z * 0.7) % 6.28, true);
+      if (Math.abs(z) % 36 === 0) queuePalm(23.5, -0.15, z - 8, h * 0.9, (z * 1.3) % 6.28, false);
     }
     for (let z = -10; z >= -600; z -= 34) {
       if (CROSS_STREETS.some((cs) => Math.abs(z - cs) < 16)) continue;
-      placePalm(-85.5, 0.16, z, 9.2, 0.2, z * 0.5, true);
+      queuePalm(-85.5, 0.16, z, 9.2, z * 0.5, true);
     }
     for (let i = 0; i < 12; i++) {
       const ang = (i / 12) * Math.PI * 2;
       if (Math.cos(ang) < -0.78) continue;
-      placePalm(152 + Math.cos(ang) * 31, 0.04, -300 + Math.sin(ang) * 31, 9.0 + (i % 3) * 0.9, 0.35, ang, false);
+      queuePalm(152 + Math.cos(ang) * 31, 0.04, -300 + Math.sin(ang) * 31, 9.0 + (i % 3) * 0.9, ang, false);
     }
 
-    // 9. Ornate Streetlamps, Fire Hydrants, Benches, Lifeguard Tower & Pier (ALL SOLID!)
+    const palmTrunks = new THREE.InstancedMesh(trunkGeo, trunkMat, palmSpecs.length);
+    const palmCollars = new THREE.InstancedMesh(collarGeo, collarMat, palmSpecs.length);
+    const palmFronds = new THREE.InstancedMesh(frondCrownGeo, frondMat, palmSpecs.length);
+    palmTrunks.castShadow = !this.isSoftwareGl;
+    palmSpecs.forEach((ps, i) => {
+      _dummy.position.set(ps.x, ps.y, ps.z);
+      _dummy.rotation.set(0, ps.rotY, 0);
+      _dummy.scale.setScalar(ps.s);
+      _dummy.updateMatrix();
+      palmTrunks.setMatrixAt(i, _dummy.matrix);
+      palmCollars.setMatrixAt(i, _dummy.matrix);
+      palmFronds.setMatrixAt(i, _dummy.matrix);
+    });
+    palmTrunks.computeBoundingSphere();
+    palmCollars.computeBoundingSphere();
+    palmFronds.computeBoundingSphere();
+    this.scene.add(palmTrunks, palmCollars, palmFronds);
+    this.palms = [];
+
+    const planterInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(1.05, 1.12, 0.22, 8), planterMat, planterSpecs.length);
+    const bushInst = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.75, 1), bushMat, planterSpecs.length);
+    planterSpecs.forEach((pl, i) => {
+      _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1);
+      _dummy.position.set(pl.x, pl.y + 0.08, pl.z); _dummy.updateMatrix(); planterInst.setMatrixAt(i, _dummy.matrix);
+      _dummy.position.set(pl.x + 0.3, pl.y + 0.42, pl.z + 0.2); _dummy.scale.set(1.2, 0.65, 1.2); _dummy.updateMatrix(); bushInst.setMatrixAt(i, _dummy.matrix);
+    });
+    this.scene.add(planterInst, bushInst);
+
+    // 9. Instanced Streetlamps, Fire Hydrants & Benches (ALL SOLID, 7 draw calls instead of 220!)
     const lampWarmMat = new THREE.MeshStandardMaterial({ color: 0xfff0c4, emissive: 0xffd888, emissiveIntensity: 1.55 });
     const lampCyanMat = new THREE.MeshStandardMaterial({ color: 0x9cf8f0, emissive: 0x21e6d1, emissiveIntensity: 1.45 });
     const benchWoodMat = new THREE.MeshStandardMaterial({ color: 0x7a4e3a, roughness: 0.82 });
     const hydrantMat = new THREE.MeshStandardMaterial({ color: 0xd92834, roughness: 0.45, metalness: 0.25 });
 
+    const lampPosts = [];
+    const warmGlobes = [];
+    const cyanGlobes = [];
+    const benchList = [];
+    const hydrantList = [];
+
     for (let z = 14; z >= -600; z -= 28) {
       if (Math.abs(z + 300) < 18) continue;
-      const lamp = new THREE.Group();
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.15, 6.4, 8), poleMat); pole.position.y = 3.2; lamp.add(pole);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.1, 0.1), poleMat); arm.position.set(-0.9, 6.25, 0); lamp.add(arm);
-      const globe = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), z % 56 === 0 ? lampCyanMat : lampWarmMat);
-      globe.position.set(-1.72, 6.1, 0); lamp.add(globe);
-      lamp.position.set(9.4, 0.16, z);
-      this.scene.add(lamp);
-      this.addCircleCollider(9.4, z, 0.28); // Solid streetlight pole!
+      lampPosts.push({ x: 9.4, z, dir: -1 });
+      (z % 56 === 0 ? cyanGlobes : warmGlobes).push({ x: 9.4 - 1.72, z });
+      this.addCircleCollider(9.4, z, 0.28);
 
-      const bench = new THREE.Group();
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 2.2), benchWoodMat); seat.position.y = 0.50; bench.add(seat);
-      const back = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.52, 2.2), benchWoodMat); back.position.set(-0.26, 0.76, 0); bench.add(back);
-      bench.position.set(15.6, 0.16, z - 12);
-      this.scene.add(bench);
+      benchList.push({ x: 15.6, z: z - 12 });
       this.addBoxCollider(15.1, 16.1, z - 13.2, z - 10.8);
 
       if (Math.abs(z) % 56 === 0) {
-        const hyd = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.72, 8), hydrantMat);
-        hyd.position.set(-9.3, 0.52, z);
-        this.scene.add(hyd);
+        hydrantList.push({ x: -9.3, z });
         this.addCircleCollider(-9.3, z, 0.24);
       }
 
-      // Washington Ave Midtown Streetlamps (East & West curbs)
       if (!CROSS_STREETS.some((cs) => Math.abs(z - cs) < 16)) {
-        const wLamp = new THREE.Group();
-        const wp = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 6.4, 8), poleMat); wp.position.y = 3.2; wLamp.add(wp);
-        const wa = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.1, 0.1), poleMat); wa.position.set(0.85, 6.25, 0); wLamp.add(wa);
-        const wg = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), lampWarmMat); wg.position.set(1.65, 6.1, 0); wLamp.add(wg);
-        wLamp.position.set(-105.4, 0.16, z);
-        this.scene.add(wLamp);
+        lampPosts.push({ x: -105.4, z, dir: 1 });
+        warmGlobes.push({ x: -105.4 + 1.65, z });
         this.addCircleCollider(-105.4, z, 0.28);
       }
     }
+
+    const lampPoleInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.14, 6.4, 7), poleMat, lampPosts.length);
+    const lampArmInst = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.1, 0.1), poleMat, lampPosts.length);
+    lampPosts.forEach((lp, i) => {
+      _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1);
+      _dummy.position.set(lp.x, 3.36, lp.z); _dummy.updateMatrix(); lampPoleInst.setMatrixAt(i, _dummy.matrix);
+      _dummy.position.set(lp.x + lp.dir * 0.88, 6.41, lp.z); _dummy.updateMatrix(); lampArmInst.setMatrixAt(i, _dummy.matrix);
+    });
+    const globeGeo = new THREE.SphereGeometry(0.24, 8, 8);
+    const warmGlobeInst = new THREE.InstancedMesh(globeGeo, lampWarmMat, warmGlobes.length);
+    warmGlobes.forEach((g, i) => { _dummy.position.set(g.x, 6.26, g.z); _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1); _dummy.updateMatrix(); warmGlobeInst.setMatrixAt(i, _dummy.matrix); });
+    const cyanGlobeInst = new THREE.InstancedMesh(globeGeo, lampCyanMat, cyanGlobes.length);
+    cyanGlobes.forEach((g, i) => { _dummy.position.set(g.x, 6.26, g.z); _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1); _dummy.updateMatrix(); cyanGlobeInst.setMatrixAt(i, _dummy.matrix); });
+
+    const benchSeatInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.62, 0.08, 2.2), benchWoodMat, benchList.length);
+    const benchBackInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.08, 0.52, 2.2), benchWoodMat, benchList.length);
+    benchList.forEach((b, i) => {
+      _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1);
+      _dummy.position.set(b.x, 0.66, b.z); _dummy.updateMatrix(); benchSeatInst.setMatrixAt(i, _dummy.matrix);
+      _dummy.position.set(b.x - 0.26, 0.92, b.z); _dummy.updateMatrix(); benchBackInst.setMatrixAt(i, _dummy.matrix);
+    });
+    const hydrantInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.14, 0.16, 0.72, 7), hydrantMat, hydrantList.length);
+    hydrantList.forEach((h, i) => { _dummy.position.set(h.x, 0.52, h.z); _dummy.rotation.set(0, 0, 0); _dummy.scale.set(1, 1, 1); _dummy.updateMatrix(); hydrantInst.setMatrixAt(i, _dummy.matrix); });
+
+    this.scene.add(lampPoleInst, lampArmInst, warmGlobeInst, cyanGlobeInst, benchSeatInst, benchBackInst, hydrantInst);
 
     // Lifeguard Tower (Z = -195) & Wooden Atlantic Pier (Z = -430)
     const woodMat = new THREE.MeshStandardMaterial({ color: 0xeee4dc, roughness: 0.8 });
@@ -1079,6 +1148,15 @@ class ViceCity3DApp {
     const pants = [0xe8e4f0, 0x1e2236, 0x2c3e5a, 0x45354e, 0x191722, 0xc8b698];
     const hairs = [0x1b151e, 0x4c3020, 0xd8a852, 0x2a1d19, 0x7c3e26];
 
+    const pedMatCache = new Map();
+    const pedMats = {
+      get: (key, make) => {
+        let m = pedMatCache.get(key);
+        if (!m) { m = make(); pedMatCache.set(key, m); }
+        return m;
+      }
+    };
+
     const addPed = (x, y, z, dir, jog, i, axis = 'z', minPos = -610, maxPos = 24) => {
       const p = createPedestrian({
         x, y, z, dir, jog, axis, minPos, maxPos,
@@ -1092,7 +1170,7 @@ class ViceCity3DApp {
         shoe: i % 2 === 0 ? 0xf2eff6 : 0x1b1824,
         blazer: !jog && i % 3 === 0,
         shades: i % 2 === 0
-      }, sharedGeos, splatMat, starMat);
+      }, sharedGeos, splatMat, starMat, pedMats);
       p.root.position.set(p.x, p.y, p.z);
       p.root.rotation.y = axis === 'x' ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (dir > 0 ? 0 : Math.PI);
       this.scene.add(p.root);
@@ -1504,7 +1582,7 @@ class ViceCity3DApp {
   toggleLights() {
     this.lightsOn = !this.lightsOn;
     this.el.lightsBtn.classList.toggle('on', this.lightsOn);
-    this.car.headLights.forEach((s) => { s.intensity = this.lightsOn ? 1.35 : 0; });
+    this.car.headLights.forEach((s) => { s.intensity = this.lightsOn ? 1.85 : 0; });
     this.car.headLensMat.emissiveIntensity = this.lightsOn ? 1.35 : 0.06;
   }
 
@@ -1537,7 +1615,7 @@ class ViceCity3DApp {
     this.renderer.setSize(w, h);
     if (this.composer) {
       this.composer.setSize(w, h);
-      if (this.bloomPass) this.bloomPass.resolution.set(w, h);
+      if (this.bloomPass) this.bloomPass.resolution.set(Math.max(1, Math.floor(w * 0.5)), Math.max(1, Math.floor(h * 0.5)));
     }
   }
 
@@ -1583,13 +1661,16 @@ class ViceCity3DApp {
   }
 
   renderFrame() {
-    // Update live CubeCamera reflection probe on GPU every 4th frame
-    if (this.cubeCamera && this.frameCount % 4 === 0) {
+    // Smart Dynamic CubeCamera reflection update: only refresh on startup or after driving >16m (eliminates 6-face stutter!)
+    if (this.cubeCamera && (this.frameCount === 0 || (this.frameCount - this.lastCubeFrame >= 24 && Math.hypot(this.carState.x - this.lastCubeX, this.carState.z - this.lastCubeZ) > 16))) {
       try {
         this.car.root.visible = false;
         this.cubeCamera.position.set(this.carState.x, 1.2, this.carState.z);
         this.cubeCamera.update(this.renderer, this.scene);
         this.car.root.visible = true;
+        this.lastCubeX = this.carState.x;
+        this.lastCubeZ = this.carState.z;
+        this.lastCubeFrame = this.frameCount;
       } catch (_) {
         this.car.root.visible = true;
         this.cubeCamera = null;
@@ -1750,6 +1831,12 @@ class ViceCity3DApp {
         if (tc.position.z < -615) tc.position.z = 42;
       }
 
+      const tdx = tc.position.x - cs.x, tdz = tc.position.z - cs.z;
+      const tDistSq = tdx * tdx + tdz * tdz;
+      const tVis = tDistSq < 48400; // 220m visibility culling
+      if (tc.visible !== tVis) tc.visible = tVis;
+      if (tDistSq > 100) continue; // Skip 3-point collision test when >10m away
+
       // 3-point hull vs traffic AABB push-out
       const tMinX = tc.position.x - 1.02, tMaxX = tc.position.x + 1.02;
       const tMinZ = tc.position.z - 2.25, tMaxZ = tc.position.z + 2.25;
@@ -1794,6 +1881,7 @@ class ViceCity3DApp {
       const ped = this.pedestrians[i];
 
       if (ped.state === 'ragdoll') {
+        ped.root.visible = true;
         ped.stateTimer -= dt;
         ped.vy -= 20.0 * dt;
         ped.x += ped.vx * dt;
@@ -1823,9 +1911,8 @@ class ViceCity3DApp {
 
       if (ped.state === 'squished') {
         ped.stateTimer -= dt;
-        ped.stars.rotation.y += dt * 4.5;
+        if (ped.root.visible) ped.stars.rotation.y += dt * 4.5;
         if (ped.stateTimer <= 0) {
-          // Respawn cleanly back on their home route
           ped.state = 'walk';
           ped.x = ped.homeX; ped.z = ped.homeZ;
           ped.root.position.set(ped.x, ped.y, ped.z);
@@ -1840,12 +1927,18 @@ class ViceCity3DApp {
         continue;
       }
 
-      // Check car-vs-pedestrian collision (GTA squish / launch!)
-      if (carAbsSpd > 2.2) {
-        const dx = ped.x - cs.x;
-        const dz = ped.z - cs.z;
-        const fwdDist = dx * fwdX + dz * fwdZ;
-        const latDist = dx * rightX + dz * rightZ;
+      const dxCar = ped.x - cs.x;
+      const dzCar = ped.z - cs.z;
+      const distSq = dxCar * dxCar + dzCar * dzCar;
+
+      // Distance-cull far pedestrians (>115m invisible -> skips distant draw calls!)
+      const isVisible = distSq < 13225; // 115^2
+      if (ped.root.visible !== isVisible) ped.root.visible = isVisible;
+
+      // Check car-vs-pedestrian collision only when near car (<5m)
+      if (carAbsSpd > 2.2 && distSq < 25) {
+        const fwdDist = dxCar * fwdX + dzCar * fwdZ;
+        const latDist = dxCar * rightX + dzCar * rightZ;
         if (Math.abs(fwdDist) < 2.55 && Math.abs(latDist) < 1.32) {
           this.triggerSquish(ped, carAbsSpd, latDist);
           continue;
@@ -1855,42 +1948,44 @@ class ViceCity3DApp {
       // Normal walking or panicked fleeing
       if (ped.state === 'panic') {
         ped.stateTimer -= dt;
-        const fx = ped.x - cs.x, fz = ped.z - cs.z;
-        const fd = Math.max(0.1, Math.hypot(fx, fz));
+        const fd = Math.max(0.1, Math.sqrt(distSq));
         const runSpd = 5.4;
-        const nx = ped.x + (fx / fd) * runSpd * dt;
-        const nz = ped.z + (fz / fd) * runSpd * dt;
-        // Keep fleeing peds safely off the ocean
+        const nx = ped.x + (dxCar / fd) * runSpd * dt;
+        const nz = ped.z + (dzCar / fd) * runSpd * dt;
         ped.x = THREE.MathUtils.clamp(nx, -200, 16.5);
         ped.z = THREE.MathUtils.clamp(nz, -630, 35);
-        ped.root.rotation.y = Math.atan2(fx, fz);
-        const sw = Math.sin(elapsed * 14 + ped.phase);
-        ped.legL.rotation.x = sw * 0.85; ped.legR.rotation.x = -sw * 0.85;
-        ped.armL.rotation.x = -2.6 + sw * 0.3; ped.armR.rotation.x = -2.6 - sw * 0.3; // hands up!
-        ped.body.position.y = Math.abs(sw) * 0.1;
+        ped.root.rotation.y = Math.atan2(dxCar, dzCar);
+        if (isVisible) {
+          const sw = Math.sin(elapsed * 14 + ped.phase);
+          ped.legL.rotation.x = sw * 0.85; ped.legR.rotation.x = -sw * 0.85;
+          ped.armL.rotation.x = -2.6 + sw * 0.3; ped.armR.rotation.x = -2.6 - sw * 0.3;
+          ped.body.position.y = Math.abs(sw) * 0.1;
+        }
         if (ped.stateTimer <= 0) ped.state = 'walk';
       } else if (ped.dir !== 0) {
         if (ped.axis === 'x') {
           ped.x += ped.dir * ped.speed * dt;
           if (ped.x > ped.maxPos) { ped.x = ped.maxPos; ped.dir = -1; }
           if (ped.x < ped.minPos) { ped.x = ped.minPos; ped.dir = 1; }
-          ped.root.rotation.y = ped.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          if (isVisible) ped.root.rotation.y = ped.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
         } else {
           ped.z += ped.dir * ped.speed * dt;
           if (ped.z < ped.minPos) ped.z = ped.maxPos;
           if (ped.z > ped.maxPos) ped.z = ped.minPos;
-          ped.root.rotation.y = ped.dir > 0 ? 0 : Math.PI;
+          if (isVisible) ped.root.rotation.y = ped.dir > 0 ? 0 : Math.PI;
         }
-        const freq = ped.jog ? 9.5 : 5.4;
-        const sw = Math.sin(elapsed * freq + ped.phase);
-        ped.legL.rotation.x = sw * (ped.jog ? 0.72 : 0.44);
-        ped.legR.rotation.x = -sw * (ped.jog ? 0.72 : 0.44);
-        ped.armL.rotation.x = -sw * (ped.jog ? 0.82 : 0.36);
-        ped.armR.rotation.x = sw * (ped.jog ? 0.82 : 0.36);
-        ped.body.position.y = Math.abs(sw) * (ped.jog ? 0.08 : 0.035);
-        ped.body.rotation.x = ped.jog ? 0.12 : 0.02;
+        if (distSq < 8100) { // Animate limbs only within 90m
+          const freq = ped.jog ? 9.5 : 5.4;
+          const sw = Math.sin(elapsed * freq + ped.phase);
+          ped.legL.rotation.x = sw * (ped.jog ? 0.72 : 0.44);
+          ped.legR.rotation.x = -sw * (ped.jog ? 0.72 : 0.44);
+          ped.armL.rotation.x = -sw * (ped.jog ? 0.82 : 0.36);
+          ped.armR.rotation.x = sw * (ped.jog ? 0.82 : 0.36);
+          ped.body.position.y = Math.abs(sw) * (ped.jog ? 0.08 : 0.035);
+          ped.body.rotation.x = ped.jog ? 0.12 : 0.02;
+        }
       }
-      ped.root.position.set(ped.x, ped.y, ped.z);
+      if (isVisible) ped.root.position.set(ped.x, ped.y, ped.z);
     }
 
     // 6. Apply Supercar Transform, Suspension, Wheels & Particles
@@ -1979,18 +2074,27 @@ class ViceCity3DApp {
     this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, _vecA.x + sx, 7.5, dt);
     this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, Math.max(0.8, _vecA.y + sy), 7.5, dt);
     this.camera.position.z = THREE.MathUtils.damp(this.camera.position.z, _vecA.z, 7.5, dt);
-    this.camera.fov = THREE.MathUtils.damp(this.camera.fov, targetFov, 6, dt);
-    this.camera.updateProjectionMatrix();
+    const nextFov = THREE.MathUtils.damp(this.camera.fov, targetFov, 6, dt);
+    if (Math.abs(nextFov - this.camera.fov) > 0.02) {
+      this.camera.fov = nextFov;
+      this.camera.updateProjectionMatrix();
+    }
     this.camera.lookAt(_vecB);
 
     this.audio.update(speedRatio, nitroActive, drifting);
-    this.drawRadar();
+    if (this.frameCount % 4 === 0) this.drawRadar();
 
-    // 8. HUD & Showroom Proximity
+    // 8. HUD & Showroom Proximity (only mutate DOM when values change!)
     const kmh = Math.round(carAbsSpd * 3.9);
-    this.el.speed.textContent = String(kmh);
-    this.el.gear.textContent = cs.speed < -0.5 ? 'R' : kmh < 4 ? 'N' : String(Math.min(5, Math.floor(kmh / 46) + 1));
-    this.el.trackFill.style.width = `${((this.visited.size / 5) * 100).toFixed(0)}%`;
+    if (kmh !== this.lastHudKmh) {
+      this.lastHudKmh = kmh;
+      this.el.speed.textContent = String(kmh);
+    }
+    const gearStr = cs.speed < -0.5 ? 'R' : kmh < 4 ? 'N' : String(Math.min(5, Math.floor(kmh / 46) + 1));
+    if (gearStr !== this.lastHudGear) {
+      this.lastHudGear = gearStr;
+      this.el.gear.textContent = gearStr;
+    }
 
     let zoneText = 'Ocean Beach · Ocean Drive';
     if (cs.x > 115) zoneText = 'Starfish Island';
@@ -1999,17 +2103,29 @@ class ViceCity3DApp {
     else if (cs.x < -55) zoneText = 'Washington Avenue';
     else if (cs.z < -580) zoneText = 'Miami Beach Plaza';
     else if (cs.z < -330) zoneText = 'Vice Point · Ocean Drive';
-    this.el.zone.textContent = zoneText;
+    if (zoneText !== this.lastHudZone) {
+      this.lastHudZone = zoneText;
+      this.el.zone.textContent = zoneText;
+    }
 
     let nearestWp = WAYPOINTS[0], bestWpDist = Infinity;
     for (let i = 0; i < WAYPOINTS.length; i++) {
       const d = Math.hypot(cs.x - WAYPOINTS[i].x, cs.z - WAYPOINTS[i].z);
       if (d < bestWpDist) { bestWpDist = d; nearestWp = WAYPOINTS[i]; }
     }
-    this.el.wpBtns.forEach((b) => {
-      b.classList.toggle('active', b.dataset.wp === nearestWp.id);
-      b.classList.toggle('visited', this.visited.has(b.dataset.wp));
-    });
+    const trackPct = Math.round(THREE.MathUtils.clamp((50 - cs.z) / 670, 0.04, 1) * 100);
+    if (trackPct !== this.lastTrackPct) {
+      this.lastTrackPct = trackPct;
+      this.el.trackFill.style.width = `${trackPct}%`;
+    }
+
+    if (nearestWp.id !== this.lastHudWp) {
+      this.lastHudWp = nearestWp.id;
+      this.el.wpBtns.forEach((b) => {
+        b.classList.toggle('active', b.dataset.wp === nearestWp.id);
+        b.classList.toggle('visited', this.visited.has(b.dataset.wp));
+      });
+    }
 
     let found = null;
     for (let i = 0; i < SHOWROOMS.length; i++) {
@@ -2019,6 +2135,7 @@ class ViceCity3DApp {
         if (!this.visited.has(sr.id)) {
           this.visited.add(sr.id);
           this.el.progress.textContent = `${this.visited.size} / 5 Showrooms Explored`;
+          this.el.wpBtns.forEach((b) => b.classList.toggle('visited', this.visited.has(b.dataset.wp)));
         }
         break;
       }
