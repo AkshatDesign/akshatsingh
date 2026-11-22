@@ -9,8 +9,8 @@
 
   const scriptEl = document.currentScript;
   const moduleUrl = scriptEl && scriptEl.src
-    ? new URL('./vice-game-3d.js?v=6', scriptEl.src).href
-    : '/assets/vice-game-3d.js?v=6';
+    ? new URL('./vice-game-3d.js?v=7', scriptEl.src).href
+    : '/assets/vice-game-3d.js?v=7';
 
   let modulePromise = null;
   let loadingEl = null;
@@ -31,8 +31,10 @@
       loadingEl.className = 'v3-loading';
       document.body.appendChild(loadingEl);
     }
+    const detail = err && err.message ? String(err.message).replace(/[<>&]/g, '') : '';
     loadingEl.innerHTML =
       '<span>Could not launch 3D engine on this browser.</span>' +
+      (detail ? '<span style="opacity:0.62;font-size:10px;max-width:460px;text-align:center;text-transform:none;letter-spacing:0.02em;">' + detail + '</span>' : '') +
       '<div style="display:flex;gap:10px;margin-top:8px;">' +
       '<button type="button" data-v3-retry style="padding:8px 16px;border-radius:8px;border:1px solid #21E6D1;background:rgba(33,230,209,0.16);color:#21E6D1;font:700 12px/1 \'JetBrains Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Retry</button>' +
       '<button type="button" data-v3-dismiss style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.28);background:transparent;color:#FFF5EE;font:700 12px/1 \'JetBrains Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Close</button>' +

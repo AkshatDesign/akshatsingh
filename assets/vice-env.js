@@ -4,7 +4,7 @@
    - Vivid Golden-Hour Miami PMREM environment for crisp car/glass/road reflections
    - World-scale architectural PBR textures (Art Deco, glass skyscrapers, asphalt)
    ========================================================================== */
-import * as THREE from '../vendor/three/build/three.module.js';
+import * as THREE from 'https://esm.sh/three@0.187.0';
 
 export const SUN_DIR = new THREE.Vector3(0.72, 0.24, -0.65).normalize();
 

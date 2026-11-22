@@ -6,11 +6,11 @@
    - 3-Point Oriented Car Hull Solid Collisions (ZERO clipping through solids!)
    - GTA-Style Pedestrian Squishing, Ragdoll Launches, Panic AI & 5-Star Wanted
    ========================================================================== */
-import * as THREE from '../vendor/three/build/three.module.js';
-import { EffectComposer } from '../vendor/three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from '../vendor/three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from '../vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from '../vendor/three/examples/jsm/postprocessing/OutputPass.js';
+import * as THREE from 'https://esm.sh/three@0.187.0';
+import { EffectComposer } from 'https://esm.sh/three@0.187.0/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'https://esm.sh/three@0.187.0/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://esm.sh/three@0.187.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'https://esm.sh/three@0.187.0/examples/jsm/postprocessing/OutputPass.js';
 
 import {
   SUN_DIR,
@@ -28,7 +28,7 @@ import {
   makeNeonSignTexture,
   makeSoftParticleTexture,
   makeSplatDecalTexture
-} from './vice-env.js?v=6';
+} from './vice-env.js?v=7';
 
 import {
   PAINTS,
@@ -40,9 +40,9 @@ import {
   createCaseStudyShowroom,
   createTrafficCar,
   createPedestrian
-} from './vice-assets.js?v=6';
+} from './vice-assets.js?v=7';
 
-import { ViceAudioEngine } from './vice-audio.js?v=6';
+import { ViceAudioEngine } from './vice-audio.js?v=7';
 
 const AVENUES = [0, -96, -192]; // Ocean Drive, Washington Ave, Downtown Hwy
 const CROSS_STREETS = [20, -140, -300, -460, -620];
@@ -363,10 +363,15 @@ class ViceCity3DApp {
     this.camera = new THREE.PerspectiveCamera(56, w / h, 0.6, 1500);
     this.camera.position.set(7.5, 2.7, 15.5);
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: !this.isSoftwareGl,
-      powerPreference: 'high-performance'
-    });
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        antialias: !this.isSoftwareGl,
+        powerPreference: 'high-performance'
+      });
+    } catch (_) {
+      this.renderer = new THREE.WebGLRenderer({ antialias: false });
+      this.isSoftwareGl = true;
+    }
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
