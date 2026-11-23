@@ -9,8 +9,8 @@
 
   const scriptEl = document.currentScript;
   const moduleUrl = scriptEl && scriptEl.src
-    ? new URL('./vice-game-3d.js?v=8', scriptEl.src).href
-    : '/assets/vice-game-3d.js?v=8';
+    ? new URL('./vice-game-3d.js?v=20', scriptEl.src).href
+    : '/assets/vice-game-3d.js?v=20';
 
   let modulePromise = null;
   let loadingEl = null;
@@ -52,10 +52,15 @@
   }
 
   async function openViceGame() {
+    document.body.classList.add('vice-game-open');
+    if (typeof window.__stopMainWebsiteRadio === 'function') window.__stopMainWebsiteRadio();
+    window.dispatchEvent(new CustomEvent('vice:game-open'));
+    document.querySelectorAll('audio, video').forEach((m) => { try { m.pause(); } catch (_) {} });
     if (!modulePromise) {
       showLoading();
       modulePromise = import(moduleUrl).catch((err) => {
         modulePromise = null;
+        document.body.classList.remove('vice-game-open');
         showLoadError(err);
         return null;
       });

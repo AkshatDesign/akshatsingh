@@ -1074,7 +1074,7 @@ html.calm .city svg{filter:none!important}
 .pj .pj-top,.pj .bot{position:relative;z-index:1}
 .calm .pj::before{display:none!important}
 </style>
-<link rel="stylesheet" href="/assets/vice-game.css?v=8">
+<link rel="stylesheet" href="/assets/vice-game.css?v=16">
 </head>
 <body>
 
@@ -2355,9 +2355,18 @@ $('#palmR svg').style.transform='scaleX(-1)';
     master.gain.cancelScheduledValues(ac.currentTime); master.gain.setTargetAtTime(vol/100*.9,ac.currentTime,.4); ui();
   }
   function pause(){
-    if(!ac) return; playing=false; master.gain.setTargetAtTime(0,ac.currentTime,.1);
-    setTimeout(()=>{if(!playing){clearInterval(timer);ac.suspend()}},450); ui();
+    if(!ac){playing=false;ui();return} playing=false; master.gain.setTargetAtTime(0,ac.currentTime,.08);
+    setTimeout(()=>{if(!playing){clearInterval(timer);try{ac.suspend()}catch(_){}}},350); ui();
   }
+  const stopForGame=()=>{
+    userPaused=true; started=true;
+    removeEventListener('pointerdown',first,true); removeEventListener('keydown',first,true);
+    clearInterval(timer);
+    if(playing || (ac && ac.state==='running')) pause();
+    else { playing=false; ui(); }
+  };
+  window.__stopMainWebsiteRadio=stopForGame;
+  window.addEventListener('vice:game-open',stopForGame);
   const power=()=>{ if(playing){userPaused=true;pause()} else play() };
   function tune(i){
     const n=(i+ST.length)%ST.length; tr+=(n-idx)*72; idx=n; spb=60/ST[idx].bpm/4;
@@ -2389,8 +2398,8 @@ $('#palmR svg').style.transform='scaleX(-1)';
   });
   /* first tap anywhere starts the radio, like turning the key */
   const first=e=>{
-    if(started||userPaused) return;
-    if(e.target&&e.target.closest&&e.target.closest('#rad')) return;
+    if(started||userPaused||document.body.classList.contains('vice-game-open')) return;
+    if(e.target&&e.target.closest&&(e.target.closest('#rad')||e.target.closest('[data-open-game]'))) return;
     removeEventListener('pointerdown',first,true); removeEventListener('keydown',first,true); play();
   };
   addEventListener('pointerdown',first,true); addEventListener('keydown',first,true);
@@ -3007,6 +3016,6 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
 })();
 })();
 </script>
-<script src="/assets/vice-game.js?v=12"></script>
+<script src="/assets/vice-game.js?v=24"></script>
 
 </body></html>
