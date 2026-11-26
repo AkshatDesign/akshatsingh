@@ -31,7 +31,8 @@ import {
   makeSoftParticleTexture,
   makeSplatDecalTexture,
   makeTarmacTexture,
-  makeCoronaGlowTexture
+  makeCoronaGlowTexture,
+  getWorldPBRTextures
 } from './vice-env.js?v=18';
 
 import {
@@ -67,10 +68,41 @@ import {
   createAirportGatehouse,
   createAirportHangarTwo,
   createBoardingAirstairs,
-  createMountViceRange
-} from './vice-assets.js?v=20';
+  createMountViceRange,
+  createSierraWestRange
+} from './vice-assets.js?v=24';
 
-import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=15';
+import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=18';
+import {
+  createMotorcycle,
+  createPoliceCruiser,
+  createRhinoTank,
+  createBarricadeWall,
+  createCountrysideVillage,
+  createPineForest,
+  createWildlifeAnimal,
+  createMalibuClubBuilding,
+  createNorthPointMall,
+  VICE_CHEAT_CODES
+} from './vice-world-ext.js?v=1';
+import {
+  LEONIDA_PROJ,
+  LEONIDA_PLACES,
+  LEONIDA_HIGHWAYS,
+  isInCoreViceFootprint,
+  isInLegacyMountains,
+  getLandFactor,
+  closestLeonidaHighway,
+  getLeonidaElevation,
+  getLeonidaZone,
+  createLeonidaVectorMapCanvas,
+  buildLeonidaWorld
+} from './leonida-world.js?v=9';
+import {
+  getImageBillboardMaterials,
+  buildImageBillboardMesh,
+  buildMountainRopeway
+} from './leonida-props.js?v=6';
 
 /* AAA Filmic Contrast, Warm Miami Highlight Grade & Subtle Optical Vignette (runs post-OutputPass in sRGB) */
 const ViceAAAColorGradeShader = {
@@ -117,95 +149,230 @@ const ROAD_W = 16.8;
 const ROAD_H = ROAD_W * 0.5; // 8.4m half-width
 
 const WEAPONS = [
-  { id: 'fists',   key: '1', name: 'Fists',   cooldown: 0.28, dmg: 1,   range: 2.6,  auto: false, label: 'Fists (Melee)' },
-  { id: 'bat',     key: '2', name: 'Bat',     cooldown: 0.36, dmg: 2.5, range: 3.3,  auto: false, label: 'Vice Baseball Bat' },
-  { id: 'pistol',  key: '3', name: '9mm',     cooldown: 0.25, dmg: 2,   range: 64,   auto: false, label: 'Chrome 9mm Pistol' },
-  { id: 'smg',     key: '4', name: 'Uzi',     cooldown: 0.085, dmg: 1.2, range: 58,  auto: true,  label: 'Vice Uzi SMG' },
-  { id: 'shotgun', key: '5', name: 'Shotgun', cooldown: 0.62, dmg: 4.5, range: 34,   auto: false, label: '12-Gauge Shotgun' },
-  { id: 'rifle',   key: '6', name: 'M4',      cooldown: 0.11, dmg: 1.6, range: 82,   auto: true,  label: 'Vice M4 Rifle' },
-  { id: 'bazooka', key: '7', name: 'RPG',     cooldown: 0.92, dmg: 10,  range: 115,  auto: false, label: 'RPG Bazooka' }
+  { id: 'fists',   key: '1', name: 'Fists',   category: 'Unarmed',        cooldown: 0.28,  dmg: 1,   range: 2.6,  auto: false, label: 'Fists (Melee)',     ammo: 'MELEE', stats: { dmg: 22, rate: 72, range: 10, acc: 95 } },
+  { id: 'bat',     key: '2', name: 'Bat',     category: 'Melee',          cooldown: 0.36,  dmg: 2.5, range: 3.3,  auto: false, label: 'Vice Baseball Bat', ammo: 'MELEE', stats: { dmg: 42, rate: 58, range: 16, acc: 92 } },
+  { id: 'pistol',  key: '3', name: '9mm',     category: 'Handgun',        cooldown: 0.25,  dmg: 2,   range: 64,   auto: false, label: 'Chrome 9mm Pistol', ammo: '∞',     stats: { dmg: 46, rate: 64, range: 58, acc: 82 } },
+  { id: 'smg',     key: '4', name: 'Uzi',     category: 'Submachine Gun', cooldown: 0.085, dmg: 1.2, range: 58,   auto: true,  label: 'Vice Uzi SMG',      ammo: '∞',     stats: { dmg: 38, rate: 96, range: 52, acc: 64 } },
+  { id: 'shotgun', key: '5', name: 'Shotgun', category: 'Shotgun',        cooldown: 0.62,  dmg: 4.5, range: 34,   auto: false, label: '12-Gauge Shotgun',  ammo: '∞',     stats: { dmg: 84, rate: 34, range: 36, acc: 54 } },
+  { id: 'rifle',   key: '6', name: 'M4',      category: 'Assault Rifle',  cooldown: 0.11,  dmg: 1.6, range: 82,   auto: true,  label: 'Vice M4 Rifle',     ammo: '∞',     stats: { dmg: 68, rate: 86, range: 82, acc: 86 } },
+  { id: 'bazooka', key: '7', name: 'RPG',     category: 'Heavy Weapon',   cooldown: 0.92,  dmg: 10,  range: 115,  auto: false, label: 'RPG Bazooka',       ammo: '∞',     stats: { dmg: 100, rate: 18, range: 96, acc: 72 } }
 ];
+
+function getWeaponWheelSvg(id) {
+  switch (id) {
+    case 'fists':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M18 22v-7a3 3 0 0 1 6 0v3h1v-5a3 3 0 0 1 6 0v5h1v-4a3 3 0 0 1 6 0v4h1v-2a3 3 0 0 1 6 0v9c0 6.5-4.5 11-11.5 11H28c-6.5 0-11-4.2-11-10.5V22h1zm-2 0a3 3 0 0 0-3 3v2.5c0 2.5 1.7 4.5 4 5V22h-1z" fill="currentColor"/></svg>`;
+    case 'bat':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M11 31l4 4 3.5-2.5-1.2-1.2 12.2-10.6 19.8-13.2c2.2-1.5 2.7-4.2 1.2-5.7s-4.2-1-5.7 1.2L31.6 22.8 21 35l-1.2-1.2L11 31z" fill="currentColor" transform="translate(0,-1)"/></svg>`;
+    case 'pistol':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M12 10h36c2 0 3 1 3 3v4c0 1.6-1.1 2.7-2.6 2.9L36 20.5l-1.5 3.8c-.4 1-1.3 1.7-2.4 1.7h-4.6l-3.6 10.2c-.4 1.1-1.4 1.8-2.6 1.8h-5.8c-1.5 0-2.5-1.5-2-2.9L17.8 20H14c-1.4 0-2.4-1-2.4-2.4V12c0-1.1.9-2 2-2zm14.5 10.5l-1 2.7h4.2l1-2.7h-4.2z" fill="currentColor"/></svg>`;
+    case 'smg':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M10 12h31v2.5h11v4H41v3H32l-1 14.5h-6.5l1.2-14.5H19l-2 8.5h-5.5l1.8-8.5H10V12zm3-4h16v3H13V8z" fill="currentColor"/></svg>`;
+    case 'shotgun':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M5 24l11.5-5.5h8.5V15h34v3.2H42v3.6H30.5l-2.5 2.2h-6.5l-9.5 7.2L5 24zm29-5.8h18v2.2H34v-2.2z" fill="currentColor"/></svg>`;
+    case 'rifle':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M4 17h12l4-3h4v-3h12v3h8v2h15v3H46v3.2h-8.5l2.8 11.2-5.2 1.2-3.4-12.4H24l-2.8 9.2h-4.8l1.6-9.2H15l-9.5 5.2L4 23v-6zm22-4h8v1.8h-8V13z" fill="currentColor"/></svg>`;
+    case 'bazooka':
+      return `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M5 17.5l7 1.2v-2.2h30v1.2l5-3.2 12 5.5-12 5.5-5-3.2v1.2H12v-2.2L5 22.5v-5zm17 6h5v8.5h-4.2L22 23.5zm12 0h4.2l1.6 7.2h-4.4L34 23.5z" fill="currentColor"/></svg>`;
+    default:
+      return '';
+  }
+}
+
+function buildWeaponWheelHTML() {
+  const size = 420;
+  const cx = 210;
+  const cy = 210;
+  const innerR = 94;
+  const outerR = 198;
+  const n = WEAPONS.length;
+  const step = (Math.PI * 2) / n;
+  const gap = 0.032;
+
+  const wedgesSvg = WEAPONS.map((w, i) => {
+    const mid = -Math.PI / 2 + i * step;
+    const a0 = mid - step / 2 + gap;
+    const a1 = mid + step / 2 - gap;
+    const x0o = cx + Math.cos(a0) * outerR;
+    const y0o = cy + Math.sin(a0) * outerR;
+    const x1o = cx + Math.cos(a1) * outerR;
+    const y1o = cy + Math.sin(a1) * outerR;
+    const x1i = cx + Math.cos(a1) * innerR;
+    const y1i = cy + Math.sin(a1) * innerR;
+    const x0i = cx + Math.cos(a0) * innerR;
+    const y0i = cy + Math.sin(a0) * innerR;
+    const d = `M ${x0o.toFixed(2)} ${y0o.toFixed(2)} A ${outerR} ${outerR} 0 0 1 ${x1o.toFixed(2)} ${y1o.toFixed(2)} L ${x1i.toFixed(2)} ${y1i.toFixed(2)} A ${innerR} ${innerR} 0 0 0 ${x0i.toFixed(2)} ${y0i.toFixed(2)} Z`;
+    return `<path class="v3-ww-wedge" data-ww-wedge="${i}" d="${d}" />`;
+  }).join('');
+
+  const itemsHtml = WEAPONS.map((w, i) => {
+    const mid = -Math.PI / 2 + i * step;
+    const iconR = 146;
+    const px = ((cx + Math.cos(mid) * iconR) / size) * 100;
+    const py = ((cy + Math.sin(mid) * iconR) / size) * 100;
+    return `
+      <button class="v3-ww-slot" type="button" data-ww-slot="${i}" style="left:${px.toFixed(2)}%;top:${py.toFixed(2)}%" aria-label="${w.label}">
+        <span class="v3-ww-key">${w.key}</span>
+        <span class="v3-ww-ico">${getWeaponWheelSvg(w.id)}</span>
+        <span class="v3-ww-lbl">${w.name}</span>
+      </button>
+    `;
+  }).join('');
+
+  return `
+    <div class="v3-ww-ov" data-weapon-wheel hidden role="dialog" aria-label="Weapon Wheel">
+      <div class="v3-ww-shell" data-ww-shell>
+        <svg class="v3-ww-svg" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+          <circle class="v3-ww-outer-rim" cx="${cx}" cy="${cy}" r="${outerR + 4}" />
+          ${wedgesSvg}
+        </svg>
+        <div class="v3-ww-items">${itemsHtml}</div>
+        <div class="v3-ww-hub">
+          <div class="v3-ww-cat" data-ww-cat>UNARMED</div>
+          <div class="v3-ww-title" data-ww-title>FISTS (MELEE)</div>
+          <div class="v3-ww-ammo" data-ww-ammo>MELEE</div>
+          <div class="v3-ww-stats">
+            <div class="v3-ww-stat"><span>DMG</span><i class="v3-ww-track"><b data-ww-dmg style="width:22%"></b></i></div>
+            <div class="v3-ww-stat"><span>RATE</span><i class="v3-ww-track"><b data-ww-rate style="width:72%"></b></i></div>
+            <div class="v3-ww-stat"><span>RNG</span><i class="v3-ww-track"><b data-ww-range style="width:10%"></b></i></div>
+            <div class="v3-ww-stat"><span>ACC</span><i class="v3-ww-track"><b data-ww-acc style="width:95%"></b></i></div>
+          </div>
+        </div>
+        <div class="v3-ww-hint">MOVE MOUSE / SCROLL · RELEASE TAB OR CLICK TO EQUIP · ESC CANCEL</div>
+      </div>
+    </div>
+  `;
+}
 
 const TIME_PRESETS = [
   {
-    id: 'sunset', label: 'Sunset', icon: '☀',
+    id: 'sunset', label: 'Sunset', icon: '☀', hour: 18.25,
     sunDir: new THREE.Vector3(0.42, 0.24, -0.87).normalize(),
     horizon: 0xfa8a5c, lower: 0xc26680, mid: 0x3d6bb8, zenith: 0x143075,
-    sunGlow: 0xffb866, fog: 0x6e546d, skyTint: 0xf28f61,
+    sunGlow: 0xffb866, fog: 0x7c5e74, skyTint: 0xf28f61,
     sunCol: 0xffce8f, sunInt: 2.55, hemiSky: 0x88b4e8, hemiGnd: 0x5c423e, hemiInt: 0.78,
     fillInt: 0.48, nightMix: 0.0, exposure: 1.12
   },
   {
-    id: 'noon', label: 'Day', icon: '☼',
+    id: 'noon', label: 'Day', icon: '☼', hour: 13.0,
     sunDir: new THREE.Vector3(0.26, 0.84, -0.48).normalize(),
-    horizon: 0x9ed8f5, lower: 0x62b4eb, mid: 0x2b82d6, zenith: 0x1252a8,
-    sunGlow: 0xfff2cc, fog: 0x8eb8d6, skyTint: 0x8cd0f2,
+    horizon: 0xaadbf5, lower: 0x6cb8ec, mid: 0x3386d8, zenith: 0x1656aa,
+    sunGlow: 0xfff2cc, fog: 0x9bc2db, skyTint: 0x8cd0f2,
     sunCol: 0xfff8e6, sunInt: 2.75, hemiSky: 0xcce8ff, hemiGnd: 0x76685a, hemiInt: 0.82,
     fillInt: 0.52, nightMix: 0.0, exposure: 1.08
   },
   {
-    id: 'night', label: 'Night', icon: '☾',
+    id: 'night', label: 'Night', icon: '☾', hour: 23.0,
     sunDir: new THREE.Vector3(-0.35, 0.52, -0.78).normalize(),
     horizon: 0x1e183a, lower: 0x14122e, mid: 0x0b0e24, zenith: 0x040614,
-    sunGlow: 0x8cb8ff, fog: 0x141126, skyTint: 0x262854,
+    sunGlow: 0x8cb8ff, fog: 0x16132b, skyTint: 0x262854,
     sunCol: 0x8eb4f0, sunInt: 0.76, hemiSky: 0x3a4a82, hemiGnd: 0x1b1428, hemiInt: 0.56,
     fillInt: 0.34, nightMix: 1.0, exposure: 1.16
   },
   {
-    id: 'dawn', label: 'Dawn', icon: '◐',
+    id: 'dawn', label: 'Dawn', icon: '◐', hour: 6.0,
     sunDir: new THREE.Vector3(0.76, 0.19, -0.62).normalize(),
     horizon: 0xffa6b8, lower: 0xc87ea6, mid: 0x526cb0, zenith: 0x1c2b66,
-    sunGlow: 0xffc4a8, fog: 0x826c8a, skyTint: 0xeba0b2,
+    sunGlow: 0xffc4a8, fog: 0x8d7594, skyTint: 0xeba0b2,
     sunCol: 0xffd2b8, sunInt: 2.05, hemiSky: 0x9cb8f0, hemiGnd: 0x544458, hemiInt: 0.74,
     fillInt: 0.46, nightMix: 0.12, exposure: 1.10
   }
 ];
 
+// Chronological 24-hour keyframe stops for continuous smooth automatic Day/Night cycle
+const DAY_CYCLE_STOPS = [
+  { hour: 0.0,  preset: 2 }, // Midnight (Night)
+  { hour: 5.5,  preset: 3 }, // Sunrise (Dawn)
+  { hour: 12.5, preset: 1 }, // High Noon (Day)
+  { hour: 18.25, preset: 0 }, // Golden Hour (Sunset)
+  { hour: 22.0, preset: 2 }, // Late Evening (Night)
+  { hour: 24.0, preset: 2 }  // Wrap Midnight
+];
+const _cycColA = new THREE.Color();
+const _cycColB = new THREE.Color();
+const _cycDirTmp = new THREE.Vector3();
+
 const WEATHER_PRESETS = [
-  { id: 'clear', label: 'Clear', icon: '☀', rain: 0.0, fogMult: 1.0, dark: 0.0 },
-  { id: 'rain',  label: 'Rain',  icon: '☂', rain: 0.72, fogMult: 1.65, dark: 0.58 },
-  { id: 'storm', label: 'Storm', icon: '⚡', rain: 1.0, fogMult: 2.1, dark: 0.88 }
+  { id: 'clear', label: 'Hazy Sun', icon: '☀', rain: 0.0,  fogMult: 1.0,  dark: 0.0 },
+  { id: 'haze',  label: 'Mist',     icon: '☁', rain: 0.0,  fogMult: 1.52, dark: 0.22 },
+  { id: 'rain',  label: 'Rain',     icon: '☂', rain: 0.72, fogMult: 1.78, dark: 0.56 },
+  { id: 'storm', label: 'Storm',    icon: '⚡', rain: 1.0,  fogMult: 2.15, dark: 0.86 }
 ];
 
-const WAYPOINTS = [
-  { id: 'start', label: 'Ocean Dr', zone: 'Ocean Drive South', x: 3.2, z: 6, yaw: 0 },
-  { id: 'fix-my-itch', label: '01 FixMyItch', zone: 'Ocean Beach', x: -4.2, z: -82, yaw: 0 },
-  { id: 'magic-checkout', label: '02 Magic (Bridge)', zone: 'Starfish Island', x: 138, z: -300, yaw: -Math.PI / 2 },
-  { id: 'agentic-payments', label: '03 Agentic', zone: 'Downtown Vice', x: -100.2, z: -220, yaw: 0 },
-  { id: 'ai-launches', label: '04 AI Impact', zone: 'Vice Point', x: -4.2, z: -382, yaw: 0 },
-  { id: 'pier', label: 'Carnival Pier', zone: 'Vice Pier Carnival', x: 24, z: -430, yaw: -Math.PI / 2 },
-  { id: 'journey', label: '05 Journey', zone: 'Little Havana', x: -100.2, z: -538, yaw: 0 },
-  { id: 'vice-key', label: 'Vice Key', zone: 'Vice Key Island', x: 144, z: -620, yaw: -Math.PI / 2 },
-  { id: 'prawn-island', label: 'Prawn Studios', zone: 'Prawn Island', x: 148, z: -940, yaw: -Math.PI / 2 },
-  { id: 'north-mall', label: 'North Vice Mall', zone: 'North Point', x: -4.2, z: -1020, yaw: 0 },
-  { id: 'little-haiti', label: 'Little Haiti', zone: 'Little Haiti', x: -384, z: -380, yaw: 0 },
-  { id: 'vice-port', label: 'Vice Port', zone: 'Vice Port Docks', x: -480, z: -140, yaw: 0 },
-  { id: 'south-marina', label: 'South Marina', zone: 'Ocean Bay Marina', x: -4.2, z: 260, yaw: 0 },
-  { id: 'ocean-view', label: 'Ocean View [IN]', zone: 'Ocean View Hotel', x: -13.0, z: -48, yaw: Math.PI / 2 },
-  { id: 'ammunation', label: 'Ammu-Nation [IN]', zone: 'Ammu-Nation', x: -13.0, z: -190, yaw: Math.PI / 2 },
-  { id: 'malibu-club', label: 'Malibu Club [IN]', zone: 'Malibu Club', x: -13.0, z: -344, yaw: Math.PI / 2 },
-  { id: 'airport', label: 'Int’l Airport [FLY]', zone: "Vice Int'l Airport", x: -46, z: 66, yaw: 0 },
-  { id: 'mount-vice', label: 'Mount Vice [66M]', zone: 'Mount Vice Summit', x: -228, z: -1422, yaw: Math.PI }
+const CORE_WAYPOINTS = [
+  { id: 'start', label: 'Ocean Dr', zone: 'Ocean Drive South', county: 'Vice-Dale County', x: 3.2, z: 6, yaw: 0 },
+  { id: 'fix-my-itch', label: '01 FixMyItch', zone: 'Ocean Beach', county: 'Vice-Dale County', x: -4.2, z: -82, yaw: 0 },
+  { id: 'magic-checkout', label: '02 Magic Checkout', zone: 'Waning Sands Beachfront', county: 'Leonard County', x: 117.0, z: -1908, yaw: 0 },
+  { id: 'agentic-payments', label: '03 Agentic Payments', zone: 'Port Gellhorn Downtown', county: 'Kelly County', x: -1963.0, z: -1222, yaw: 0 },
+  { id: 'ai-launches', label: '04 AI Impact', zone: 'Ambrosia Downtown', county: 'Leonard County', x: -963.0, z: -1790, yaw: 0 },
+  { id: 'pier', label: 'Carnival Pier', zone: 'Vice Pier Carnival', county: 'Vice-Dale County', x: 24, z: -430, yaw: -Math.PI / 2 },
+  { id: 'journey', label: '05 Journey App', zone: 'Key Lento Village', county: 'Leonida Keys', x: -443.0, z: 1320, yaw: 0 },
+  { id: 'vice-key', label: 'Vice Key', zone: 'Vice Key Island', county: 'Vice-Dale County', x: 144, z: -620, yaw: -Math.PI / 2 },
+  { id: 'prawn-island', label: 'Prawn Studios', zone: 'Prawn Island', county: 'Vice-Dale County', x: 148, z: -940, yaw: -Math.PI / 2 },
+  { id: 'north-mall', label: 'North Point Mall [IN]', zone: 'North Point Mall', county: 'Vice-Dale County', x: -13.0, z: -1018, yaw: Math.PI / 2 },
+  { id: 'little-haiti', label: 'Little Haiti', zone: 'Little Haiti', county: 'Vice-Dale County', x: -384, z: -380, yaw: 0 },
+  { id: 'vice-port', label: 'Vice Port', zone: 'Vice Port Docks', county: 'Vice-Dale County', x: -480, z: -140, yaw: 0 },
+  { id: 'south-marina', label: 'South Marina', zone: 'Ocean Bay Marina', county: 'Vice-Dale County', x: -4.2, z: 260, yaw: 0 },
+  { id: 'ocean-view', label: 'Ocean View [IN]', zone: 'Ocean View Hotel', county: 'Vice-Dale County', x: -13.0, z: -48, yaw: Math.PI / 2 },
+  { id: 'ammunation', label: 'Ammu-Nation [IN]', zone: 'Ammu-Nation', county: 'Vice-Dale County', x: -13.0, z: -190, yaw: Math.PI / 2 },
+  { id: 'malibu-club', label: 'Malibu Club [IN]', zone: 'Malibu Club', county: 'Vice-Dale County', x: -13.0, z: -344, yaw: Math.PI / 2 },
+  { id: 'airport', label: 'Int’l Airport [FLY]', zone: "Vice Int'l Airport", county: 'Vice-Dale County', x: -46, z: 66, yaw: 0 },
+  { id: 'forest', label: 'Vice Pines Forest', zone: 'Vice Pines Forest', county: 'Vice-Dale County', x: -418, z: -1036, yaw: 0 },
+  { id: 'village', label: 'Vice Hollow Village', zone: 'Vice Hollow Community', county: 'Vice-Dale County', x: -382, z: -1178, yaw: 0 },
+  { id: 'mount-vice', label: 'Mount Vice [118M]', zone: 'Mount Vice Summit', county: 'Vice-Dale County', x: -228, z: -1422, yaw: Math.PI },
+  { id: 'sierra-west', label: 'Sierra West [96M]', zone: 'Sierra West Peaks', county: 'Vice-Dale County', x: -772, z: -206, yaw: -Math.PI / 2 }
+];
+
+const LEONIDA_WAYPOINTS = LEONIDA_PLACES.map((pl) => ({
+  id: pl.id,
+  label: pl.name,
+  zone: `${pl.county}${pl.note ? ' · ' + pl.note : ''}`,
+  county: pl.county,
+  kind: pl.kind,
+  x: pl.x,
+  z: pl.z,
+  yaw: pl.yaw || 0,
+  isLeonida: true
+}));
+
+const WAYPOINTS = [...CORE_WAYPOINTS, ...LEONIDA_WAYPOINTS];
+const DOCK_FEATURED_IDS = new Set([
+  'leaf-links', 'waning-sands', 'lake-leonida', 'mount-kalaga',
+  'port-gellhorn', 'ambrosia-raceway', 'leonida-prison', 'key-lento'
+]);
+const DOCK_WAYPOINTS = [
+  ...CORE_WAYPOINTS,
+  ...LEONIDA_WAYPOINTS.filter((w) => DOCK_FEATURED_IDS.has(w.id))
 ];
 
 /* ==========================================================================
-   GTA 5 MOUNT CHILIAD-INSPIRED ROADABLE MOUNTAIN RANGE ("MOUNT VICE")
-   - Analytical O(1) Heightfield + Smooth Flat-Cross-Section Switchback Highway
-   - Returns 0.0 everywhere south of Z = -1115 (100% safe for entire city grid!)
+   DUAL ROADABLE MOUNTAIN RANGES — ZERO DEAD ENDS! (MOUNT CHILIAD SCALE)
+   1) MOUNT VICE (NORTH, Z = -1106..-1496): Full continuous alpine loop from
+      Ocean Drive North (X=0) -> 118m Summit -> West Descent -> Vice Port Expy (X=-480)!
+   2) SIERRA WEST (WEST, X = -885..-492, Z = -760..+240): Completely separate
+      redrock canyon & redwood mountain range looping Vice Port North (-486,-540)
+      -> 96m Redrock Overlook (-772,-210) -> Vice Port South (-486,-60)!
    ========================================================================== */
 const MOUNT_VICE_ANCHORS = [
   { x: 0,    z: -1106, y: 0.0 },
-  { x: -2,   z: -1146, y: 3.4 },
-  { x: -20,  z: -1188, y: 10.2 },
-  { x: -84,  z: -1218, y: 18.0 },
-  { x: -184, z: -1236, y: 26.2 },
-  { x: -290, z: -1262, y: 34.4 },
-  { x: -332, z: -1302, y: 41.8 },
-  { x: -252, z: -1336, y: 49.2 },
-  { x: -146, z: -1356, y: 55.6 },
-  { x: -144, z: -1398, y: 61.6 },
-  { x: -198, z: -1426, y: 65.2 },
-  { x: -228, z: -1432, y: 66.0 }
+  { x: -2,   z: -1146, y: 6.2 },
+  { x: -20,  z: -1188, y: 18.4 },
+  { x: -84,  z: -1218, y: 32.5 },
+  { x: -184, z: -1236, y: 47.0 },
+  { x: -290, z: -1262, y: 61.8 },
+  { x: -332, z: -1302, y: 75.2 },
+  { x: -252, z: -1336, y: 88.4 },
+  { x: -146, z: -1356, y: 99.6 },
+  { x: -144, z: -1398, y: 110.2 },
+  { x: -198, z: -1426, y: 116.6 },
+  { x: -228, z: -1432, y: 118.0 }, // 118m Towering Mount Vice Summit Overlook!
+  // Continuous West Alpine Descent Loop back onto flat Vice Port Expy (ZERO DEAD END!)
+  { x: -316, z: -1410, y: 101.0 },
+  { x: -404, z: -1366, y: 75.5 },
+  { x: -464, z: -1298, y: 44.8 },
+  { x: -478, z: -1216, y: 17.2 },
+  { x: -480, z: -1152, y: 4.0 },
+  { x: -480, z: -1106, y: 0.0 }
 ];
 const MOUNT_VICE_CURVE = new THREE.CatmullRomCurve3(
   MOUNT_VICE_ANCHORS.map((p) => new THREE.Vector3(p.x, p.y, p.z)),
@@ -213,22 +380,42 @@ const MOUNT_VICE_CURVE = new THREE.CatmullRomCurve3(
   'catmullrom',
   0.42
 );
-const MOUNT_VICE_ROAD = MOUNT_VICE_CURVE.getSpacedPoints(140);
+const MOUNT_VICE_ROAD = MOUNT_VICE_CURVE.getSpacedPoints(185);
 
-function closestMountainRoad(x, z) {
+const SIERRA_WEST_ANCHORS = [
+  { x: -486, z: -540, y: 0.0 },
+  { x: -534, z: -540, y: 10.6 },
+  { x: -608, z: -518, y: 31.5 },
+  { x: -694, z: -464, y: 55.6 },
+  { x: -762, z: -372, y: 77.8 },
+  { x: -784, z: -278, y: 91.6 },
+  { x: -772, z: -210, y: 96.0 }, // 96m Towering Sierra West Redrock Summit Overlook!
+  { x: -746, z: -134, y: 78.6 },
+  { x: -678, z: -82,  y: 52.8 },
+  { x: -598, z: -64,  y: 26.0 },
+  { x: -532, z: -60,  y: 7.6 },
+  { x: -486, z: -60,  y: 0.0 }   // Reconnects cleanly back onto Vice Port South!
+];
+const SIERRA_WEST_CURVE = new THREE.CatmullRomCurve3(
+  SIERRA_WEST_ANCHORS.map((p) => new THREE.Vector3(p.x, p.y, p.z)),
+  false,
+  'catmullrom',
+  0.42
+);
+const SIERRA_WEST_ROAD = SIERRA_WEST_CURVE.getSpacedPoints(150);
+
+function _closestRoadPts(pts, x, z) {
   let bestDistSq = Infinity;
   let bestY = 0;
-  for (let i = 0; i < MOUNT_VICE_ROAD.length - 1; i++) {
-    const a = MOUNT_VICE_ROAD[i];
-    const b = MOUNT_VICE_ROAD[i + 1];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
     const abx = b.x - a.x;
     const abz = b.z - a.z;
     const lenSq = abx * abx + abz * abz;
     const t = lenSq > 1e-6 ? THREE.MathUtils.clamp(((x - a.x) * abx + (z - a.z) * abz) / lenSq, 0, 1) : 0;
-    const cx = a.x + abx * t;
-    const cz = a.z + abz * t;
-    const dx = x - cx;
-    const dz = z - cz;
+    const dx = x - (a.x + abx * t);
+    const dz = z - (a.z + abz * t);
     const dSq = dx * dx + dz * dz;
     if (dSq < bestDistSq) {
       bestDistSq = dSq;
@@ -238,43 +425,200 @@ function closestMountainRoad(x, z) {
   return { dist: Math.sqrt(bestDistSq), roadY: bestY };
 }
 
+function closestMountainRoad(x, z) {
+  return _closestRoadPts(MOUNT_VICE_ROAD, x, z);
+}
+
+function closestSierraRoad(x, z) {
+  return _closestRoadPts(SIERRA_WEST_ROAD, x, z);
+}
+
+function closestAnyMountainRoad(x, z) {
+  if (z < -1104) return closestMountainRoad(x, z);
+  if (x < -484 && z > -765 && z < 245) return closestSierraRoad(x, z);
+  return { dist: 999, roadY: 0 };
+}
+
 function getTerrainHeight(x, z) {
-  if (z >= -1106) return 0;
+  // 1) NORTHERN MOUNT VICE RANGE (Strict footprint X in [-506, 44], Z in [-1498, -1106], 118m Alpine Peak!)
+  if (z < -1106 && z > -1498 && x > -506 && x < 44) {
+    const roadHit = closestMountainRoad(x, z);
+    const dSummitMv = Math.hypot(x + 228, z + 1432);
+    const mvDeckH = dSummitMv < 22.0
+      ? (dSummitMv <= 17.6 ? 118.14 : THREE.MathUtils.lerp(118.14, roadHit.roadY, (dSummitMv - 17.6) / 4.4))
+      : 0;
+    if (roadHit.dist <= 7.6) return Math.max(0, roadHit.roadY, mvDeckH);
 
-  // Exact continuous switchback roadbed terrace — zero bumps, zero sideways tilt!
-  const roadHit = closestMountainRoad(x, z);
-  if (roadHit.dist <= 7.6) {
-    return Math.max(0, roadHit.roadY);
+    const northT = THREE.MathUtils.clamp((-1106 - z) / 56, 0, 1);
+    const apron = northT * northT * (3 - 2 * northT);
+
+    const dMainSq  = ((x + 228) * (x + 228)) / (172 * 172) + ((z + 1432) * (z + 1432)) / (148 * 148);
+    const dWestSq  = ((x + 392) * (x + 392)) / (112 * 112) + ((z + 1358) * (z + 1358)) / (108 * 108);
+    const dFarWSq  = ((x + 468) * (x + 468)) / (84 * 84)   + ((z + 1292) * (z + 1292)) / (86 * 86);
+    const dEastSq  = ((x + 58)  * (x + 58))  / (92 * 92)   + ((z + 1318) * (z + 1318)) / (94 * 94);
+    const dNeSq    = ((x - 16)  * (x - 16))  / (78 * 78)   + ((z + 1396) * (z + 1396)) / (84 * 84);
+    const dKnollSq = ((x + 152) * (x + 152)) / (76 * 76)   + ((z + 1184) * (z + 1184)) / (64 * 64);
+
+    let h =
+      Math.exp(-dMainSq) * 121.0 +
+      Math.exp(-dWestSq) * 82.0 +
+      Math.exp(-dFarWSq) * 62.0 +
+      Math.exp(-dEastSq) * 60.0 +
+      Math.exp(-dNeSq) * 71.0 +
+      Math.exp(-dKnollSq) * 34.0;
+    h += (Math.sin(x * 0.042) * Math.cos(z * 0.048) + Math.sin((x + z) * 0.025) * 0.7) * 5.2 * apron;
+    h = Math.max(0, h * apron);
+
+    // Level Scenic Valley Terrace for Vice Hollow Community Village (X = -448..-308, Z = -1236..-1148)
+    const vdx = Math.max(0, Math.max(-446 - x, x - (-308)));
+    const vdz = Math.max(0, Math.max(-1234 - z, z - (-1148)));
+    const vDist = Math.hypot(vdx, vdz);
+    if (vDist < 28) {
+      const vt = THREE.MathUtils.clamp((28 - vDist) / 22, 0, 1);
+      const vb = vt * vt * (3 - 2 * vt);
+      h = THREE.MathUtils.lerp(h, 2.0, vb);
+    }
+
+    const dSummit = Math.hypot(x + 228, z + 1432);
+    if (dSummit < 28) {
+      const st = THREE.MathUtils.clamp((28 - dSummit) / 11, 0, 1);
+      const sb = st * st * (3 - 2 * st);
+      h = THREE.MathUtils.lerp(h, 118.0, sb);
+    }
+
+    if (roadHit.dist < 24.0) {
+      const rt = THREE.MathUtils.clamp((24.0 - roadHit.dist) / 16.4, 0, 1);
+      const rb = rt * rt * (3 - 2 * rt);
+      h = THREE.MathUtils.lerp(h, roadHit.roadY, rb);
+    }
+    return Math.max(0, h, mvDeckH);
   }
 
-  // Smooth transition apron from flat North Vice City (Z = -1106) into Mount Vice foothills
-  const northT = THREE.MathUtils.clamp((-1106 - z) / 62, 0, 1);
-  const apron = northT * northT * (3 - 2 * northT);
+  // 2) SEPARATE WESTERN MOUNTAIN RANGE — SIERRA WEST REDROCK PEAKS (Strict footprint X in [-886, -492], Z in [-760, 240], 96m Peak!)
+  if (x < -492 && x > -886 && z > -760 && z < 240) {
+    const roadHit = closestSierraRoad(x, z);
+    const dSummitSw = Math.hypot(x + 772, z + 210);
+    const swDeckH = dSummitSw < 20.0
+      ? (dSummitSw <= 15.6 ? 96.14 : THREE.MathUtils.lerp(96.14, roadHit.roadY, (dSummitSw - 15.6) / 4.4))
+      : 0;
+    if (roadHit.dist <= 7.6) return Math.max(0, roadHit.roadY, swDeckH);
 
-  // Main Mount Vice 66m Peak + West Alpine Ridge + East Coastal Bluff
-  const dMainSq = ((x + 228) * (x + 228)) / (174 * 174) + ((z + 1432) * (z + 1432)) / (150 * 150);
-  const dWestSq = ((x + 392) * (x + 392)) / (118 * 118) + ((z + 1358) * (z + 1358)) / (115 * 115);
-  const dEastSq = ((x + 58)  * (x + 58))  / (96 * 96)   + ((z + 1318) * (z + 1318)) / (98 * 98);
+    const westT = THREE.MathUtils.clamp((-492 - x) / 52, 0, 1);
+    const northFade = THREE.MathUtils.clamp((z - (-760)) / 65, 0, 1);
+    const southFade = THREE.MathUtils.clamp((240 - z) / 65, 0, 1);
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const apron = smooth(westT) * smooth(northFade) * smooth(southFade);
 
-  let h = Math.exp(-dMainSq) * 68.0 + Math.exp(-dWestSq) * 38.0 + Math.exp(-dEastSq) * 32.0;
-  h += (Math.sin(x * 0.042) * Math.cos(z * 0.048) + Math.sin((x + z) * 0.025) * 0.7) * 3.8 * apron;
-  h = Math.max(0, h * apron);
+    const dPeakSq  = ((x + 772) * (x + 772)) / (155 * 155) + ((z + 210) * (z + 210)) / (195 * 195);
+    const dNorthSq = ((x + 738) * (x + 738)) / (128 * 128) + ((z + 520) * (z + 520)) / (145 * 145);
+    const dSouthSq = ((x + 725) * (x + 725)) / (125 * 125) + ((z - 45)  * (z - 45))  / (135 * 135);
+    const dRidgeSq = ((x + 618) * (x + 618)) / (95 * 95)   + ((z + 305) * (z + 305)) / (155 * 155);
 
-  // Flat circular Summit Overlook Plateau around (-228, -1432) at Y = 66m
-  const dSummit = Math.hypot(x + 228, z + 1432);
-  if (dSummit < 28) {
-    const st = THREE.MathUtils.clamp((28 - dSummit) / 11, 0, 1);
-    const sb = st * st * (3 - 2 * st);
-    h = THREE.MathUtils.lerp(h, 66.0, sb);
+    let h =
+      Math.exp(-dPeakSq) * 101.5 +
+      Math.exp(-dNorthSq) * 84.0 +
+      Math.exp(-dSouthSq) * 74.0 +
+      Math.exp(-dRidgeSq) * 46.0;
+    h += (Math.sin(x * 0.038 + 1.1) * Math.cos(z * 0.044) + Math.sin((x - z) * 0.022) * 0.65) * 4.6 * apron;
+    h = Math.max(0, h * apron);
+
+    const dSummit = Math.hypot(x + 772, z + 210);
+    if (dSummit < 25) {
+      const st = THREE.MathUtils.clamp((25 - dSummit) / 10, 0, 1);
+      h = THREE.MathUtils.lerp(h, 96.0, smooth(st));
+    }
+
+    if (roadHit.dist < 24.0) {
+      const rt = THREE.MathUtils.clamp((24.0 - roadHit.dist) / 16.4, 0, 1);
+      h = THREE.MathUtils.lerp(h, roadHit.roadY, smooth(rt));
+    }
+    return Math.max(0, h, swDeckH);
   }
 
-  // Smoothly blend hillside embankment out from the level engineered roadbed (7.6m -> 24.0m)
-  if (roadHit.dist < 24.0) {
-    const rt = THREE.MathUtils.clamp((24.0 - roadHit.dist) / 16.4, 0, 1);
-    const rb = rt * rt * (3 - 2 * rt);
-    h = THREE.MathUtils.lerp(h, roadHit.roadY, rb);
+  if (isInCoreViceFootprint(x, z)) return 0;
+  return Math.max(0, getLeonidaElevation(x, z));
+}
+
+/* ==========================================================================
+   O(1) ZERO-ALLOCATION SPATIAL HASH GRID FOR SOLID COLLIDERS
+   - Replaces O(N) scans over 1,800+ colliders with instant local neighborhood
+     queries so 8x substepped continuous collision runs at rock-solid 60 FPS!
+   ========================================================================== */
+class SpatialColliderGrid {
+  constructor(cellSize = 24) {
+    this.cellSize = cellSize;
+    this.inv = 1 / cellSize;
+    this.boxes = new Map();
+    this.circles = new Map();
+    this._stamp = 0;
+    this._boxOut = [];
+    this._cirOut = [];
   }
-  return Math.max(0, h);
+  _key(cx, cz) {
+    return ((cx + 512) << 12) ^ (cz + 512);
+  }
+  addBox(b) {
+    b._q = 0;
+    const x0 = Math.floor(b.minX * this.inv), x1 = Math.floor(b.maxX * this.inv);
+    const z0 = Math.floor(b.minZ * this.inv), z1 = Math.floor(b.maxZ * this.inv);
+    for (let cx = x0; cx <= x1; cx++) {
+      for (let cz = z0; cz <= z1; cz++) {
+        const k = this._key(cx, cz);
+        let bucket = this.boxes.get(k);
+        if (!bucket) { bucket = []; this.boxes.set(k, bucket); }
+        bucket.push(b);
+      }
+    }
+  }
+  addCircle(c) {
+    c._q = 0;
+    const x0 = Math.floor((c.x - c.r) * this.inv), x1 = Math.floor((c.x + c.r) * this.inv);
+    const z0 = Math.floor((c.z - c.r) * this.inv), z1 = Math.floor((c.z + c.r) * this.inv);
+    for (let cx = x0; cx <= x1; cx++) {
+      for (let cz = z0; cz <= z1; cz++) {
+        const k = this._key(cx, cz);
+        let bucket = this.circles.get(k);
+        if (!bucket) { bucket = []; this.circles.set(k, bucket); }
+        bucket.push(c);
+      }
+    }
+  }
+  queryBoxes(x, z, rad) {
+    const out = this._boxOut;
+    out.length = 0;
+    const st = ++this._stamp;
+    const x0 = Math.floor((x - rad) * this.inv), x1 = Math.floor((x + rad) * this.inv);
+    const z0 = Math.floor((z - rad) * this.inv), z1 = Math.floor((z + rad) * this.inv);
+    for (let cx = x0; cx <= x1; cx++) {
+      for (let cz = z0; cz <= z1; cz++) {
+        const bucket = this.boxes.get(this._key(cx, cz));
+        if (!bucket) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          const b = bucket[i];
+          if (b._q !== st) { b._q = st; out.push(b); }
+        }
+      }
+    }
+    return out;
+  }
+  queryCircles(x, z, rad) {
+    const out = this._cirOut;
+    out.length = 0;
+    const st = ++this._stamp;
+    const x0 = Math.floor((x - rad) * this.inv), x1 = Math.floor((x + rad) * this.inv);
+    const z0 = Math.floor((z - rad) * this.inv), z1 = Math.floor((z + rad) * this.inv);
+    for (let cx = x0; cx <= x1; cx++) {
+      for (let cz = z0; cz <= z1; cz++) {
+        const bucket = this.circles.get(this._key(cx, cz));
+        if (!bucket) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          const c = bucket[i];
+          if (c._q !== st) { c._q = st; out.push(c); }
+        }
+      }
+    }
+    return out;
+  }
 }
 
 /* Realistic Vice City Citizens for [E] Text-Based Conversation & Street Brawl AI */
@@ -325,39 +669,39 @@ const NPC_PROFILES = [
 
 const SHOWROOMS = [
   {
-    id: 'fix-my-itch', num: '01', district: 'Ocean Beach', title: 'FixMyItch',
+    id: 'fix-my-itch', num: '01', district: 'Ocean Beach · Vice City', title: 'FixMyItch',
     stat: 'Awwwards Nominee · Framer Showcase · Razorpay',
     desc: 'Tactile interactive campaign transforming merchant payment friction into an award-winning product showcase.',
     img: '/assets/images/mockup-fix-my-itch.webp', url: '/fix-my-itch/',
     accent: 0xff2e88, accentHex: '#FF2E88', x: -17.0, z: -82, rotY: 0, parkX: -4.2, parkZ: -82
   },
   {
-    id: 'magic-checkout', num: '02', district: 'Starfish Island', title: 'Magic Checkout',
+    id: 'magic-checkout', num: '02', district: 'Waning Sands · Leonard County', title: 'Magic Checkout',
     stat: '5x Faster Checkout · 12 Interactive Islands',
     desc: 'High-craft conversion showcase demonstrating 1-click checkout speed and intelligent RTO protection.',
     img: '/assets/images/mockup-magic-checkout-v3.webp', url: '/magic-checkout/',
-    accent: 0x21e6d1, accentHex: '#21E6D1', x: 162, z: -300, rotY: Math.PI, parkX: 144, parkZ: -300
+    accent: 0x21e6d1, accentHex: '#21E6D1', x: 103.0, z: -1908, rotY: 0, parkX: 117.0, parkZ: -1908
   },
   {
-    id: 'agentic-payments', num: '03', district: 'Downtown Vice', title: 'Agentic Payments',
+    id: 'agentic-payments', num: '03', district: 'Port Gellhorn · Kelly County', title: 'Agentic Payments',
     stat: 'AI Agent MCP Protocol · Multi-Device Launch',
     desc: 'Product storytelling and interactive system launch for Razorpay’s autonomous AI-native commerce stack.',
     img: '/assets/images/mockup-agentic-payments.webp', url: '/razorpay-agentic-payments/',
-    accent: 0xff8a2a, accentHex: '#FF8A2A', x: -113.0, z: -220, rotY: 0, parkX: -100.2, parkZ: -220
+    accent: 0xff8a2a, accentHex: '#FF8A2A', x: -1977.0, z: -1222, rotY: 0, parkX: -1963.0, parkZ: -1222
   },
   {
-    id: 'ai-launches', num: '04', district: 'Vice Point', title: 'India AI Impact',
+    id: 'ai-launches', num: '04', district: 'Ambrosia · Lake Leonida', title: 'India AI Impact',
     stat: '4 Live AI Unveils · 14-Day Sprint · Summit',
     desc: 'Rapid-turnaround keynote launchpad unveiling four flagship AI payment products live at Bharat Mandapam.',
     img: '/assets/images/mockup-ai-launches.webp', url: '/razorpay-ai-launches/',
-    accent: 0x21e6d1, accentHex: '#21E6D1', x: -17.0, z: -382, rotY: 0, parkX: -4.2, parkZ: -382
+    accent: 0x21e6d1, accentHex: '#21E6D1', x: -977.0, z: -1790, rotY: 0, parkX: -963.0, parkZ: -1790
   },
   {
-    id: 'journey', num: '05', district: 'Little Havana', title: 'Journey App',
+    id: 'journey', num: '05', district: 'Key Lento · Leonida Keys', title: 'Journey App',
     stat: 'Multi-City India Planner · Conflict Auto-Fix',
     desc: 'Calm mobile travel companion unifying multi-leg flights, stays, and live itinerary conflict resolution.',
     img: '/assets/images/journey-cover-v2.jpg', url: '/journey/',
-    accent: 0xffd36b, accentHex: '#FFD36B', x: -113.0, z: -538, rotY: 0, parkX: -100.2, parkZ: -538
+    accent: 0xffd36b, accentHex: '#FFD36B', x: -457.0, z: 1320, rotY: 0, parkX: -443.0, parkZ: 1320
   }
 ];
 
@@ -377,94 +721,102 @@ const _dummy = new THREE.Object3D();
 const _tmpCol = new THREE.Color();
 const _tmpCol2 = new THREE.Color();
 
-function buildVintageSpeedoSVG() {
-  const ticks = [];
-  const labels = [];
-  // Sweep from -130 deg (0 km/h) to +130 deg (280 km/h)
-  for (let v = 0; v <= 280; v += 10) {
-    const t = v / 280;
-    const deg = -130 + t * 260;
-    const rad = ((deg - 90) * Math.PI) / 180;
-    const isMajor = v % 40 === 0;
-    const isMid = v % 20 === 0 && !isMajor;
-    const rOut = 88;
-    const rIn = isMajor ? 74 : isMid ? 78 : 82;
-    const x1 = (100 + Math.cos(rad) * rOut).toFixed(1);
-    const y1 = (100 + Math.sin(rad) * rOut).toFixed(1);
-    const x2 = (100 + Math.cos(rad) * rIn).toFixed(1);
-    const y2 = (100 + Math.sin(rad) * rIn).toFixed(1);
-    const col = v >= 220 ? '#FF465A' : (isMajor ? '#FFE4B5' : 'rgba(255,212,148,0.58)');
-    const sw = isMajor ? 2.4 : isMid ? 1.5 : 1.0;
-    ticks.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`);
-    if (isMajor) {
-      const rl = 61;
-      const lx = (100 + Math.cos(rad) * rl).toFixed(1);
-      const ly = (100 + Math.sin(rad) * rl + 3.6).toFixed(1);
-      labels.push(`<text x="${lx}" y="${ly}" text-anchor="middle" fill="${v >= 220 ? '#FF5C6C' : '#FFE4B5'}" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="13.5">${v}</text>`);
-    }
-  }
+function buildPortfolioSpeedoSVG() {
   return `
-    <svg class="v3-dial-svg" viewBox="0 0 200 200" aria-hidden="true">
+    <svg viewBox="0 0 410 200" aria-hidden="true">
       <defs>
-        <radialGradient id="v3DialBg" cx="50%" cy="44%" r="54%">
-          <stop offset="0%" stop-color="#1f1924"/>
-          <stop offset="72%" stop-color="#0f0b14"/>
-          <stop offset="100%" stop-color="#07050a"/>
+        <linearGradient id="v3SpdCh" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f4f4fa"/>
+          <stop offset=".25" stop-color="#7d7d8c"/>
+          <stop offset=".5" stop-color="#e2e2ec"/>
+          <stop offset=".75" stop-color="#55555f"/>
+          <stop offset="1" stop-color="#c9c9d6"/>
+        </linearGradient>
+        <radialGradient id="v3SpdFc" cx=".5" cy=".42" r=".65">
+          <stop offset="0" stop-color="#262633"/>
+          <stop offset=".7" stop-color="#0d0d15"/>
+          <stop offset="1" stop-color="#050509"/>
         </radialGradient>
-        <linearGradient id="v3BrassCap" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#f2d59b"/>
-          <stop offset="50%" stop-color="#9c7a42"/>
-          <stop offset="100%" stop-color="#403018"/>
+        <linearGradient id="v3SpdGl" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".16"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
         </linearGradient>
       </defs>
-      <circle cx="100" cy="100" r="95" fill="url(#v3DialBg)" stroke="rgba(255,220,165,0.22)" stroke-width="1.2"/>
-      <circle cx="100" cy="100" r="91" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <!-- Redline danger arc (220-280 km/h) -->
-      <path d="M 184.7 76.2 A 88 88 0 0 1 167.4 156.6" fill="none" stroke="rgba(255,58,86,0.34)" stroke-width="6.5" stroke-linecap="round"/>
-      <!-- Inner subtle tachometer RPM arc -->
-      <circle cx="100" cy="100" r="46" fill="none" stroke="rgba(255,214,153,0.10)" stroke-width="3.5" stroke-dasharray="208 290" stroke-dashoffset="0" transform="rotate(140 100 100)"/>
-      <circle class="v3-rpm-arc" data-rpm-arc cx="100" cy="100" r="46" fill="none" stroke="#FFB84D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="208 290" stroke-dashoffset="208" transform="rotate(140 100 100)"/>
-      ${ticks.join('')}
-      ${labels.join('')}
-      <text x="100" y="87" text-anchor="middle" fill="rgba(255,212,148,0.52)" font-family="JetBrains Mono, monospace" font-size="6.8" letter-spacing="1.4">VEGLIA · KM/H</text>
-      <!-- Sweeping vintage coral-orange needle -->
-      <g class="v3-needle-wrap" data-needle>
-        <polygon points="98.2,116 101.8,116 100.9,22 99.1,22" fill="#FF4B3E"/>
-        <polygon points="99.3,100 100.7,100 100.3,24 99.7,24" fill="#FF9B71"/>
-        <circle cx="100" cy="100" r="10.5" fill="url(#v3BrassCap)" stroke="#1b1410" stroke-width="1.5"/>
-        <circle cx="100" cy="100" r="4.2" fill="#171216"/>
+      <g>
+        <circle cx="100" cy="100" r="99" fill="#000"/>
+        <circle cx="100" cy="100" r="97" fill="url(#v3SpdCh)"/>
+        <circle cx="100" cy="100" r="92.5" fill="#050509"/>
+        <circle cx="100" cy="100" r="91" fill="url(#v3SpdFc)"/>
+        <path d="M188.57 91.28A89 89 0 0 1 162.93 162.93" fill="none" stroke="#ff3b4a" stroke-width="2.4" stroke-linecap="butt"/>
+        <line x1="39.19" y1="160.81" x2="49.80" y2="150.20" stroke="#e8e8f2" stroke-width="2.2"/><text x="58.28" y="144.72" class="spd-t">0</text>
+        <line x1="24.15" y1="140.54" x2="30.33" y2="137.24" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="15.65" y1="116.78" x2="30.36" y2="113.85" stroke="#e8e8f2" stroke-width="2.2"/><text x="42.13" y="114.51" class="spd-t">1</text>
+        <line x1="14.41" y1="91.57" x2="21.38" y2="92.26" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="20.55" y1="67.09" x2="34.40" y2="72.83" stroke="#e8e8f2" stroke-width="2.2"/><text x="45.49" y="80.42" class="spd-t">2</text>
+        <line x1="33.52" y1="45.44" x2="38.93" y2="49.88" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="52.22" y1="28.49" x2="60.55" y2="40.97" stroke="#e8e8f2" stroke-width="2.2"/><text x="67.22" y="53.94" class="spd-t">3</text>
+        <line x1="75.04" y1="17.70" x2="77.07" y2="24.40" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="100.00" y1="14.00" x2="100.00" y2="29.00" stroke="#e8e8f2" stroke-width="2.2"/><text x="100.00" y="44.00" class="spd-t">4</text>
+        <line x1="124.96" y1="17.70" x2="122.93" y2="24.40" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="147.78" y1="28.49" x2="139.45" y2="40.97" stroke="#e8e8f2" stroke-width="2.2"/><text x="132.78" y="53.94" class="spd-t">5</text>
+        <line x1="166.48" y1="45.44" x2="161.07" y2="49.88" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="179.45" y1="67.09" x2="165.60" y2="72.83" stroke="#e8e8f2" stroke-width="2.2"/><text x="154.51" y="80.42" class="spd-t">6</text>
+        <line x1="185.59" y1="91.57" x2="178.62" y2="92.26" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="184.35" y1="116.78" x2="169.64" y2="113.85" stroke="#ff3b4a" stroke-width="2.2"/><text x="157.87" y="114.51" class="spd-t r">7</text>
+        <line x1="175.85" y1="140.54" x2="169.67" y2="137.24" stroke="#ff3b4a" stroke-width="1.1"/>
+        <line x1="160.81" y1="160.81" x2="150.20" y2="150.20" stroke="#ff3b4a" stroke-width="2.2"/><text x="141.72" y="144.72" class="spd-t r">8</text>
+        <text x="100" y="124" class="spd-lim tch" text-anchor="middle">RPM x1000</text>
+        <text x="100" y="152" class="spd-num tch-g" data-gear text-anchor="middle">N</text>
+        <text x="100" y="165" class="spd-u" data-tch-u text-anchor="middle">GEAR</text>
+        <g class="v3-tch-needle" data-tach-needle transform="rotate(135 100 100)">
+          <polygon points="100,97.6 176,99.3 176,100.7 100,102.4" fill="#ff8a2a"/>
+          <polygon points="100,97.2 86,98.4 86,101.6 100,102.8" fill="#ff8a2a"/>
+        </g>
+        <circle cx="100" cy="100" r="10" fill="url(#v3SpdCh)"/>
+        <circle cx="100" cy="100" r="6" fill="#14141c"/>
+        <circle cx="100" cy="100" r="2" fill="#ff8a2a"/>
+        <path d="M14 88A88 88 0 0 1 186 88Q100 70 14 88Z" fill="url(#v3SpdGl)"/>
       </g>
-    </svg>
-  `;
-}
-
-function buildVintageTachSVG() {
-  const ticks = [];
-  const labels = [];
-  for (let r = 0; r <= 9; r++) {
-    const deg = -128 + (r / 9) * 256;
-    const rad = ((deg - 90) * Math.PI) / 180;
-    const isRed = r >= 7;
-    const x1 = 60 + Math.cos(rad) * 44;
-    const y1 = 60 + Math.sin(rad) * 44;
-    const x2 = 60 + Math.cos(rad) * 51;
-    const y2 = 60 + Math.sin(rad) * 51;
-    ticks.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${isRed ? '#FF3A56' : '#FFE4B5'}" stroke-width="1.8" stroke-linecap="round"/>`);
-    const lx = 60 + Math.cos(rad) * 34.5;
-    const ly = 60 + Math.sin(rad) * 34.5 + 3.0;
-    labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${isRed ? '#FF4B5C' : '#FFF0D4'}" font-family="JetBrains Mono, monospace" font-size="8.2" font-weight="800">${r}</text>`);
-  }
-  return `
-    <svg class="v3-tach-svg" viewBox="0 0 120 120" aria-hidden="true">
-      <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,214,153,0.14)" stroke-width="1"/>
-      <path d="M 103.5 34.5 A 50 50 0 0 1 99.4 90.8" fill="none" stroke="rgba(255,58,86,0.42)" stroke-width="4.5" stroke-linecap="round"/>
-      ${ticks.join('')}
-      ${labels.join('')}
-      <text x="60" y="79" text-anchor="middle" fill="rgba(255,212,148,0.62)" font-family="JetBrains Mono, monospace" font-size="5.8" letter-spacing="0.8">RPM x1000</text>
-      <g class="v3-tach-needle" data-tach-needle>
-        <polygon points="58.7,69 61.3,69 60.5,14 59.5,14" fill="#FF4B3E"/>
-        <circle cx="60" cy="60" r="6.5" fill="#c7b28a" stroke="#1b1410" stroke-width="1.2"/>
-        <circle cx="60" cy="60" r="2.6" fill="#171216"/>
+      <g transform="translate(210 0)">
+        <circle cx="100" cy="100" r="99" fill="#000"/>
+        <circle cx="100" cy="100" r="97" fill="url(#v3SpdCh)"/>
+        <circle cx="100" cy="100" r="92.5" fill="#050509"/>
+        <circle cx="100" cy="100" r="91" fill="url(#v3SpdFc)"/>
+        <path d="M37.07 162.93A89 89 0 0 1 22.35 56.51" fill="none" stroke="#21e6d1" stroke-width="2.4" stroke-linecap="butt"/>
+        <path d="M187.90 86.08A89 89 0 0 1 162.93 162.93" fill="none" stroke="#ff3b4a" stroke-width="2.4" stroke-linecap="butt"/>
+        <line x1="39.19" y1="160.81" x2="49.80" y2="150.20" stroke="#e8e8f2" stroke-width="2.2"/><text x="58.28" y="144.72" class="spd-t">0</text>
+        <line x1="26.67" y1="144.93" x2="32.64" y2="141.28" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="18.21" y1="126.58" x2="32.47" y2="121.94" stroke="#e8e8f2" stroke-width="2.2"/><text x="43.89" y="121.23" class="spd-t">20</text>
+        <line x1="14.27" y1="106.75" x2="21.24" y2="106.20" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="15.06" y1="86.55" x2="29.87" y2="88.89" stroke="#e8e8f2" stroke-width="2.2"/><text x="41.73" y="93.77" class="spd-t">40</text>
+        <line x1="20.55" y1="67.09" x2="27.01" y2="69.77" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="30.42" y1="49.45" x2="42.56" y2="58.27" stroke="#e8e8f2" stroke-width="2.2"/><text x="52.27" y="68.32" class="spd-t">60</text>
+        <line x1="44.15" y1="34.61" x2="48.69" y2="39.93" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="60.96" y1="23.37" x2="67.77" y2="36.74" stroke="#e8e8f2" stroke-width="2.2"/><text x="73.21" y="50.43" class="spd-t">80</text>
+        <line x1="79.92" y1="16.38" x2="81.56" y2="23.18" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="100.00" y1="14.00" x2="100.00" y2="29.00" stroke="#e8e8f2" stroke-width="2.2"/><text x="100.00" y="44.00" class="spd-t">100</text>
+        <line x1="120.08" y1="16.38" x2="118.44" y2="23.18" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="139.04" y1="23.37" x2="132.23" y2="36.74" stroke="#e8e8f2" stroke-width="2.2"/><text x="126.79" y="50.43" class="spd-t">120</text>
+        <line x1="155.85" y1="34.61" x2="151.31" y2="39.93" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="169.58" y1="49.45" x2="157.44" y2="58.27" stroke="#e8e8f2" stroke-width="2.2"/><text x="147.73" y="68.32" class="spd-t">140</text>
+        <line x1="179.45" y1="67.09" x2="172.99" y2="69.77" stroke="#e8e8f2" stroke-width="1.1"/>
+        <line x1="184.94" y1="86.55" x2="170.13" y2="88.89" stroke="#ff3b4a" stroke-width="2.2"/><text x="158.27" y="93.77" class="spd-t r">160</text>
+        <line x1="185.73" y1="106.75" x2="178.76" y2="106.20" stroke="#ff3b4a" stroke-width="1.1"/>
+        <line x1="181.79" y1="126.58" x2="167.53" y2="121.94" stroke="#ff3b4a" stroke-width="2.2"/><text x="156.11" y="121.23" class="spd-t r">180</text>
+        <line x1="173.33" y1="144.93" x2="167.36" y2="141.28" stroke="#ff3b4a" stroke-width="1.1"/>
+        <line x1="160.81" y1="160.81" x2="150.20" y2="150.20" stroke="#ff3b4a" stroke-width="2.2"/><text x="141.72" y="144.72" class="spd-t r">200</text>
+        <line x1="24.97" y1="57.98" x2="38.05" y2="65.31" stroke="#ffd447" stroke-width="2.6"/>
+        <text x="100" y="124" class="spd-lim" data-spd-lim text-anchor="middle">LIMIT 55</text>
+        <text x="100" y="152" class="spd-num" data-speed text-anchor="middle">000</text>
+        <text x="100" y="165" class="spd-u" data-spd-u text-anchor="middle">MPH</text>
+        <g class="v3-spd-needle" data-needle transform="rotate(135 100 100)">
+          <polygon points="100,97.6 176,99.3 176,100.7 100,102.4" fill="#ff3b4a"/>
+          <polygon points="100,97.2 86,98.4 86,101.6 100,102.8" fill="#ff3b4a"/>
+        </g>
+        <circle cx="100" cy="100" r="10" fill="url(#v3SpdCh)"/>
+        <circle cx="100" cy="100" r="6" fill="#14141c"/>
+        <circle cx="100" cy="100" r="2" fill="#ff3b4a"/>
+        <path d="M14 88A88 88 0 0 1 186 88Q100 70 14 88Z" fill="url(#v3SpdGl)"/>
       </g>
     </svg>
   `;
@@ -517,6 +869,11 @@ class ViceCity3DApp {
     this.pointerLocked = false;
     this.orbitYawOffset = 0;
     this.orbitPitchOffset = 0;
+    this.targetOrbitYaw = 0;
+    this.targetOrbitPitch = 0;
+    this._lastAppliedOrbitYaw = 0;
+    this._lastAppliedOrbitPitch = 0;
+    this.northPointMall = null;
     this.dragging = false;
     this.lastPtrX = 0;
     this.lastPtrY = 0;
@@ -555,17 +912,30 @@ class ViceCity3DApp {
     this.interiorPerks = [];
     this.parachuteMesh = null;
 
-    // Dynamic Weather & Day/Night Cycle State
+    // Continuous Automatic Day/Night & Dynamic Weather Cycle State
     this.timeIdx = 0; // 0: Sunset, 1: Day, 2: Night, 3: Dawn
-    this.weatherIdx = 0; // 0: Clear, 1: Rain, 2: Storm
+    this.dayTime = 17.6; // Continuous 24h solar clock (starts at Golden Sunset!)
+    this.autoDayNight = true;
+    this.weatherIdx = 0; // 0: Hazy Sun, 1: Mist, 2: Rain, 3: Storm
+    this.autoWeather = true;
+    this.autoWeatherTimer = 54.0; // Automatically transitions weather smoothly every ~54-72s
+    this.curRainLevel = 0.0;
+    this.curFogMult = 1.0;
+    this.curWeatherDark = 0.0;
+    this.lastAutoNightLights = false;
     this.envSunDir = SUN_DIR.clone();
     this.lightningFlash = 0;
     this.lightningCooldown = 5.0;
     this.rainLines = null;
+    this.mountViceRopeway = null;
+    this.worldHazeGroup = null;
+    this.worldHazeMats = [];
 
-    // Solid world collision geometry & interactive items
+    // Solid world collision geometry & O(1) spatial hash grid + interactive items
     this.boxColliders = [];
     this.circleColliders = [];
+    this.colliderGrid = new SpatialColliderGrid(24);
+    this.sierraWest = null;
     this.tokens = [];
     this.tokensCollected = 0;
     this.weaponPickups = [];
@@ -608,8 +978,27 @@ class ViceCity3DApp {
     this.streakTimer = 0;
     this.wantedStars = 0;
     this.wantedDecay = 0;
-    this.cash = 0;
+    this.cash = 250;
     this.odometerKm = 18.4;
+
+    // VCPD Police Chase Units, Wildlife Animals, Malibu Club Disco, Barricades, Taxi Service & Vice City Cheats!
+    this.policeUnits = [];
+    this.policeCops = [];
+    this.policeSirenTimer = 0;
+    this.policeDispatchTimer = 0;
+    this.wildlife = [];
+    this.malibuExtras = null;
+    this.barricadeBeacons = [];
+    this.taxiModalOpen = false;
+    this.taxiFareMission = null;
+    this.taxiDropBeacon = null;
+    this.cheatBuffer = '';
+    this.cheatToastTimer = 0;
+    this.cheats = {
+      flyingCars: false, seaways: false, grip: false, greenLight: false,
+      fastTraffic: false, slowMo: false, fastMo: false, fastClock: false,
+      riot: false, hostilePeds: false, armedPeds: false, fannyMagnet: false, heavyFog: false
+    };
 
     this.lastCubeX = 9999;
     this.lastCubeZ = 9999;
@@ -625,6 +1014,13 @@ class ViceCity3DApp {
     this.lastAutoDist = -1;
     this.lastNavKey = '';
     this.audio = new ViceAudioEngine();
+    this.audio.onRadioChange = () => this.updateRadioHUD();
+    this.weaponWheelOpen = false;
+    this.weaponWheelHover = 0;
+    this.weaponWheelHoldMode = false;
+    this.weaponWheelVecX = 0;
+    this.weaponWheelVecY = -1;
+    this.weaponWheelHadPointerLock = false;
     this.carState = {
       x: 3.2, y: 0, z: 6.0, vy: 0, airborne: false, airTime: 0,
       yaw: 0, speed: 0, steer: 0,
@@ -635,6 +1031,8 @@ class ViceCity3DApp {
     this.buildDOM();
     this.initWebGL();
     this.bindEvents();
+    this.audio.setRadioInCar(this.isInCar());
+    this.updateRadioHUD();
     this.exposeQCHook();
   }
 
@@ -647,8 +1045,27 @@ class ViceCity3DApp {
         mode: this.mode,
         weapon: this.weapon,
         timeOfDay: TIME_PRESETS[this.timeIdx].id,
+        dayTime: Number((this.dayTime || 0).toFixed(3)),
+        autoDayNight: Boolean(this.autoDayNight),
         weather: WEATHER_PRESETS[this.weatherIdx].id,
+        autoWeather: Boolean(this.autoWeather),
+        autoWeatherTimer: Number((this.autoWeatherTimer || 0).toFixed(1)),
+        curRainLevel: Number((this.curRainLevel || 0).toFixed(3)),
+        ropewaysCount: (this.mountViceRopeway ? 1 : 0) + (this.leonidaWorld && this.leonidaWorld.kalagaRopeway ? 1 : 0),
         radioStation: this.audio.getRadioStation().name,
+        radioStep: this.audio.radioStep,
+        radioInCar: this.audio.radioInCar,
+        radioPlaying: this.audio.canPlayRadio(),
+        radioVisible: Boolean(this.el && this.el.radioDeck && !this.el.radioDeck.hidden && !this.el.radioDeck.classList.contains('hidden-radio')),
+        rjActive: Boolean(this.audio.getActiveRJ()),
+        rjPaused: Boolean(this.audio.rjPausedByExit),
+        rjTime: this.audio.rjAudio ? Number(this.audio.rjAudio.currentTime.toFixed(3)) : 0,
+        rjRemainingMs: this.audio.rjRemainingMs,
+        rjHost: this.audio.rjClip ? this.audio.rjClip.host : null,
+        rjSrc: this.audio.rjClip ? this.audio.rjClip.src : null,
+        weaponWheelOpen: Boolean(this.weaponWheelOpen),
+        weaponWheelHover: this.weaponWheelHover,
+        weaponWheelHoverId: WEAPONS[this.weaponWheelHover] ? WEAPONS[this.weaponWheelHover].id : null,
         isSoftwareGl: this.isSoftwareGl,
         kmh: Math.round(Math.abs(this.carState.speed) * 3.9),
         x: this.carState.x,
@@ -695,6 +1112,18 @@ class ViceCity3DApp {
         enterableCount: this.enterableBuildings ? this.enterableBuildings.length : 0,
         hasCarnivalPier: Boolean(this.carnivalPier),
         hasMountVice: Boolean(this.mountVice),
+        hasMalibuClub: Boolean(this.malibuExtras),
+        hasNorthPointMall: Boolean(this.northPointMall),
+        fogDensity: this.scene && this.scene.fog ? Number(this.scene.fog.density.toFixed(5)) : 0,
+        bikeRiderRotY: this.player && this.player.root ? Number(this.player.root.rotation.y.toFixed(3)) : null,
+        mountViceSummitY: Number(getTerrainHeight(-228, -1432).toFixed(2)),
+        sierraWestSummitY: Number(getTerrainHeight(-772, -210).toFixed(2)),
+        loopEndpointsY: [
+          Number(getTerrainHeight(0, -1106).toFixed(2)),
+          Number(getTerrainHeight(-480, -1106).toFixed(2)),
+          Number(getTerrainHeight(-486, -540).toFixed(2)),
+          Number(getTerrainHeight(-486, -60).toFixed(2))
+        ],
         playerHp: this.playerHp,
         playerArmor: this.playerArmor,
         dialogueOpen: Boolean(this.activeDialogue),
@@ -715,13 +1144,18 @@ class ViceCity3DApp {
           textures: this.renderer.info.memory.textures
         } : null
       }),
+      triggerRandomRJ: (idx = null) => this.audio.triggerRandomRJ(idx),
+      openWeaponWheel: (hold = false) => this.openWeaponWheel(hold),
+      closeWeaponWheel: (commit = true) => this.closeWeaponWheel(commit),
+      hoverWeaponWheel: (idx = 0) => this.setWeaponWheelHover(idx),
       stealNearest: (instant = false) => {
         this.carjackAnim = null;
         if (this.mode !== 'foot') {
           this.setMode('foot');
           this.playerState.x = this.carState.x - 2.3;
           this.playerState.z = this.carState.z;
-          this.player.root.position.set(this.playerState.x, 0, this.playerState.z);
+          this.playerState.y = this.getSurfaceY(this.playerState.x, this.playerState.z, true);
+          this.player.root.position.set(this.playerState.x, this.playerState.y, this.playerState.z);
         }
         let best = null, bestD = Infinity;
         for (let i = 0; i < this.traffic.length; i++) {
@@ -733,7 +1167,8 @@ class ViceCity3DApp {
           const rx = Math.cos(best.rotation.y), rz = -Math.sin(best.rotation.y);
           this.playerState.x = best.position.x - rx * 2.25;
           this.playerState.z = best.position.z - rz * 2.25;
-          this.player.root.position.set(this.playerState.x, 0, this.playerState.z);
+          this.playerState.y = this.getSurfaceY(this.playerState.x, this.playerState.z, true);
+          this.player.root.position.set(this.playerState.x, this.playerState.y, this.playerState.z);
           if (instant) this.finishStealTrafficCar(best);
           else this.startCarjackAnim(best);
         }
@@ -785,20 +1220,23 @@ class ViceCity3DApp {
         if (this.mode === 'foot') {
           this.playerState.x = x;
           this.playerState.z = z;
-          this.playerState.y = 0;
+          this.playerState.y = this.getSurfaceY(x, z, true);
           this.playerState.vy = 0;
+          this.playerState.grounded = true;
           this.playerState.yaw = yaw;
+          this.player.root.position.set(x, this.playerState.y, z);
         } else {
           this.carState.x = x;
-          this.carState.y = 0;
+          this.carState.z = z;
+          this.carState.y = this.getSurfaceY(x, z, false) + 0.05;
           this.carState.vy = 0;
           this.carState.airborne = false;
-          this.carState.z = z;
           this.carState.yaw = yaw;
           this.carState.speed = speed;
         }
         this.snapCameraNext = true;
         this.cancelAutopilot();
+        this.drawRadar();
       },
       toggleVehicle: () => this.toggleVehicle(true),
       boardPlane: (idx = 0) => {
@@ -844,6 +1282,7 @@ class ViceCity3DApp {
       setWeapon: (id) => this.setWeapon(id),
       fireWeapon: () => this.fireWeapon(),
       setTimeOfDay: (idx) => this.setTimeOfDay(idx),
+      setDayTime: (h) => { this.dayTime = ((Number(h) % 24) + 24) % 24; },
       setWeather: (idx) => this.setWeather(idx),
       cycleRadio: (delta = 1) => this.cycleRadio(delta),
       hoverLook: (dx, dy = 0) => this.applyHoverLook(dx, dy),
@@ -863,6 +1302,21 @@ class ViceCity3DApp {
       },
       openFullMap: () => this.openFullMap(),
       closeFullMap: () => this.closeFullMap(),
+      leonidaPlaces: LEONIDA_PLACES,
+      getLeonidaStats: () => this.leonidaWorld ? {
+        placesCount: this.leonidaWorld.placesCount,
+        highwaysCount: this.leonidaWorld.highwaysCount,
+        buildingsCount: this.leonidaWorld.buildingsCount,
+        treesCount: this.leonidaWorld.treesCount,
+        tollPlazasCount: this.leonidaWorld.tollPlazasCount,
+        signsCount: this.leonidaWorld.signsCount,
+        billboardsCount: this.leonidaWorld.billboardsCount,
+        gasStationsCount: this.leonidaWorld.gasStationsCount,
+        rocksCount: this.leonidaWorld.rocksCount,
+        bushesCount: this.leonidaWorld.bushesCount,
+        trafficCount: this.leonidaWorld.trafficCount,
+        trafficSignalsCount: (this.leonidaWorld.trafficSignalsCount || 0) + (this.trafficSignals ? this.trafficSignals.length : 0)
+      } : null,
       openProjectsHub: () => this.openProjectsHub(),
       closeProjectsHub: () => this.closeProjectsHub(),
       talkNearestNpc: () => {
@@ -920,8 +1374,13 @@ class ViceCity3DApp {
         this.closeMiniGameHub();
         if (this.mode === 'ride') this.exitPierRide();
         if (this.mode !== 'car') this.setMode('car');
-        const pt = MOUNT_VICE_ROAD[MOUNT_VICE_ROAD.length - 18];
-        const nextPt = MOUNT_VICE_ROAD[MOUNT_VICE_ROAD.length - 10];
+        let peakIdx = Math.floor(MOUNT_VICE_ROAD.length * 0.5);
+        let peakY = -Infinity;
+        for (let i = 0; i < MOUNT_VICE_ROAD.length; i++) {
+          if (MOUNT_VICE_ROAD[i].y > peakY) { peakY = MOUNT_VICE_ROAD[i].y; peakIdx = i; }
+        }
+        const pt = MOUNT_VICE_ROAD[Math.max(4, peakIdx - 6)];
+        const nextPt = MOUNT_VICE_ROAD[Math.min(MOUNT_VICE_ROAD.length - 1, peakIdx + 2)];
         this.carState.x = pt.x;
         this.carState.z = pt.z;
         this.carState.y = getTerrainHeight(pt.x, pt.z) + 0.08;
@@ -932,6 +1391,8 @@ class ViceCity3DApp {
         this.orbitYawOffset = 0;
         this.orbitPitchOffset = 0.14;
         this.snapCameraNext = true;
+        if (this.el && this.el.combo) this.el.combo.classList.remove('on');
+        this.streakTimer = 0;
         const vehMesh = this.activeVehicle ? this.activeVehicle.mesh : this.car.root;
         vehMesh.position.set(this.carState.x, this.carState.y, this.carState.z);
         vehMesh.rotation.y = this.carState.yaw;
@@ -950,7 +1411,55 @@ class ViceCity3DApp {
         for (let i = 0; i < steps; i++) this.update(dt, this.clock.getElapsedTime() + i * dt);
         this.renderFrame();
       },
-      setKeys: (k) => Object.assign(this.keys, k)
+      setKeys: (k) => Object.assign(this.keys, k),
+      triggerCheat: (code) => this.activateCheatCode(code),
+      openTaxi: () => this.openTaxiModal(),
+      closeTaxi: () => this.closeTaxiModal(),
+      teleportTo: (x, z, mode = 'car', yaw = 0) => {
+        this.started = true; this.el.startOv.hidden = true;
+        this.closeNpcDialogue(); this.closeMiniGameHub(); this.closeTaxiModal();
+        if (this.mode === 'ride') this.exitPierRide();
+        if (this.mode !== mode) this.setMode(mode);
+        const gy = getTerrainHeight(x, z);
+        if (mode === 'foot') {
+          this.playerState.x = x; this.playerState.z = z; this.playerState.y = gy;
+          this.playerState.yaw = yaw; this.orbitYawOffset = yaw;
+          this.player.root.position.set(x, gy, z);
+        } else {
+          this.carState.x = x; this.carState.z = z; this.carState.y = gy + 0.06;
+          this.carState.yaw = yaw; this.carState.speed = 0; this.carState.vy = 0; this.carState.airborne = false;
+          this.orbitYawOffset = 0;
+          const m = this.activeVehicle ? this.activeVehicle.mesh : this.car.root;
+          m.position.set(x, this.carState.y, z); m.rotation.y = yaw;
+        }
+        this.snapCameraNext = true;
+        this.drawRadar();
+        return { x, y: gy, z, fog: this.scene.fog ? this.scene.fog.density : 0 };
+      },
+      mountBike: (kind = 'pcj600') => {
+        this.started = true; this.el.startOv.hidden = true;
+        const idx = this.parkedVehicles.findIndex((pv) => pv && pv.rig && pv.rig.isBike && (!kind || pv.rig.bikeKind === kind));
+        if (idx === -1) return false;
+        this.enterParkedVehicle(this.parkedVehicles[idx], idx);
+        this.snapCameraNext = true;
+        return this.activeVehicle ? this.activeVehicle.label : false;
+      },
+      spawnPolice: (stars = 3) => {
+        this.started = true; this.el.startOv.hidden = true;
+        this.wantedStars = Math.max(1, Math.min(5, stars));
+        this.wantedDecay = 28;
+        this.updateWantedHUD(0);
+        this.ensurePoliceDispatch(true);
+        return this.policeUnits.length;
+      },
+      tryFarEnterF: () => {
+        this.started = true; this.el.startOv.hidden = true;
+        if (this.mode !== 'foot') this.setMode('foot');
+        this.playerState.x = this.carState.x + 28;
+        this.playerState.z = this.carState.z;
+        this.toggleVehicle(false);
+        return { modeAfterF: this.mode, comboText: this.el.combo ? this.el.combo.textContent : '' };
+      }
     };
   }
 
@@ -1039,27 +1548,20 @@ class ViceCity3DApp {
             <button class="v3-env-chip" type="button" data-weather-btn title="Cycle Weather (Y)">☀ <span>Clear</span></button>
             <button class="v3-exit" type="button" data-close>Exit · ESC</button>
           </div>
-          <!-- Remastered GTA Vice City Top-Right Status Cluster -->
+          <!-- Authentic Unboxed GTA V / Vice City Top-Right Floating Status HUD -->
           <div class="v3-gta-hud" aria-label="Vice City HUD Status">
-            <div class="v3-gta-row">
-              <div class="v3-gta-cash" data-cash>$0</div>
-              <span class="v3-gta-wep-pill" data-gta-wep-pill>DRIVE-BY UZI</span>
+            <div class="v3-gta-toprow">
+              <span class="v3-gta-clock" data-gta-clock>18:45</span>
+              <div class="v3-gta-cash" data-cash>$250</div>
             </div>
-            <div class="v3-gta-row">
-              <div class="v3-wanted" data-wanted title="GTA Wanted Level">
-                <span class="star" data-s="1">★</span><span class="star" data-s="2">★</span><span class="star" data-s="3">★</span><span class="star" data-s="4">★</span><span class="star" data-s="5">★</span>
-              </div>
+            <div class="v3-wanted" data-wanted title="GTA Wanted Level">
+              <span class="star" data-s="1">★</span><span class="star" data-s="2">★</span><span class="star" data-s="3">★</span><span class="star" data-s="4">★</span><span class="star" data-s="5">★</span>
             </div>
-            <div class="v3-gta-bars">
-              <div class="v3-bar-wrap">
-                <div class="v3-bar-lbl"><span>HP</span><span data-hp-val>100</span></div>
-                <div class="v3-bar-track"><div class="v3-bar-fill hp" data-hp-fill></div></div>
-              </div>
-              <div class="v3-bar-wrap">
-                <div class="v3-bar-lbl"><span>ARMOR</span><span data-arm-val>100</span></div>
-                <div class="v3-bar-track"><div class="v3-bar-fill arm" data-arm-fill></div></div>
-              </div>
-            </div>
+            <button class="v3-gta-wep-pill" type="button" data-gta-wep-pill title="Open GTA 5 Weapon Wheel [TAB]">
+              <span class="v3-gta-wep-ico" data-gta-wep-ico>${getWeaponWheelSvg('smg')}</span>
+              <span class="v3-gta-wep-txt" data-gta-wep-txt>DRIVE-BY UZI</span>
+              <span class="v3-gta-wep-key">TAB</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1106,6 +1608,12 @@ class ViceCity3DApp {
 
       <div class="v3-combo" data-combo>SQUISH! <span>+$100</span></div>
 
+      <!-- Classic GTA Vice City Cheat Activated Toast -->
+      <div class="v3-cheat-toast" data-cheat-toast>
+        <div class="v3-cheat-k">CHEAT ACTIVATED</div>
+        <div class="v3-cheat-msg" data-cheat-msg>PANZER · RHINO TANK SPAWNED</div>
+      </div>
+
       <!-- Top-Center Turn-by-Turn GPS Navigation Ribbon -->
       <div class="v3-nav-bar" data-nav-bar>
         <div class="v3-nav-arrow" data-nav-arrow>↑</div>
@@ -1117,43 +1625,29 @@ class ViceCity3DApp {
         <button class="v3-auto-cancel" type="button" data-nav-cancel>Stop</button>
       </div>
 
-      <!-- Upgraded Tactical Interactive Corner GPS Minimap (Click or Press G for Full City Map) -->
+      <!-- Authentic GTA V Rectangular Tactical Minimap + Flush Health / Armor / Special Bars -->
       <div class="v3-radar" data-radar-wrap title="Open Full Vice City GPS Map (G)">
-        <div class="v3-radar-head">
-          <span>VICE TACTICAL GPS</span>
-          <strong>MAP [G]</strong>
+        <div class="v3-radar-map">
+          <canvas width="240" height="154" data-radar></canvas>
+          <span class="v3-radar-tag">MAP [G]</span>
+          <div class="v3-radar-cap">
+            <span data-radar-street>Ocean Drive</span>
+            <strong data-radar-info>40 Cash Piles</strong>
+          </div>
         </div>
-        <canvas width="212" height="184" data-radar></canvas>
-        <div class="v3-radar-foot">
-          <span data-radar-street>Ocean Drive</span>
-          <span data-radar-info>40 Cash Piles</span>
+        <div class="v3-radar-bars" aria-label="Health, Armor and Nitro">
+          <div class="v3-gbar hp" title="Health"><div class="v3-gbar-fill" data-hp-fill></div></div>
+          <div class="v3-gbar arm" title="Armor"><div class="v3-gbar-fill" data-arm-fill></div></div>
+          <div class="v3-gbar nos" title="Nitro / Special"><div class="v3-gbar-fill" data-nos-fill></div></div>
         </div>
       </div>
 
-      <!-- Realistic 1986 Italian Exotic Dual-Gauge Analog Instrument Binnacle -->
-      <div class="v3-cluster" data-cluster aria-label="Vintage analog speedometer and tachometer">
-        <div class="v3-binnacle-hood"></div>
-        <div class="v3-gauge-tach">
-          ${buildVintageTachSVG()}
-        </div>
-        <div class="v3-gauge-speedo">
-          ${buildVintageSpeedoSVG()}
-          <div class="v3-telltales">
-            <span class="v3-lamp on-lights" data-lamp-lights>LGT</span>
-            <span class="v3-lamp" data-lamp-nos>NOS</span>
-            <span class="v3-lamp" data-lamp-auto>GPS</span>
-          </div>
-          <div class="v3-speed-readout" data-speed>0</div>
-          <div class="v3-odo-box" title="Mechanical Rolling Odometer">
-            <span data-odo-main>00018</span><span class="v3-odo-tenths" data-odo-dec>.4</span>
-          </div>
-          <div class="v3-cluster-gear">
-            <span class="v3-gear-gate" data-gear>N</span>
-          </div>
-        </div>
+      <!-- Exact Main Portfolio Website Sports-Car Dual-Dial Tachometer & Speedometer -->
+      <div class="v3-cluster v3-spd" data-cluster aria-label="Sports car tachometer and speedometer">
+        ${buildPortfolioSpeedoSVG()}
       </div>
 
-      <!-- Active Vehicle & Drive-By / Flight Badge -->
+      <!-- Authentic GTA Bottom-Right Unboxed Vehicle Callout -->
       <button class="v3-car-badge" type="button" data-car-badge title="Click or Left-Click on road to fire Drive-By Uzi">
         <strong data-car-name>VICE SUPERCAR</strong>
         <span data-car-sub>LMB · UZI DRIVE-BY</span>
@@ -1176,6 +1670,7 @@ class ViceCity3DApp {
         <div class="v3-foot-acts">
           <button class="v3-combat-btn" type="button" data-punch-btn>Punch [LMB]</button>
           <button class="v3-combat-btn kick" type="button" data-kick-btn>Kick [K]</button>
+          <button class="v3-combat-btn wheel" type="button" data-foot-wheel-btn title="Open GTA 5 Weapon Wheel [TAB]">Wheel [TAB]</button>
           <button class="v3-foot-car-btn" type="button" data-foot-car-btn>Steal / Car [F]</button>
         </div>
       </div>
@@ -1202,7 +1697,7 @@ class ViceCity3DApp {
         <button class="v3-dock-toggle" type="button" data-dock-toggle>▾ Hide Controls</button>
         <div class="v3-dock">
           <div class="v3-route-row" data-waypoints>
-            ${WAYPOINTS.map((w, i) => `<button class="v3-wp${i === 0 ? ' active' : ''}" type="button" data-wp="${w.id}">${w.label}</button>`).join('')}
+            ${DOCK_WAYPOINTS.map((w, i) => `<button class="v3-wp${i === 0 ? ' active' : ''}" type="button" data-wp="${w.id}">${w.label}</button>`).join('')}
           </div>
           <div class="v3-track"><div class="v3-track-fill" data-track-fill></div></div>
           <div class="v3-ctrl-row">
@@ -1213,6 +1708,7 @@ class ViceCity3DApp {
             <div class="v3-keys-hint" data-keys-hint>WASD Drive · Mouse Hover Look · R Radio · T/Y Time &amp; Weather · F Exit Car</div>
             <div class="v3-tools">
               <button class="v3-tool-btn" type="button" data-veh-btn>Exit Car [F]</button>
+              <button class="v3-tool-btn" type="button" data-taxi-btn title="Hail Kaufman Cabs Taxi Service [X]">Taxi [X]</button>
               <button class="v3-tool-btn" type="button" data-map-btn>Map [G]</button>
               <button class="v3-tool-btn" type="button" data-cam>Cam: Chase</button>
               <button class="v3-tool-btn on" type="button" data-lights>Lights</button>
@@ -1238,27 +1734,71 @@ class ViceCity3DApp {
       <div class="v3-ov" data-start-ov>
         <div class="v3-start">
           <div class="v3-start-k">Akshat Singh · Interactive 3D Open World</div>
-          <h2>Vice City Ocean Drive</h2>
-          <p>Explore a massive 6×10 Vice City open world featuring Starfish Island, Vice Key Resort, Prawn Island Film Studios, Little Haiti, Vice Port Docks, South Marina &amp; Int’l Airport. Pull up to 5 Art Deco Showcase Cinemas, collect 40 Piles of Cash &amp; 10 Weapon Pickups, or hop out [F] to hijack ANY NPC car and unleash 7 Weapons [1–7]!</p>
+          <h2>Great State of Leonida</h2>
+          <p>Explore the entire Great State of Leonida — all 5 counties &amp; 68 named destinations from Mount Kalaga National Park (165m), Lake Leonida, Port Gellhorn, Ambrosia &amp; Leonida State Prison to Vice City Ocean Drive, Grassrivers, and the US-1A Leonida Keys! Pull up to 5 Art Deco Showcase Cinemas, hijack ANY car or fly jets from 4 airports, and unleash 7 Weapons [TAB].</p>
           <button class="v3-start-btn" type="button" data-begin>Start Exploring</button>
-          <div class="v3-start-keys">WASD Move · F Exit / Steal NPC Car · 1–7 Weapons · Click Fire / Drive-By · P Projects · R Radio · G Map</div>
+          <div class="v3-start-keys">WASD Move · F Exit / Steal NPC Car · TAB Weapon Wheel · Click Fire / Drive-By · P Projects · R In-Car Radio · G Leonida Map</div>
         </div>
       </div>
 
-      <!-- Interactive Full-Screen Vice City GPS Map Modal -->
+      <!-- Kaufman Cabs Interactive Vice City Taxi Service Modal -->
+      <div class="v3-ov" data-taxi-ov hidden>
+        <div class="v3-taxi-card" role="dialog" aria-label="Kaufman Cabs Taxi Service">
+          <div class="v3-taxi-head">
+            <div>
+              <div class="v3-taxi-title">KAUFMAN CABS · VICE TAXI SERVICE</div>
+              <div class="v3-taxi-sub">Choose your destination for instant VIP cab transport across Vice City</div>
+            </div>
+            <button class="v3-dlg-close" type="button" data-taxi-close>Close [ESC]</button>
+          </div>
+          <div class="v3-taxi-grid">
+            ${[
+              { id: 'malibu-club', name: 'The Malibu Club [IN]', fare: 25 },
+              { id: 'north-mall', name: 'North Point Mall [IN]', fare: 35 },
+              { id: 'pier', name: 'Vice Carnival Pier', fare: 30 },
+              { id: 'airport', name: "Escobar Int'l Airport", fare: 40 },
+              { id: 'village', name: 'Vice Hollow Community', fare: 55 },
+              { id: 'forest', name: 'Vice Pines Forest', fare: 50 },
+              { id: 'mount-vice', name: 'Mount Vice Loop (118m)', fare: 75 },
+              { id: 'sierra-west', name: 'Sierra West Peaks (96m)', fare: 70 },
+              { id: 'ammunation', name: 'Ammu-Nation Ocean Dr', fare: 20 },
+              { id: 'start', name: 'Ocean Drive Beachfront', fare: 20 }
+            ].map((d) => `
+              <button class="v3-taxi-dest" type="button" data-taxi-dest="${d.id}" data-taxi-fare="${d.fare}">
+                <span>${d.name}</span>
+                <span class="v3-taxi-fare">$${d.fare}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Full-Screen Great State of Leonida GPS Atlas Modal -->
       <div class="v3-ov" data-fullmap-ov hidden>
         <div class="v3-fullmap">
           <div class="v3-fullmap-canvas-wrap">
-            <canvas width="520" height="520" data-fullmap-canvas></canvas>
-            <div class="v3-fullmap-tip">Click anywhere on the map to set GPS Auto-Drive destination</div>
+            <canvas width="460" height="620" data-fullmap-canvas></canvas>
+            <div class="v3-fullmap-tip">Click anywhere on the State of Leonida map to set GPS Auto-Drive</div>
           </div>
           <div class="v3-fullmap-side">
-            <div>
-              <div class="v3-card-k">Vice City GPS Navigation</div>
-              <h3>City Map</h3>
-              <div class="v3-fullmap-list" data-fullmap-list style="margin-top:12px;">
+            <div class="v3-fullmap-top">
+              <div class="v3-card-k">The Great State of Leonida · GPS Atlas</div>
+              <div class="v3-fullmap-headrow">
+                <h3>State Map</h3>
+                <span class="v3-fm-count" data-fm-count>${WAYPOINTS.length - 1} Places</span>
+              </div>
+              <div class="v3-fm-tabs" data-fm-tabs>
+                <button class="v3-fm-tab active" type="button" data-fm-tab="ALL">All</button>
+                <button class="v3-fm-tab" type="button" data-fm-tab="Vice-Dale County">Vice-Dale</button>
+                <button class="v3-fm-tab" type="button" data-fm-tab="Leonard County">Leonard</button>
+                <button class="v3-fm-tab" type="button" data-fm-tab="Kelly County">Kelly</button>
+                <button class="v3-fm-tab" type="button" data-fm-tab="Lummox County">Lummox</button>
+                <button class="v3-fm-tab" type="button" data-fm-tab="MARIANA">Keys &amp; Mariana</button>
+              </div>
+              <input class="v3-fm-search" type="search" data-fm-search placeholder="Search Leonida cities, golf, shops, parks..." autocomplete="off" />
+              <div class="v3-fullmap-list" data-fullmap-list>
                 ${WAYPOINTS.filter((w) => w.id !== 'start').map((w) => `
-                  <div class="v3-fm-row">
+                  <div class="v3-fm-row" data-fm-row data-fm-county="${w.county || 'Vice-Dale County'}" data-fm-q="${(w.label + ' ' + w.zone + ' ' + (w.county || '')).toLowerCase().replace(/"/g, '')}">
                     <button class="v3-fm-btn" type="button" data-fm-wp="${w.id}" title="Auto-Drive GPS route">
                       <div>
                         <div class="v3-fm-title">${w.label}</div>
@@ -1274,11 +1814,11 @@ class ViceCity3DApp {
             <div>
               <div class="v3-fm-legend">
                 <span>● Projects (01–05)</span>
-                <span>💵 Piles of Cash</span>
-                <span>◆ Weapon Pickups</span>
-                <span>🚗 Parked Vehicles</span>
+                <span>✈ 4 Airports / Jets</span>
+                <span>━ 12 Interstates &amp; Grids</span>
+                <span>▲ Player Position</span>
               </div>
-              <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+              <div style="margin-top:10px; display:flex; justify-content:flex-end;">
                 <button class="v3-card-close" type="button" data-fullmap-close>Close Map [G]</button>
               </div>
             </div>
@@ -1392,6 +1932,7 @@ class ViceCity3DApp {
           </div>
         </div>
       </div>
+      ${buildWeaponWheelHTML()}
     `;
 
     document.body.appendChild(stage);
@@ -1402,6 +1943,9 @@ class ViceCity3DApp {
       uiCursor: stage.querySelector('[data-ui-cursor]'),
       lockTip: stage.querySelector('[data-lock-tip]'),
       gtaWepPill: stage.querySelector('[data-gta-wep-pill]'),
+      gtaWepIco: stage.querySelector('[data-gta-wep-ico]'),
+      gtaWepTxt: stage.querySelector('[data-gta-wep-txt]'),
+      gtaClock: stage.querySelector('[data-gta-clock]'),
       zone: stage.querySelector('[data-zone]'),
       progress: stage.querySelector('[data-progress]'),
       radioDeck: stage.querySelector('[data-radio-deck]'),
@@ -1422,6 +1966,9 @@ class ViceCity3DApp {
       gear: stage.querySelector('[data-gear]'),
       needle: stage.querySelector('[data-needle]'),
       tachNeedle: stage.querySelector('[data-tach-needle]'),
+      spdLim: stage.querySelector('[data-spd-lim]'),
+      spdUnit: stage.querySelector('[data-spd-u]'),
+      tchUnit: stage.querySelector('[data-tch-u]'),
       rpmArc: stage.querySelector('[data-rpm-arc]'),
       odoMain: stage.querySelector('[data-odo-main]'),
       odoDec: stage.querySelector('[data-odo-dec]'),
@@ -1437,7 +1984,19 @@ class ViceCity3DApp {
       wepBtns: Array.from(stage.querySelectorAll('[data-wep]')),
       punchBtn: stage.querySelector('[data-punch-btn]'),
       kickBtn: stage.querySelector('[data-kick-btn]'),
+      footWheelBtn: stage.querySelector('[data-foot-wheel-btn]'),
       footCarBtn: stage.querySelector('[data-foot-car-btn]'),
+      weaponWheel: stage.querySelector('[data-weapon-wheel]'),
+      wwShell: stage.querySelector('[data-ww-shell]'),
+      wwWedges: Array.from(stage.querySelectorAll('[data-ww-wedge]')),
+      wwSlots: Array.from(stage.querySelectorAll('[data-ww-slot]')),
+      wwCat: stage.querySelector('[data-ww-cat]'),
+      wwTitle: stage.querySelector('[data-ww-title]'),
+      wwAmmo: stage.querySelector('[data-ww-ammo]'),
+      wwDmg: stage.querySelector('[data-ww-dmg]'),
+      wwRate: stage.querySelector('[data-ww-rate]'),
+      wwRange: stage.querySelector('[data-ww-range]'),
+      wwAcc: stage.querySelector('[data-ww-acc]'),
       carPrompt: stage.querySelector('[data-car-prompt]'),
       navBar: stage.querySelector('[data-nav-bar]'),
       navArrow: stage.querySelector('[data-nav-arrow]'),
@@ -1452,6 +2011,7 @@ class ViceCity3DApp {
       hpVal: stage.querySelector('[data-hp-val]'),
       armFill: stage.querySelector('[data-arm-fill]'),
       armVal: stage.querySelector('[data-arm-val]'),
+      nosFill: stage.querySelector('[data-nos-fill]'),
       dmgFlash: stage.querySelector('[data-dmg-flash]'),
       wasted: stage.querySelector('[data-wasted]'),
       dlg: stage.querySelector('[data-dlg]'),
@@ -1471,6 +2031,12 @@ class ViceCity3DApp {
       mgHud: stage.querySelector('[data-mg-hud]'),
       mgName: stage.querySelector('[data-mg-name]'),
       mgStat: stage.querySelector('[data-mg-stat]'),
+      cheatToast: stage.querySelector('[data-cheat-toast]'),
+      cheatMsg: stage.querySelector('[data-cheat-msg]'),
+      taxiBtn: stage.querySelector('[data-taxi-btn]'),
+      taxiOv: stage.querySelector('[data-taxi-ov]'),
+      taxiClose: stage.querySelector('[data-taxi-close]'),
+      taxiDests: Array.from(stage.querySelectorAll('[data-taxi-dest]')),
       mgTimer: stage.querySelector('[data-mg-timer]'),
       mgAbort: stage.querySelector('[data-mg-abort]'),
       combo: stage.querySelector('[data-combo]'),
@@ -1484,6 +2050,10 @@ class ViceCity3DApp {
       fullMapOv: stage.querySelector('[data-fullmap-ov]'),
       fullMapCanvas: stage.querySelector('[data-fullmap-canvas]'),
       fullMapClose: stage.querySelector('[data-fullmap-close]'),
+      fmTabs: Array.from(stage.querySelectorAll('[data-fm-tab]')),
+      fmSearch: stage.querySelector('[data-fm-search]'),
+      fmCount: stage.querySelector('[data-fm-count]'),
+      fmRows: Array.from(stage.querySelectorAll('[data-fm-row]')),
       fmBtns: Array.from(stage.querySelectorAll('[data-fm-wp]')),
       fmTpBtns: Array.from(stage.querySelectorAll('[data-fm-tp]')),
       fmDists: Array.from(stage.querySelectorAll('[data-fm-dist]')),
@@ -1540,9 +2110,13 @@ class ViceCity3DApp {
 
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // Higher near plane (0.6) improves 24-bit depth-buffer precision; far 2200 keeps 1750m sky dome unclipped across the 6x10 map!
-    this.camera = new THREE.PerspectiveCamera(56, w / h, 0.6, 2200);
+    // Wide 3600m far plane keeps towering Mount Kalaga (165m) & distant Leonida coastlines crisp!
+    this.camera = new THREE.PerspectiveCamera(56, w / h, 0.6, 3600);
     this.camera.position.set(7.5, 2.7, 15.5);
+
+    // Generate 100% custom procedural GTA-style vector map & minimap directly from the live 3D world!
+    this.activeCountyTab = 'ALL';
+    this.leonidaMapCanvas = createLeonidaVectorMapCanvas(640, 840);
 
     try {
       this.renderer = new THREE.WebGLRenderer({
@@ -1569,7 +2143,7 @@ class ViceCity3DApp {
     // Golden-Hour Sunset PMREM Environment Map (vivid sky/sun/city reflections across all glass, paint & road)
     try {
       this.scene.environment = createGoldenHourEnvironment(this.renderer);
-      this.scene.environmentIntensity = 1.15;
+      this.scene.environmentIntensity = 1.24;
     } catch (err) {
       console.warn('[ViceCity3D] PMREM environment fallback:', err);
     }
@@ -1601,6 +2175,7 @@ class ViceCity3DApp {
     }
 
     const maxAniso = Math.min(this.renderer.capabilities.getMaxAnisotropy(), 16);
+    this.parkedVehicles = [];
     this.buildLighting();
     this.buildOpenWorld(maxAniso);
 
@@ -1629,7 +2204,6 @@ class ViceCity3DApp {
       yaw: this.carState.yaw
     };
     this.activeVehicle = this.heroVehicle;
-    this.parkedVehicles = [];
     this.nearbyVehicleTarget = null;
 
     // Playable 1986 Vice City Protagonist (steps out on 'F' to roam, fight, steal cars & fly planes!)
@@ -1695,16 +2269,16 @@ class ViceCity3DApp {
     this.scene.add(arrowGrp);
     this.navArrow = arrowGrp;
 
-    // Lightweight 64px Dynamic CubeCamera reflections on Player Supercar (updates only on movement!)
+    // High-Res 128px Dynamic CubeCamera reflections on Player Supercar (updates smoothly on movement!)
     this.cubeCamera = null;
     this.cubeRT = null;
     if (!this.isSoftwareGl) {
       try {
-        this.cubeRT = new THREE.WebGLCubeRenderTarget(64, {
+        this.cubeRT = new THREE.WebGLCubeRenderTarget(128, {
           generateMipmaps: true,
           minFilter: THREE.LinearMipmapLinearFilter
         });
-        this.cubeCamera = new THREE.CubeCamera(0.6, 1050, this.cubeRT);
+        this.cubeCamera = new THREE.CubeCamera(0.6, 1250, this.cubeRT);
         this.scene.add(this.cubeCamera);
         this.car.setDynamicEnvMap(this.cubeRT.texture);
       } catch (err) {
@@ -1782,39 +2356,46 @@ class ViceCity3DApp {
   }
 
   addBoxCollider(minX, maxX, minZ, maxZ) {
-    this.boxColliders.push({ minX, maxX, minZ, maxZ });
+    const b = { minX, maxX, minZ, maxZ };
+    this.boxColliders.push(b);
+    this.colliderGrid.addBox(b);
   }
 
   addCircleCollider(x, z, r) {
-    this.circleColliders.push({ x, z, r });
+    const c = { x, z, r };
+    this.circleColliders.push(c);
+    this.colliderGrid.addCircle(c);
   }
 
   buildOpenWorld(maxAniso) {
     const texLoader = new THREE.TextureLoader();
 
-    // 1. Sky Dome (follows camera every frame) & Reflective Atlantic Ocean
+    // 1. Sky Dome (follows camera every frame) & Reflective Atlantic/Gulf Ocean across all of Leonida
     this.skyDome = createViceSkyDome();
+    this.skyDome.scale.setScalar(1.65);
     this.scene.add(this.skyDome);
 
     this.ocean = createAtlanticOcean();
+    this.ocean.scale.set(3.4, 1, 3.4);
+    this.ocean.position.set(-980, -0.58, -300);
     this.scene.add(this.ocean);
 
     // 2. NON-OVERLAPPING ZERO-Z-FIGHTING ROAD NETWORK (y = 0.0)
     const interTex = makeIntersectionTexture(maxAniso);
     const interMat = new THREE.MeshStandardMaterial({
-      map: interTex, roughness: 0.72, metalness: 0.06, envMapIntensity: 0.55
+      map: interTex, roughness: 0.56, metalness: 0.14, envMapIntensity: 0.92
     });
 
     const nsTex = makeAsphaltTextures(maxAniso, 8);
     const nsRoadMat = new THREE.MeshStandardMaterial({
       map: nsTex.map, roughnessMap: nsTex.roughnessMap, normalMap: nsTex.normalMap,
-      normalScale: new THREE.Vector2(0.36, 0.36), roughness: 0.74, metalness: 0.06, envMapIntensity: 0.72
+      normalScale: new THREE.Vector2(0.42, 0.42), roughness: 0.54, metalness: 0.14, envMapIntensity: 1.12
     });
 
     const ewTex = makeAsphaltTextures(maxAniso, 4);
     const ewRoadMat = new THREE.MeshStandardMaterial({
       map: ewTex.map, roughnessMap: ewTex.roughnessMap, normalMap: ewTex.normalMap,
-      normalScale: new THREE.Vector2(0.36, 0.36), roughness: 0.74, metalness: 0.06, envMapIntensity: 0.72
+      normalScale: new THREE.Vector2(0.42, 0.42), roughness: 0.54, metalness: 0.14, envMapIntensity: 1.12
     });
 
     // 2a. Clean Intersection Squares (exact 16.8m x 16.8m at every Avenue x Cross-Street)
@@ -1832,12 +2413,22 @@ class ViceCity3DApp {
     const interInst = new THREE.InstancedMesh(interGeo, interMat, interCount);
     interInst.receiveShadow = true;
 
-    const tlPostG = new THREE.CylinderGeometry(0.12, 0.16, 6.4, 8); tlPostG.translate(0, 3.2, 0);
-    const tlArmG = new THREE.BoxGeometry(6.2, 0.15, 0.15); tlArmG.translate(-3.0, 6.2, 0);
-    const tlBoxG = new THREE.BoxGeometry(0.46, 1.32, 0.36); tlBoxG.translate(-3.8, 5.5, 0);
-    const tlGantryGeo = mergeGeometries([tlPostG, tlArmG, tlBoxG]);
+    const tlBaseG = new THREE.CylinderGeometry(0.28, 0.34, 0.35, 8); tlBaseG.translate(0, 0.175, 0);
+    const tlPostG = new THREE.CylinderGeometry(0.13, 0.17, 6.7, 8); tlPostG.translate(0, 3.35, 0);
+    const tlArm1G = new THREE.BoxGeometry(6.6, 0.16, 0.16); tlArm1G.translate(-3.3, 6.45, 0);
+    const tlArm2G = new THREE.BoxGeometry(0.16, 0.16, 6.6); tlArm2G.translate(0, 6.15, 3.3);
+    const tlPedG  = new THREE.BoxGeometry(0.32, 0.44, 0.24); tlPedG.translate(-0.26, 2.55, 0.12);
+    const tlBox1G = new THREE.BoxGeometry(0.48, 1.38, 0.38); tlBox1G.translate(-3.8, 5.75, 0);
+    const tlVis1a = new THREE.BoxGeometry(0.50, 0.06, 0.36); tlVis1a.translate(-3.8, 6.26, 0.24);
+    const tlVis1b = new THREE.BoxGeometry(0.50, 0.06, 0.36); tlVis1b.translate(-3.8, 5.86, 0.24);
+    const tlVis1c = new THREE.BoxGeometry(0.50, 0.06, 0.36); tlVis1c.translate(-3.8, 5.46, 0.24);
+    const tlBox2G = new THREE.BoxGeometry(0.38, 1.38, 0.48); tlBox2G.translate(0, 5.45, 3.8);
+    const tlVis2a = new THREE.BoxGeometry(0.36, 0.06, 0.50); tlVis2a.translate(-0.24, 5.96, 3.8);
+    const tlVis2b = new THREE.BoxGeometry(0.36, 0.06, 0.50); tlVis2b.translate(-0.24, 5.56, 3.8);
+    const tlVis2c = new THREE.BoxGeometry(0.36, 0.06, 0.50); tlVis2c.translate(-0.24, 5.16, 3.8);
+    const tlGantryGeo = mergeGeometries([tlBaseG, tlPostG, tlArm1G, tlArm2G, tlPedG, tlBox1G, tlVis1a, tlVis1b, tlVis1c, tlBox2G, tlVis2a, tlVis2b, tlVis2c]);
     const tlGantryInst = new THREE.InstancedMesh(tlGantryGeo, poleMat, interCount);
-    const bulbGeo = new THREE.SphereGeometry(0.12, 6, 6);
+    const bulbGeo = new THREE.SphereGeometry(0.13, 6, 6);
     const iMat = new THREE.Matrix4();
     let interIdx = 0;
 
@@ -1852,15 +2443,22 @@ class ViceCity3DApp {
         tlGantryInst.setMatrixAt(interIdx, iMat);
         interIdx++;
 
-        const lR = new THREE.Mesh(bulbGeo, sigOffMat); lR.position.set(px - 3.8, 6.06, pz + 0.19); this.scene.add(lR);
-        const lY = new THREE.Mesh(bulbGeo, sigOffMat); lY.position.set(px - 3.8, 5.66, pz + 0.19); this.scene.add(lY);
-        const lG = new THREE.Mesh(bulbGeo, sigOffMat); lG.position.set(px - 3.8, 5.26, pz + 0.19); this.scene.add(lG);
-        this.addCircleCollider(px, pz, 0.32);
-        this.trafficSignals.push({ lR, lY, lG, phase: (ci % 2) * 5.0 });
+        // N-S Signal Head (facing +Z / -Z)
+        const lR = new THREE.Mesh(bulbGeo, sigOffMat); lR.position.set(px - 3.8, 6.28, pz + 0.21); this.scene.add(lR);
+        const lY = new THREE.Mesh(bulbGeo, sigOffMat); lY.position.set(px - 3.8, 5.88, pz + 0.21); this.scene.add(lY);
+        const lG = new THREE.Mesh(bulbGeo, sigOffMat); lG.position.set(px - 3.8, 5.48, pz + 0.21); this.scene.add(lG);
+        // E-W Cross-Street Signal Head (opposing phase!)
+        const lR2 = new THREE.Mesh(bulbGeo, sigOffMat); lR2.position.set(px - 0.21, 5.98, pz + 3.8); this.scene.add(lR2);
+        const lY2 = new THREE.Mesh(bulbGeo, sigOffMat); lY2.position.set(px - 0.21, 5.58, pz + 3.8); this.scene.add(lY2);
+        const lG2 = new THREE.Mesh(bulbGeo, sigOffMat); lG2.position.set(px - 0.21, 5.18, pz + 3.8); this.scene.add(lG2);
+        this.addCircleCollider(px, pz, 0.36);
+        this.trafficSignals.push({ lR, lY, lG, lR2, lY2, lG2, phase: (ci % 2) * 5.0 });
       });
     });
     interInst.instanceMatrix.needsUpdate = true;
     tlGantryInst.instanceMatrix.needsUpdate = true;
+    interInst.computeBoundingSphere();
+    tlGantryInst.computeBoundingSphere();
     this.scene.add(interInst, tlGantryInst);
     this.sigMats = { red: sigRedMat, yel: sigYelMat, grn: sigGrnMat, off: sigOffMat };
 
@@ -1915,7 +2513,13 @@ class ViceCity3DApp {
       roughness: 0.82,
       metalness: 0.03
     });
-    const grassMat = new THREE.MeshStandardMaterial({ map: makeGrassTexture(maxAniso, 5, 10), roughness: 0.92 });
+    const pbrLib = getWorldPBRTextures(maxAniso);
+    const grassMat = new THREE.MeshStandardMaterial({
+      map: makeGrassTexture(maxAniso, 5, 10),
+      normalMap: pbrLib.grass.normalMap,
+      normalScale: new THREE.Vector2(1.1, 1.1),
+      roughness: 0.92
+    });
     const curbMat = new THREE.MeshStandardMaterial({ color: 0xb6aea4, roughness: 0.82 });
     const bushMat = new THREE.MeshStandardMaterial({ color: 0x2d6e3a, roughness: 0.88 });
 
@@ -2042,21 +2646,21 @@ class ViceCity3DApp {
       perkX: -108, perkZ: 42.0, accent: 0x21e6d1, accentHex: '#21E6D1'
     });
 
-    // 2 Parked High-Poly Vice Air Widebody Airliners Docked at Boarding Jetways!
+    // 2 Parked High-Poly Vice Air Widebody Airliners Docked at Boarding Jetways (Clean Wingtip Clearance!)
     this.parkedJets = [];
     const parkedJetA = createAirlinerJet('#FF2E88', maxAniso);
-    parkedJetA.root.position.set(-127, 0.02, 78);
+    parkedJetA.root.position.set(-132, 0.02, 78);
     parkedJetA.root.rotation.y = Math.PI * 0.04;
     this.scene.add(parkedJetA.root);
     this.parkedJets.push(parkedJetA);
-    this.addBoxCollider(-144, -110, 62, 92);
+    this.addBoxCollider(-149, -115, 62, 92);
 
     const parkedJetB = createAirlinerJet('#21E6D1', maxAniso);
-    parkedJetB.root.position.set(-88, 0.02, 78);
+    parkedJetB.root.position.set(-84, 0.02, 78);
     parkedJetB.root.rotation.y = -Math.PI * 0.04;
     this.scene.add(parkedJetB.root);
     this.parkedJets.push(parkedJetB);
-    this.addBoxCollider(-105, -71, 62, 92);
+    this.addBoxCollider(-101, -67, 62, 92);
 
     // 1 Live Animated Vice Air Widebody Airliner (Takeoff Down Runway -> Climb -> City Scenic Orbit -> Approach & Landing!)
     this.flyingJet = createAirlinerJet('#FF8A2A', maxAniso);
@@ -2134,6 +2738,34 @@ class ViceCity3DApp {
       homeX: -196, homeZ: 78, homeYaw: -Math.PI * 0.5, radius: 4.6
     });
 
+    // REGIONAL LEONIDA AIRFIELD AIRCRAFT (Wild Hog Airfield, Bobcat Key Airport, Mile Zero Naval Air Station!)
+    const extraPlanes = [
+      { id: 'wildhog-prop',  placeId: 'wild-hog-airfield', kind: 'prop', color: 0x21e6d1, label: 'GELLHORN STUNT PROP', dx: 18,   dz: 66, yaw: -Math.PI * 0.5 },
+      { id: 'bobcat-jet',    placeId: 'bobcat-key',        kind: 'jet',  color: 0xff8a2a, label: 'MARIANA CHARTER JET', dx: -150, dz: 76, yaw: -Math.PI * 0.5 },
+      { id: 'milezero-jet',  placeId: 'mile-zero',         kind: 'jet',  color: 0x21e6d1, label: 'MILE ZERO NAVAL JET', dx: 18,   dz: 56, yaw: -Math.PI * 0.5 }
+    ];
+    extraPlanes.forEach((ep) => {
+      const pl = LEONIDA_PLACES.find((p) => p.id === ep.placeId);
+      if (!pl) return;
+      const px = pl.x + ep.dx;
+      const pz = pl.z + ep.dz;
+      const py = Math.max(0.4, getLeonidaElevation(px, pz) + 0.08);
+      const rig = ep.kind === 'jet' ? createPrivateLearjet(ep.color, maxAniso) : createPropPlane(ep.color);
+      rig.root.position.set(px, py, pz);
+      rig.root.rotation.y = ep.yaw;
+      this.scene.add(rig.root);
+      this.flyablePlanes.push({
+        id: ep.id, label: ep.label, kind: ep.kind,
+        rig, root: rig.root,
+        x: px, y: py, z: pz, yaw: ep.yaw, pitch: 0, roll: 0,
+        speed: 0, throttle: 0, gearBlend: 1, resetTimer: 0,
+        topSpeed: ep.kind === 'jet' ? 112 : 72,
+        takeoffSpeed: ep.kind === 'jet' ? 24 : 19,
+        climbRate: ep.kind === 'jet' ? 26 : 19,
+        homeX: px, homeZ: pz, homeYaw: ep.yaw, radius: ep.kind === 'jet' ? 5.4 : 4.6
+      });
+    });
+
     // Airport Ground Support Vehicles (Fuel Tanker Truck & Baggage Tug Carts)
     const fuelTruck = createAirportSupportVehicle('fuel');
     fuelTruck.position.set(-108, 0.02, 85);
@@ -2146,6 +2778,8 @@ class ViceCity3DApp {
     tug2.rotation.y = 1.1;
     this.scene.add(fuelTruck, tug1, tug2);
     this.addCircleCollider(-108, 85, 3.6);
+    this.addCircleCollider(-68, 72, 2.2);
+    this.addCircleCollider(-156, 74, 2.2);
 
     // Detailed Multi-Tier ATC Control Tower with Panoramic Cab, Catwalk & Rotating Radar Dish
     const atcTower = createAirportControlTower();
@@ -2169,6 +2803,7 @@ class ViceCity3DApp {
       this.windsock.add(seg);
     }
     this.scene.add(wsPole, this.windsock);
+    this.addCircleCollider(-42, 92, 0.55);
 
     // LSIA-Style Upgraded Escobar Int'l Airport: FAA Runway 09/27 Markings, Taxiway Blue Edge Lights,
     // Aviation Fuel Farm ("VICE JET-A1"), Security Gatehouse + Perimeter Fence, Hangar #2 & Boarding Airstairs!
@@ -2204,17 +2839,201 @@ class ViceCity3DApp {
     this.scene.add(airstairs);
     this.addCircleCollider(-55, 74, 2.2);
 
-    // GTA 5 Mount Chiliad-Inspired Roadable Mount Vice Range (North of North Point Mall, Z = -1106..-1496!)
+    // SOLID ESCOBAR INT'L AIRPORT SECURITY BARRICADES & CHAIN-LINK PERIMETER FENCING
+    // (Leaves clean drive-in security gates open at Gatehouse X=-46 & Terminal X=-108!)
+    const airportBarricades = [
+      [-272, 30, -144, 30],   // North-West tarmac fence
+      [-74,  30, -61,  30],   // North-Center fence up to Gatehouse
+      [-36,  30, -12,  30],   // North-East Hangar #2 fence
+      [-274, 30, -274, 154],  // West Runway 09 threshold barricade
+      [-10,  30, -10,  154],  // East Runway 27 threshold barricade
+      [-274, 154, -10, 154]   // South Runway perimeter barricade
+    ];
+    airportBarricades.forEach(([x1, z1, x2, z2]) => {
+      const bw = createBarricadeWall(x1, z1, x2, z2, 'airport', getTerrainHeight);
+      this.scene.add(bw.group);
+      this.addBoxCollider(bw.collider.minX, bw.collider.maxX, bw.collider.minZ, bw.collider.maxZ);
+      this.barricadeBeacons.push(...bw.beacons);
+    });
+
+    // FULL-SCALE GREAT STATE OF LEONIDA OPEN WORLD (5 Counties, 68 Named Places, 10 Interstates & Ocean Bridges!)
+    // Replaces cramped old Vice-edge roadblock walls so players can drive seamlessly across the entire State of Leonida!
+    this.leonidaWorld = buildLeonidaWorld(
+      this.scene,
+      getTerrainHeight,
+      maxAniso,
+      (minX, maxX, minZ, maxZ) => this.addBoxCollider(minX, maxX, minZ, maxZ),
+      (cx, cz, cr) => this.addCircleCollider(cx, cz, cr),
+      SHOWROOMS
+    );
+
+    // 1) NORTHERN MOUNT VICE FULL-LOOP RANGE (Z = -1106..-1496, ZERO DEAD ENDS!)
     this.mountVice = createMountViceRange(getTerrainHeight, closestMountainRoad, MOUNT_VICE_ROAD, maxAniso);
     this.scene.add(this.mountVice.root);
-    // Seamless Asphalt Apron connecting Ocean Drive North straight onto Mount Vice Switchback Trailhead
-    const mvConn = new THREE.Mesh(
-      new THREE.PlaneGeometry(14.4, 24.0),
-      new THREE.MeshStandardMaterial({ color: 0x262933, roughness: 0.84, polygonOffset: true, polygonOffsetFactor: -1 })
-    );
-    mvConn.rotation.x = -Math.PI / 2;
-    mvConn.position.set(0, 0.04, -1108);
-    this.scene.add(mvConn);
+    if (this.mountVice.circleColliders) {
+      this.mountVice.circleColliders.forEach((c) => this.addCircleCollider(c.x, c.z, c.r));
+    }
+    // Seamless Asphalt Aprons for BOTH Mount Vice Loop Entries (East Ocean Dr X=0 & West Vice Port Expy X=-480!)
+    const connMat = new THREE.MeshStandardMaterial({ color: 0x262933, roughness: 0.84, polygonOffset: true, polygonOffsetFactor: -1 });
+    for (const [cx, cz, cw, cd] of [[0, -1108, 14.4, 24.0], [-480, -1108, 14.4, 24.0], [-384, -1126, 13.0, 48.0]]) {
+      const conn = new THREE.Mesh(new THREE.PlaneGeometry(cw, cd), connMat);
+      conn.rotation.x = -Math.PI / 2;
+      conn.position.set(cx, 0.04, cz);
+      this.scene.add(conn);
+    }
+
+    // 1B) MOUNT VICE SKYWAY — ANIMATED AERIAL ROPEWAY / GONDOLA LIFT (Foothills -> 118M Summit!)
+    this.mountViceRopeway = buildMountainRopeway({
+      root: this.scene,
+      id: 'mt-vice',
+      title: 'MOUNT VICE SKYWAY',
+      subtitle: '118M SUMMIT CABLE CAR',
+      startPos: { x: -116, z: -1114 },
+      endPos: { x: -214, z: -1412 },
+      numPylons: 4,
+      numCabins: 6,
+      clearanceY: 16.5,
+      speed: 0.038,
+      getHeight: getTerrainHeight,
+      addCircleCollider: (cx, cz, cr) => this.addCircleCollider(cx, cz, cr),
+      addBoxCollider: (a, b, c, d) => this.addBoxCollider(a, b, c, d)
+    });
+
+    // Register Rideable Boarding Rings for BOTH Mountain Ropeways (Mount Vice Skyway & Mount Kalaga Gondola!)
+    const ropewayRides = [];
+    if (this.mountViceRopeway) {
+      const mv = this.mountViceRopeway;
+      ropewayRides.push(
+        {
+          id: 'mt-vice-base', ropewayKey: 'mountVice', label: 'MOUNT VICE SKYWAY',
+          sub: '118m Alpine Cable Car Ascent',
+          boardX: mv.baseBoardPos.x, boardZ: mv.baseBoardPos.z, boardY: mv.baseBoardPos.y,
+          exitX: mv.baseBoardPos.x, exitZ: mv.baseBoardPos.z, col: 0xffbe0b
+        },
+        {
+          id: 'mt-vice-summit', ropewayKey: 'mountVice', label: 'MOUNT VICE SKYWAY',
+          sub: '118m Summit Gondola Descent',
+          boardX: mv.summitBoardPos.x, boardZ: mv.summitBoardPos.z, boardY: mv.summitBoardPos.y,
+          exitX: mv.summitBoardPos.x, exitZ: mv.summitBoardPos.z, col: 0xffbe0b
+        }
+      );
+    }
+    if (this.leonidaWorld && this.leonidaWorld.kalagaRopeway) {
+      const kg = this.leonidaWorld.kalagaRopeway;
+      ropewayRides.push(
+        {
+          id: 'mt-kalaga-base', ropewayKey: 'kalaga', label: 'MT. KALAGA SKYWAY',
+          sub: '148m Lummox Alpine Gondola',
+          boardX: kg.baseBoardPos.x, boardZ: kg.baseBoardPos.z, boardY: kg.baseBoardPos.y,
+          exitX: kg.baseBoardPos.x, exitZ: kg.baseBoardPos.z, col: 0x21e6d1
+        },
+        {
+          id: 'mt-kalaga-summit', ropewayKey: 'kalaga', label: 'MT. KALAGA SKYWAY',
+          sub: '148m Summit Observation Lift',
+          boardX: kg.summitBoardPos.x, boardZ: kg.summitBoardPos.z, boardY: kg.summitBoardPos.y,
+          exitX: kg.summitBoardPos.x, exitZ: kg.summitBoardPos.z, col: 0x21e6d1
+        }
+      );
+    }
+    ropewayRides.forEach((rd, idx) => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.6, 2.25, 24),
+        new THREE.MeshBasicMaterial({ color: rd.col, side: THREE.DoubleSide, transparent: true, opacity: 0.88 })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(rd.boardX, (rd.boardY || 0) + 0.24, rd.boardZ);
+      this.scene.add(ring);
+      this.pierRides.push({ ...rd, ring, phase: 4.0 + idx * 1.1 });
+    });
+
+    // THICK ATMOSPHERIC HAZE LAYER (24 Soft-Radial Drifting Horizon & Forest Mist Banks Around Camera!)
+    const hazeTex = makeSoftParticleTexture();
+    this.worldHazeGroup = new THREE.Group();
+    this.worldHazeMats = [];
+    for (let hi = 0; hi < 24; hi++) {
+      const ang = (hi / 24) * Math.PI * 2;
+      const dist = 115 + (hi % 3) * 52;
+      const hMat = new THREE.SpriteMaterial({
+        map: hazeTex,
+        color: 0xcfdce8,
+        transparent: true,
+        opacity: 0.14,
+        depthWrite: false,
+        fog: true
+      });
+      const hSp = new THREE.Sprite(hMat);
+      hSp.position.set(Math.cos(ang) * dist, 14 + (hi % 4) * 10, Math.sin(ang) * dist);
+      hSp.scale.set(110 + (hi % 3) * 35, 38 + (hi % 2) * 16, 1);
+      hSp.userData = { baseAng: ang, dist, baseY: hSp.position.y, phase: hi * 0.85 };
+      this.worldHazeGroup.add(hSp);
+      this.worldHazeMats.push(hMat);
+    }
+    this.scene.add(this.worldHazeGroup);
+
+    // 2) COMPLETELY SEPARATE WESTERN MOUNTAIN RANGE — SIERRA WEST REDROCK PEAKS (X = -885..-492, Z = -760..+240)!
+    this.sierraWest = createSierraWestRange(getTerrainHeight, closestSierraRoad, SIERRA_WEST_ROAD, maxAniso);
+    this.scene.add(this.sierraWest.root);
+    if (this.sierraWest.circleColliders) {
+      this.sierraWest.circleColliders.forEach((c) => this.addCircleCollider(c.x, c.z, c.r));
+    }
+    // Seamless Asphalt Aprons connecting Vice Port Expy (X=-480) to BOTH Sierra West Loop Entrances (Z=-540 & Z=-60)!
+    for (const sz of [-540, -60]) {
+      const sConn = new THREE.Mesh(new THREE.PlaneGeometry(22.0, 14.6), connMat);
+      sConn.rotation.x = -Math.PI / 2;
+      sConn.position.set(-488, 0.04, sz);
+      this.scene.add(sConn);
+    }
+
+    // VICE HOLLOW COUNTRYSIDE COMMUNITY VILLAGE (NW Foothill Valley, X = -448..-308, Z = -1236..-1148!)
+    this.village = createCountrysideVillage(getTerrainHeight, maxAniso);
+    this.scene.add(this.village.root);
+    this.village.boxColliders.forEach((b) => this.addBoxCollider(b.minX, b.maxX, b.minZ, b.maxZ));
+    this.village.circleColliders.forEach((c) => this.addCircleCollider(c.x, c.z, c.r));
+
+    // VICE PINES DEEP WOODLAND FOREST (NW Wilderness, X = -486..-362, Z = -1132..-946!)
+    this.pineForest = createPineForest(getTerrainHeight, closestMountainRoad, maxAniso);
+    this.scene.add(this.pineForest.root);
+    this.pineForest.circleColliders.forEach((c) => this.addCircleCollider(c.x, c.z, c.r));
+
+    // LIVE ANIMATED 3D WILDLIFE ANIMALS (Deer, Boars, Village Dogs & Vice City Pink Flamingos across Forest & Both Ranges!)
+    const wildlifeSpecs = [
+      // White-Tail Deer in Vice Pines Forest, Foothills & Separate Sierra West Redrock Canyons
+      { kind: 'deer', x: -426, z: -1028 }, { kind: 'deer', x: -454, z: -1064 },
+      { kind: 'deer', x: -406, z: -1088 }, { kind: 'deer', x: -442, z: -992 },
+      { kind: 'deer', x: -318, z: -1158 }, { kind: 'deer', x: -162, z: -1172 },
+      { kind: 'deer', x: -580, z: -320 },  { kind: 'deer', x: -670, z: -240 },
+      { kind: 'deer', x: -640, z: -420 },  { kind: 'deer', x: -620, z: -110 },
+      // Wild Forest & Canyon Boars
+      { kind: 'boar', x: -460, z: -1015 }, { kind: 'boar', x: -432, z: -1096 },
+      { kind: 'boar', x: -468, z: -1072 }, { kind: 'boar', x: -408, z: -978 },
+      { kind: 'boar', x: -575, z: -190 },  { kind: 'boar', x: -690, z: -340 },
+      // Village & Beachfront Dogs
+      { kind: 'dog', x: -380, z: -1184 }, { kind: 'dog', x: -362, z: -1196 },
+      { kind: 'dog', x: -404, z: -1192 }, { kind: 'dog', x: 18, z: -140 },
+      { kind: 'dog', x: 20, z: -310 },
+      // Iconic Vice City Pink Flamingos along Ocean Beach Sand & Lagoons!
+      { kind: 'flamingo', x: 28, z: -86 }, { kind: 'flamingo', x: 29.5, z: -92 },
+      { kind: 'flamingo', x: 27, z: -95 }, { kind: 'flamingo', x: 28.5, z: -215 },
+      { kind: 'flamingo', x: 29, z: -222 }, { kind: 'flamingo', x: 28, z: -510 },
+      { kind: 'flamingo', x: 29.5, z: -516 }
+    ];
+    wildlifeSpecs.forEach((ws, idx) => {
+      const rig = createWildlifeAnimal(ws.kind);
+      const gy = getTerrainHeight(ws.x, ws.z);
+      rig.root.position.set(ws.x, gy, ws.z);
+      const yaw = (idx * 1.7) % (Math.PI * 2);
+      rig.root.rotation.y = yaw;
+      this.scene.add(rig.root);
+      this.wildlife.push({
+        ...rig,
+        x: ws.x, y: gy, z: ws.z,
+        homeX: ws.x, homeZ: ws.z,
+        yaw, speed: 0, walkPhase: idx * 0.9,
+        state: 'wander', stateTimer: 2 + (idx % 4),
+        baseSpeed: ws.kind === 'deer' ? 2.2 : (ws.kind === 'boar' ? 1.8 : (ws.kind === 'dog' ? 2.4 : 0.7)),
+        fleeSpeed: ws.kind === 'deer' ? 9.5 : (ws.kind === 'boar' ? 6.8 : (ws.kind === 'dog' ? 6.2 : 2.6))
+      });
+    });
 
     // All 3 Glowing In-World GTA 5 Mini-Game Start Pads on VICE CARNIVAL PIER!
     const mgPadDefs = [
@@ -2248,7 +3067,13 @@ class ViceCity3DApp {
       { zMin: -1134.0, zMax: -948.4 }
     ];
     const sandMat = new THREE.MeshStandardMaterial({ map: makeSandTexture(maxAniso), roughness: 0.94 });
-    const seawallMat = new THREE.MeshStandardMaterial({ color: 0xd4cbc0, roughness: 0.78 });
+    const seawallMat = new THREE.MeshStandardMaterial({
+      map: pbrLib.concrete.map,
+      normalMap: pbrLib.concrete.normalMap,
+      normalScale: new THREE.Vector2(1.0, 1.0),
+      color: 0xdcd4ca,
+      roughness: 0.80
+    });
     const railMetal = new THREE.MeshStandardMaterial({ color: 0xe6e8ee, metalness: 0.76, roughness: 0.25 });
 
     promSegments.forEach((seg) => {
@@ -2274,7 +3099,7 @@ class ViceCity3DApp {
       this.scene.add(beach);
     });
 
-    // Instanced Beach Umbrellas & Lounge Chairs along Extended Golden Sand Coastline
+    // Instanced Beach Umbrellas & Lounge Chairs along Extended Golden Sand Coastline (with Solid Colliders!)
     const beachColors = [0xff2e88, 0x21e6d1, 0xff9e32, 0x3b82f6, 0xffd36b];
     const chairMat = new THREE.MeshStandardMaterial({ color: 0xf4f0ea, roughness: 0.72 });
     const umbPositions = [];
@@ -2296,6 +3121,7 @@ class ViceCity3DApp {
       _dummy.position.set(up.x, up.y + 2.25, up.z); _dummy.updateMatrix(); umbTops.setMatrixAt(i, _dummy.matrix);
       umbTops.setColorAt(i, tmpCol.setHex(up.color));
       _dummy.position.set(up.x, up.y + 0.25, up.z + 1.05); _dummy.updateMatrix(); umbBeds.setMatrixAt(i, _dummy.matrix);
+      this.addCircleCollider(up.x, up.z, 0.72);
     });
     umbTops.instanceColor.needsUpdate = true;
     this.scene.add(umbPoles, umbTops, umbBeds);
@@ -2596,7 +3422,8 @@ class ViceCity3DApp {
     // 6. Five 1986 Miami Art Deco Showcase Cinemas & VIP Red-Carpet Galleries
     SHOWROOMS.forEach((sr) => {
       const srObj = createCaseStudyShowroom(sr, texLoader, maxAniso);
-      srObj.group.position.set(sr.x, 0.16, sr.z);
+      const srY = Math.max(0.16, this.getSurfaceY(sr.x, sr.z, false));
+      srObj.group.position.set(sr.x, srY, sr.z);
       this.scene.add(srObj.group);
       this.showroomAnims.push({ ...srObj, sr });
       // Exact collider around the Art Deco theater facade (leaving the Red Carpet & VIP Valet Bay open!)
@@ -2614,7 +3441,6 @@ class ViceCity3DApp {
       { x: -24.5, z: -116, w: 22, h: 16, d: 15, base: '#F2E0CC', trimHex: '#FFF6EC', accent: 0x0ec4b8, accentHex: '#0EC4B8', name: 'THE COLONY',  sub: 'SPANISH VILLAS',   seed: 2, cafe: true,  style: 'colonial' },
       { x: -24.5, z: -190, w: 26, h: 18, d: 15, base: '#E4DDD6', trimHex: '#FAF4EE', accent: 0xff3a4c, accentHex: '#FF3A4C', name: 'AMMU-NATION', sub: 'GUNS · WALK IN',   seed: 3, cafe: false, style: 'artdeco', enterable: 'ammunation' },
       { x: -24.5, z: -252, w: 26, h: 24, d: 15, base: '#E8DCE8', trimHex: '#F8F2FA', accent: 0xff2e88, accentHex: '#FF2E88', name: 'CLEVELANDER', sub: 'LOUNGE & SUITES',  seed: 4, cafe: true,  style: 'midtown_tower' },
-      { x: -24.5, z: -344, w: 24, h: 20, d: 15, base: '#F2E4CC', trimHex: '#FFF9EC', accent: 0xe6a822, accentHex: '#E6A822', name: 'MALIBU CLUB', sub: 'CLUB · WALK IN',   seed: 5, cafe: true,  style: 'artdeco', enterable: 'club' },
       { x: -24.5, z: -424, w: 24, h: 18, d: 15, base: '#E8DEC8', trimHex: '#FFF8EC', accent: 0x18c4be, accentHex: '#18C4BE', name: 'CARLYLE',     sub: 'COLONIAL SUITES',  seed: 6, cafe: true,  style: 'colonial' },
       { x: -24.5, z: -512, w: 28, h: 24, d: 15, base: '#EED6DC', trimHex: '#FFF4F6', accent: 0xff2e88, accentHex: '#FF2E88', name: 'BREAKWATER',  sub: 'OCEAN FRONT',      seed: 7, cafe: true,  style: 'artdeco' },
       { x: -24.5, z: -574, w: 26, h: 17, d: 15, base: '#E6DFD2', trimHex: '#FAF7F2', accent: 0xff7a24, accentHex: '#FF7A24', name: 'BEACON',      sub: 'MIAMI COLONIAL',   seed: 8, cafe: true,  style: 'colonial' },
@@ -2625,15 +3451,13 @@ class ViceCity3DApp {
       { x: -64, z: -380, w: 36, h: 22, d: 24, base: '#EDE0D2', trimHex: '#FFF8F0', accent: 0xe6a822, accentHex: '#E6A822', name: 'POINCIANA',  sub: 'GRAND ATRIUM',  seed: 11, cafe: false, style: 'mall_atrium' },
       { x: -64, z: -540, w: 38, h: 20, d: 24, base: '#D8E2E0', trimHex: '#F2F8F6', accent: 0x18c4be, accentHex: '#18C4BE', name: 'WASHINGTON', sub: 'SHOPPING MALL', seed: 12, cafe: false, style: 'mall_atrium' },
 
-      // North Vice Point Heights & North Point Mall (Z = -650..-1080)
+      // North Vice Point Heights (North Point Mall is mounted standalone at X=-50, Z=-1018!)
       { x: -24.5, z: -676, w: 26, h: 26, d: 15, base: '#F0DEE6', trimHex: '#FFF6FA', accent: 0xff2e88, accentHex: '#FF2E88', name: 'NORTH PALMS', sub: 'VICE HEIGHTS', seed: 17, cafe: true, style: 'midtown_tower' },
       { x: -24.5, z: -738, w: 26, h: 28, d: 15, base: '#D6ECE8', trimHex: '#F2FCFA', accent: 0x21e6d1, accentHex: '#21E6D1', name: 'BAYSIDE CLUB', sub: 'PENTHOUSE',  seed: 18, cafe: true, style: 'artdeco' },
       { x: -24.5, z: -846, w: 28, h: 18, d: 15, base: '#F4DFCE', trimHex: '#FFF7EE', accent: 0xff8a2a, accentHex: '#FF8A2A', name: 'EL SWANKO',   sub: 'NORTH CASA',  seed: 26, cafe: true, style: 'colonial' },
       { x: -24.5, z: -904, w: 26, h: 24, d: 15, base: '#DCE8F0', trimHex: '#F4FAFF', accent: 0x21e6d1, accentHex: '#21E6D1', name: 'LINKS VIEW',  sub: 'ESTATES',     seed: 27, cafe: true, style: 'midtown_tower' },
-      { x: -24.5, z: -1018, w: 34, h: 22, d: 18, base: '#EFE0E8', trimHex: '#FFF5FA', accent: 0xff2e88, accentHex: '#FF2E88', name: 'NORTH MALL', sub: 'VICE POINT',  seed: 28, cafe: true, style: 'mall_atrium' },
       { x: -64,   z: -700, w: 38, h: 36, d: 24, base: '#EDE2D4', trimHex: '#FAF6F0', accent: 0xffd36b, accentHex: '#FFD36B', name: 'SUNSET ROYALE', sub: 'RESIDENCES', seed: 19, cafe: false, style: 'midtown_tower' },
       { x: -64,   z: -860, w: 38, h: 32, d: 24, base: '#D8E8E4', trimHex: '#F2FCFA', accent: 0x21e6d1, accentHex: '#21E6D1', name: 'FAIRGROUND',  sub: 'NORTH TOWER', seed: 29, cafe: false, style: 'midtown_tower' },
-      { x: -64,   z: -1020, w: 40, h: 24, d: 24, base: '#F0DFD0', trimHex: '#FFF8F0', accent: 0xffd36b, accentHex: '#FFD36B', name: 'VICE GALLERIA', sub: 'GRAND MALL', seed: 30, cafe: false, style: 'mall_atrium' },
 
       // South Ocean Bay Marina Hotels (Z = +200..+325)
       { x: -24.5, z: 240,  w: 28, h: 18, d: 15, base: '#E8E4D4', trimHex: '#FAF8EE', accent: 0x21e6d1, accentHex: '#21E6D1', name: 'SOUTH MARINA', sub: 'YACHT CLUB', seed: 31, cafe: true, style: 'colonial' },
@@ -2679,7 +3503,7 @@ class ViceCity3DApp {
         this.addBoxCollider(maxX - 0.5, maxX + 0.9, minZ - 0.5, hd.z - 3.65);  // East-North facade wing
         this.addBoxCollider(maxX - 0.5, maxX + 0.9, hd.z + 3.65, maxZ + 0.5);  // East-South facade wing
 
-        const ebId = hd.enterable === 'hotel' ? 'ocean-view' : (hd.enterable === 'club' ? 'malibu-club' : 'ammunation');
+        const ebId = hd.enterable === 'hotel' ? 'ocean-view' : 'ammunation';
         this.enterableBuildings.push({
           id: ebId, label: hd.name, kind: hd.enterable,
           doorX: maxX + 1.4, doorZ: hd.z,
@@ -2697,6 +3521,44 @@ class ViceCity3DApp {
       b.userData.phase = hd.seed * 1.3;
       this.scene.add(b);
       this.beacons.push(b);
+    });
+
+    // 7b. STANDALONE REBUILT THE MALIBU CLUB (Streamline Moderne Exterior + 2-Level Enterable Disco Interior!)
+    const malibuX = -30.0, malibuZ = -344.0;
+    this.malibuExtras = createMalibuClubBuilding(maxAniso);
+    this.malibuExtras.root.position.set(malibuX, 0.16, malibuZ);
+    this.scene.add(this.malibuExtras.root);
+    if (this.malibuExtras.localColliders) {
+      this.malibuExtras.localColliders.forEach((c) => {
+        this.addBoxCollider(malibuX + c.minX, malibuX + c.maxX, malibuZ + c.minZ, malibuZ + c.maxZ);
+      });
+    }
+    this.enterableBuildings.push({
+      id: 'malibu-club', label: 'THE MALIBU CLUB', kind: 'club',
+      doorX: malibuX + 14.5, doorZ: malibuZ,
+      insideX: malibuX + 4.5, insideZ: malibuZ, insideYaw: Math.PI / 2,
+      perkX: malibuX + 2.2, perkZ: malibuZ + 7.2,
+      bounds: { minX: malibuX - 11.4, maxX: malibuX + 11.4, minZ: malibuZ - 10.4, maxZ: malibuZ + 10.4 },
+      accent: 0xff2e88, accentHex: '#FF2E88'
+    });
+
+    // 7c. STANDALONE HUGE ENTERABLE 2-STORY NORTH POINT MALL (68m x 54m Vice City Shopping Concourse!)
+    const mallX = -50.0, mallZ = -1018.0;
+    this.northPointMall = createNorthPointMall(maxAniso);
+    this.northPointMall.root.position.set(mallX, 0.16, mallZ);
+    this.scene.add(this.northPointMall.root);
+    if (this.northPointMall.localColliders) {
+      this.northPointMall.localColliders.forEach((c) => {
+        this.addBoxCollider(mallX + c.minX, mallX + c.maxX, mallZ + c.minZ, mallZ + c.maxZ);
+      });
+    }
+    this.enterableBuildings.push({
+      id: 'north-point-mall', label: 'NORTH POINT MALL', kind: 'mall',
+      doorX: mallX + 35.8, doorZ: mallZ,
+      insideX: mallX + 22.0, insideZ: mallZ, insideYaw: Math.PI / 2,
+      perkX: mallX, perkZ: mallZ - 21.5,
+      bounds: { minX: mallX - 32.0, maxX: mallX + 32.0, minZ: mallZ - 25.0, maxZ: mallZ + 25.0 },
+      accent: 0x21e6d1, accentHex: '#21E6D1'
     });
 
     // Glowing GTA Floor Doorway Rings + Interior Interactive Perk Pads for All Walk-In Buildings!
@@ -2768,7 +3630,14 @@ class ViceCity3DApp {
     }
     const contInst = new THREE.InstancedMesh(
       new THREE.BoxGeometry(9.2, 3.2, 16.5),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.62, metalness: 0.38 }),
+      new THREE.MeshStandardMaterial({
+        map: pbrLib.corrugated.map,
+        normalMap: pbrLib.corrugated.normalMap,
+        normalScale: new THREE.Vector2(1.25, 1.25),
+        color: 0xffffff,
+        roughness: 0.58,
+        metalness: 0.42
+      }),
       containerSpecs.length
     );
     const contTmpCol = new THREE.Color();
@@ -3111,47 +3980,92 @@ class ViceCity3DApp {
 
     this.traffic = [];
     const trafficSpecs = [
-      // Ocean Drive (North & Southbound — diverse hijackable 1986 rides across full 1.45km strip!)
-      { x: -3.6,   z:  260, speed:  12, color: 0x21e6d1, type: 'convertible' },
-      { x: -3.6,   z:  120, speed:  12, color: 0xf4c430, type: 'taxi' },
-      { x: -3.6,   z:  -38, speed:  11, color: 0x21e6d1, type: 'convertible' },
-      { x: -3.6,   z: -165, speed:  13, color: 0xff2e88, type: 'muscle' },
-      { x: -3.6,   z: -340, speed:  12, color: 0xf4c430, type: 'taxi' },
-      { x: -3.6,   z: -510, speed:  13, color: 0x3b82f6, type: 'suv' },
-      { x: -3.6,   z: -690, speed:  12, color: 0xe2dde8, type: 'coupe' },
-      { x: -3.6,   z: -910, speed:  13, color: 0xff8a2a, type: 'muscle' },
-      { x:  3.6,   z:  280, speed: -12, color: 0xf4c430, type: 'taxi' },
-      { x:  3.6,   z:   85, speed: -12, color: 0xff6b35, type: 'convertible' },
-      { x:  3.6,   z:  -95, speed: -12, color: 0xf4c430, type: 'taxi' },
-      { x:  3.6,   z: -245, speed: -14, color: 0xd93060, type: 'muscle' },
-      { x:  3.6,   z: -425, speed: -13, color: 0x18b5aa, type: 'suv' },
-      { x:  3.6,   z: -610, speed: -13, color: 0xe6a834, type: 'coupe' },
-      { x:  3.6,   z: -790, speed: -12, color: 0x9b5de5, type: 'convertible' },
-      { x:  3.6,   z: -1020, speed: -13, color: 0xff2e88, type: 'muscle' },
-      // Washington Avenue
-      { x: -99.6,  z:  240, speed:  13, color: 0x18b5aa, type: 'suv' },
-      { x: -99.6,  z:   60, speed:  13, color: 0xe68838, type: 'muscle' },
-      { x: -99.6,  z: -140, speed:  12, color: 0xf4c430, type: 'taxi' },
-      { x: -99.6,  z: -390, speed:  13, color: 0x18b5aa, type: 'convertible' },
-      { x: -99.6,  z: -650, speed:  14, color: 0x3b66d8, type: 'suv' },
-      { x: -99.6,  z: -960, speed:  13, color: 0xf4c430, type: 'taxi' },
+      // Ocean Drive (North & Southbound — bustling Miami beachfront avenue!)
+      { x: -3.6,   z:  310, speed:  12, color: 0xf4c430, type: 'taxi' },
+      { x: -3.6,   z:  220, speed:  13, color: 0x21e6d1, type: 'convertible' },
+      { x: -3.6,   z:  130, speed:  12, color: 0xff6b35, type: 'coupe' },
+      { x: -3.6,   z:   42, speed:  11, color: 0xf4c430, type: 'taxi' },
+      { x: -3.6,   z:  -46, speed:  12, color: 0x21e6d1, type: 'convertible' },
+      { x: -3.6,   z: -135, speed:  13, color: 0xff2e88, type: 'muscle' },
+      { x: -3.6,   z: -225, speed:  12, color: 0x3b82f6, type: 'suv' },
+      { x: -3.6,   z: -325, speed:  12, color: 0xf4c430, type: 'taxi' },
+      { x: -3.6,   z: -420, speed:  13, color: 0x9b5de5, type: 'convertible' },
+      { x: -3.6,   z: -515, speed:  13, color: 0x3b82f6, type: 'suv' },
+      { x: -3.6,   z: -620, speed:  12, color: 0xe2dde8, type: 'coupe' },
+      { x: -3.6,   z: -740, speed:  13, color: 0x34e89e, type: 'muscle' },
+      { x: -3.6,   z: -865, speed:  13, color: 0xff8a2a, type: 'muscle' },
+      { x: -3.6,   z: -990, speed:  12, color: 0xf4c430, type: 'taxi' },
+      { x:  3.6,   z:  295, speed: -12, color: 0xf4c430, type: 'taxi' },
+      { x:  3.6,   z:  195, speed: -13, color: 0x3b66d8, type: 'suv' },
+      { x:  3.6,   z:   92, speed: -12, color: 0xff6b35, type: 'convertible' },
+      { x:  3.6,   z:   -8, speed: -13, color: 0xe2dde8, type: 'coupe' },
+      { x:  3.6,   z:  -98, speed: -12, color: 0xf4c430, type: 'taxi' },
+      { x:  3.6,   z: -195, speed: -14, color: 0xd93060, type: 'muscle' },
+      { x:  3.6,   z: -305, speed: -12, color: 0x21e6d1, type: 'convertible' },
+      { x:  3.6,   z: -415, speed: -13, color: 0x18b5aa, type: 'suv' },
+      { x:  3.6,   z: -525, speed: -13, color: 0xf4c430, type: 'taxi' },
+      { x:  3.6,   z: -630, speed: -13, color: 0xe6a834, type: 'coupe' },
+      { x:  3.6,   z: -745, speed: -12, color: 0x9b5de5, type: 'convertible' },
+      { x:  3.6,   z: -875, speed: -14, color: 0x34e89e, type: 'muscle' },
+      { x:  3.6,   z: -1010, speed: -13, color: 0xff2e88, type: 'muscle' },
+      // Washington Avenue (High-Density Midtown Traffic)
+      { x: -99.6,  z:  260, speed:  13, color: 0x18b5aa, type: 'suv' },
+      { x: -99.6,  z:  140, speed:  13, color: 0xff2e88, type: 'convertible' },
+      { x: -99.6,  z:   30, speed:  13, color: 0xe68838, type: 'muscle' },
+      { x: -99.6,  z: -115, speed:  12, color: 0xf4c430, type: 'taxi' },
+      { x: -99.6,  z: -260, speed:  14, color: 0xe2dde8, type: 'coupe' },
+      { x: -99.6,  z: -395, speed:  13, color: 0x18b5aa, type: 'convertible' },
+      { x: -99.6,  z: -535, speed:  13, color: 0xd93060, type: 'muscle' },
+      { x: -99.6,  z: -675, speed:  14, color: 0x3b66d8, type: 'suv' },
+      { x: -99.6,  z: -820, speed:  13, color: 0x34e89e, type: 'coupe' },
+      { x: -99.6,  z: -970, speed:  13, color: 0xf4c430, type: 'taxi' },
+      { x: -92.4,  z:  215, speed: -13, color: 0xf4c430, type: 'taxi' },
+      { x: -92.4,  z:   75, speed: -14, color: 0x21e6d1, type: 'suv' },
       { x: -92.4,  z:  -65, speed: -14, color: 0xd93060, type: 'coupe' },
-      { x: -92.4,  z: -290, speed: -13, color: 0xe2dde8, type: 'muscle' },
-      { x: -92.4,  z: -560, speed: -13, color: 0xf4c430, type: 'taxi' },
-      { x: -92.4,  z: -860, speed: -14, color: 0x21e6d1, type: 'convertible' },
-      // Downtown Hwy & West Bayside Blvd
-      { x: -195.6, z: -120, speed:  15, color: 0xe2dde8, type: 'coupe' },
-      { x: -188.4, z: -440, speed: -15, color: 0xff2e88, type: 'muscle' },
-      { x: -188.4, z: -880, speed: -14, color: 0x21e6d1, type: 'suv' },
-      { x: -291.6, z: -190, speed:  14, color: 0xf4c430, type: 'taxi' },
-      { x: -284.4, z: -520, speed: -15, color: 0xff8a2a, type: 'convertible' },
-      { x: -284.4, z: -920, speed: -14, color: 0xe2dde8, type: 'coupe' },
+      { x: -92.4,  z: -210, speed: -13, color: 0xff8a2a, type: 'convertible' },
+      { x: -92.4,  z: -345, speed: -13, color: 0xe2dde8, type: 'muscle' },
+      { x: -92.4,  z: -485, speed: -14, color: 0x9b5de5, type: 'coupe' },
+      { x: -92.4,  z: -620, speed: -13, color: 0xf4c430, type: 'taxi' },
+      { x: -92.4,  z: -775, speed: -14, color: 0x3b82f6, type: 'suv' },
+      { x: -92.4,  z: -920, speed: -14, color: 0x21e6d1, type: 'convertible' },
+      // Downtown Highway (Both Lanes)
+      { x: -195.6, z:  220, speed:  15, color: 0xf4c430, type: 'taxi' },
+      { x: -195.6, z:   45, speed:  15, color: 0xff6b35, type: 'muscle' },
+      { x: -195.6, z: -130, speed:  15, color: 0xe2dde8, type: 'coupe' },
+      { x: -195.6, z: -340, speed:  14, color: 0x3b66d8, type: 'suv' },
+      { x: -195.6, z: -570, speed:  15, color: 0x21e6d1, type: 'convertible' },
+      { x: -195.6, z: -830, speed:  15, color: 0xd93060, type: 'muscle' },
+      { x: -188.4, z:  160, speed: -14, color: 0x18b5aa, type: 'suv' },
+      { x: -188.4, z:  -55, speed: -15, color: 0xf4c430, type: 'taxi' },
+      { x: -188.4, z: -260, speed: -15, color: 0x9b5de5, type: 'coupe' },
+      { x: -188.4, z: -460, speed: -15, color: 0xff2e88, type: 'muscle' },
+      { x: -188.4, z: -690, speed: -14, color: 0xe6a834, type: 'convertible' },
+      { x: -188.4, z: -910, speed: -14, color: 0x21e6d1, type: 'suv' },
+      // West Bayside Blvd
+      { x: -291.6, z:  180, speed:  14, color: 0x34e89e, type: 'convertible' },
+      { x: -291.6, z:  -30, speed:  14, color: 0x3b82f6, type: 'suv' },
+      { x: -291.6, z: -240, speed:  14, color: 0xf4c430, type: 'taxi' },
+      { x: -291.6, z: -510, speed:  15, color: 0xd93060, type: 'muscle' },
+      { x: -291.6, z: -810, speed:  14, color: 0xe2dde8, type: 'coupe' },
+      { x: -284.4, z:   95, speed: -14, color: 0xff2e88, type: 'muscle' },
+      { x: -284.4, z: -180, speed: -15, color: 0xf4c430, type: 'taxi' },
+      { x: -284.4, z: -480, speed: -15, color: 0xff8a2a, type: 'convertible' },
+      { x: -284.4, z: -760, speed: -14, color: 0x18b5aa, type: 'suv' },
+      { x: -284.4, z: -960, speed: -14, color: 0xe2dde8, type: 'coupe' },
       // Little Haiti Ave & Vice Port Expressway
-      { x: -387.6, z:   80, speed:  13, color: 0xf4c430, type: 'taxi' },
+      { x: -387.6, z:  160, speed:  13, color: 0xf4c430, type: 'taxi' },
+      { x: -387.6, z: -180, speed:  14, color: 0x3b66d8, type: 'suv' },
+      { x: -387.6, z: -540, speed:  13, color: 0xff2e88, type: 'convertible' },
+      { x: -387.6, z: -860, speed:  14, color: 0xe68838, type: 'muscle' },
+      { x: -380.4, z:   20, speed: -14, color: 0xe2dde8, type: 'coupe' },
       { x: -380.4, z: -360, speed: -14, color: 0x34e89e, type: 'muscle' },
-      { x: -387.6, z: -760, speed:  13, color: 0xff2e88, type: 'convertible' },
-      { x: -483.6, z: -220, speed:  14, color: 0x3b66d8, type: 'suv' },
-      { x: -476.4, z: -640, speed: -15, color: 0xe68838, type: 'muscle' }
+      { x: -380.4, z: -720, speed: -13, color: 0xf4c430, type: 'taxi' },
+      { x: -483.6, z:  110, speed:  14, color: 0xff6b35, type: 'coupe' },
+      { x: -483.6, z: -240, speed:  14, color: 0x3b66d8, type: 'suv' },
+      { x: -483.6, z: -640, speed:  15, color: 0x21e6d1, type: 'convertible' },
+      { x: -476.4, z:  -75, speed: -15, color: 0xf4c430, type: 'taxi' },
+      { x: -476.4, z: -480, speed: -15, color: 0xe68838, type: 'muscle' },
+      { x: -476.4, z: -890, speed: -14, color: 0xd93060, type: 'suv' }
     ];
     trafficSpecs.forEach((ts) => {
       const tc = createTrafficCar(ts.color, ts.type);
@@ -3231,48 +4145,8 @@ class ViceCity3DApp {
       this.weaponPickups.push({ ...ps, ...wpMesh, phase: idx * 1.1, cooldown: 0 });
     });
 
-    // B. 14 Neon-Edged Asphalt Stunt Jump Ramps (including South Airport, Prawn Island, Little Haiti & Vice Port!)
-    const rampShape = new THREE.Shape();
-    rampShape.moveTo(0, 0);
-    rampShape.lineTo(10.5, 0);
-    rampShape.lineTo(10.5, 2.35);
-    rampShape.closePath();
-    const rampGeo = new THREE.ExtrudeGeometry(rampShape, { depth: 4.8, bevelEnabled: false });
-    rampGeo.translate(-5.25, 0, -2.4);
-    rampGeo.rotateY(Math.PI / 2); // High end at -Z (heading north), entry at +Z
-    const rampMat = new THREE.MeshStandardMaterial({ color: 0x2c2a38, roughness: 0.72, metalness: 0.18 });
-    const railStripGeo = new THREE.BoxGeometry(0.18, 0.18, 10.6);
-
-    const rampSpecs = [
-      { x: 4.0,   z:  255, yaw: 0,           name: 'South Marina Launch' },
-      { x: 4.0,   z: -168, yaw: 0,           name: 'Ocean Beach Launch' },
-      { x: 4.0,   z: -485, yaw: 0,           name: 'Vice Point Flyover' },
-      { x: 4.0,   z: -860, yaw: 0,           name: 'North Beach Sky Jump' },
-      { x: 64.0,  z: -296.0, yaw: -Math.PI / 2, name: 'Starfish Causeway Leap' },
-      { x: 64.0,  z: -616.0, yaw: -Math.PI / 2, name: 'Vice Key Island Launch' },
-      { x: 64.0,  z: -936.0, yaw: -Math.PI / 2, name: 'Prawn Studios Stunt Leap' },
-      { x: -92.0, z: -175, yaw: 0,           name: 'Washington Ave Boost' },
-      { x: -188,  z: -360, yaw: 0,           name: 'Downtown Skyway Jump' },
-      { x: -48,   z: -460, yaw: Math.PI / 2, name: 'Midtown Cross Jump' },
-      { x: -380,  z: -320, yaw: 0,           name: 'Little Haiti Air Jump' },
-      { x: -476,  z: -460, yaw: 0,           name: 'Vice Port Dock Leap' },
-      { x: -102,  z:  114, yaw: Math.PI / 2, name: 'Airport Runway Jump West' },
-      { x: -206,  z:  114, yaw: -Math.PI / 2, name: 'Airport Runway Jump East' }
-    ];
-    rampSpecs.forEach((rs) => {
-      const rg = new THREE.Group();
-      rg.add(new THREE.Mesh(rampGeo, rampMat));
-      for (const sx of [-2.42, 2.42]) {
-        const rail = new THREE.Mesh(railStripGeo, sx < 0 ? pinkNeon : cyanNeon);
-        rail.position.set(sx, 1.25, 0);
-        rail.rotation.x = Math.atan2(2.35, 10.5);
-        rg.add(rail);
-      }
-      rg.position.set(rs.x, 0.02, rs.z);
-      rg.rotation.y = rs.yaw;
-      this.scene.add(rg);
-      this.ramps.push({ ...rs, fx: -Math.sin(rs.yaw), fz: -Math.cos(rs.yaw), rx: Math.cos(rs.yaw), rz: -Math.sin(rs.yaw), cooldown: 0 });
-    });
+    // B. Clean Realistic Roads — Zero Stunt Ramps on Boulevards, Bridges or Runways!
+    this.ramps = [];
 
     // C. 16 Glowing Cyan Nitro Boost Pads (Instant free Turbo Surge!)
     const padC = document.createElement('canvas');
@@ -3389,13 +4263,69 @@ class ViceCity3DApp {
     pbGlowInst.instanceMatrix.needsUpdate = true;
     this.scene.add(pbBodyInst, pbGlowInst);
 
-    // G. 4 Valet-Parked Classic Coupes Outside Beachfront Hotels
-    [[-10.2, -16, 0x21e6d1], [-10.2, -168, 0xffd36b], [-10.2, -336, 0xff2e88], [-10.2, -502, 0xe2dde8]].forEach(([x, z, col]) => {
-      const pc = createTrafficCar(col);
-      pc.position.set(x, 0.16, z);
+    // G. Rideable Parked Two-Wheelers (PCJ-600 Superbikes, Sanchez Dirt Bikes, Faggio Scooters),
+    //    VCPD Patrol Cruiser & Kaufman Cabs Yellow Taxi across Vice City & Vice Hollow Village!
+    const bikeSpecs = [
+      { kind: 'pcj600',  color: 0xff2e88, x:  9.2,   z: -8.0,   yaw: 0.25 },
+      { kind: 'faggio',  color: 0x21e6d1, x: -10.8,  z: -332.0, yaw: 0.15 }, // Outside Malibu Club!
+      { kind: 'pcj600',  color: 0xffd36b, x:  13.2,  z: -424.0, yaw: -1.2 }, // Carnival Pier entrance!
+      { kind: 'sanchez', color: 0xff5a22, x: -372.0, z: -1188,  yaw: 1.55 }, // Vice Hollow Village!
+      { kind: 'sanchez', color: 0x34e89e, x: -8.5,   z: -1112,  yaw: 0.0  }, // Mount Vice East Trailhead!
+      { kind: 'sanchez', color: 0xff8a2a, x: -496.0, z: -532.0, yaw: Math.PI / 2 }, // Sierra West North Entry!
+      { kind: 'sanchez', color: 0xffd36b, x: -762.0, z: -206.0, yaw: -Math.PI / 2 }, // Sierra West Redrock Overlook!
+      { kind: 'faggio',  color: 0xff9ec4, x: -10.5,  z: -56.0,  yaw: 0.1  }  // Outside Ocean View Hotel!
+    ];
+    bikeSpecs.forEach((bs) => {
+      const rig = createMotorcycle(bs.kind, bs.color);
+      const gy = getTerrainHeight(bs.x, bs.z);
+      rig.root.position.set(bs.x, gy, bs.z);
+      rig.root.rotation.y = bs.yaw;
+      this.scene.add(rig.root);
+      this.parkedVehicles.push({
+        isHero: false, isBike: true, label: rig.label,
+        mesh: rig.root, rig,
+        topSpeed: rig.topSpeed, nitroSpeed: rig.topSpeed * 1.32,
+        accel: rig.accel, grip: rig.grip,
+        x: bs.x, y: gy, z: bs.z, yaw: bs.yaw
+      });
+    });
+
+    // Parked Stealable VCPD Police Cruiser & Kaufman Cabs Yellow Taxi on Ocean Drive
+    const parkedCop = createPoliceCruiser(maxAniso);
+    parkedCop.root.position.set(-10.2, 0.02, -168);
+    parkedCop.root.rotation.y = 0.08;
+    this.scene.add(parkedCop.root);
+    this.parkedVehicles.push({
+      isHero: false, isPolice: true, label: 'VCPD CRUISER',
+      mesh: parkedCop.root, rig: parkedCop,
+      topSpeed: parkedCop.topSpeed, nitroSpeed: 64, accel: parkedCop.accel, grip: parkedCop.grip,
+      x: -10.2, y: 0.02, z: -168, yaw: 0.08
+    });
+
+    const parkedCab = createTrafficCar(0xf4c430, 'taxi');
+    parkedCab.position.set(-10.2, 0.02, -24);
+    parkedCab.rotation.y = 0.06;
+    this.scene.add(parkedCab);
+    const cabRig = parkedCab.userData.carRig;
+    this.parkedVehicles.push({
+      isHero: false, isTaxi: true, label: 'KAUFMAN CAB TAXI',
+      mesh: parkedCab, rig: cabRig,
+      topSpeed: 44, nitroSpeed: 58, accel: 20, grip: 0.94,
+      x: -10.2, y: 0.02, z: -24, yaw: 0.06
+    });
+
+    // 2 Valet-Parked Classic Coupes Outside Beachfront Hotels (Rideable via [F]!)
+    [[-10.2, -366, 0xff2e88], [-10.2, -502, 0xe2dde8]].forEach(([x, z, col]) => {
+      const pc = createTrafficCar(col, 'convertible');
+      pc.position.set(x, 0.02, z);
       pc.rotation.y = 0.08;
       this.scene.add(pc);
-      this.addBoxCollider(x - 1.1, x + 1.1, z - 2.3, z + 2.3);
+      const rig = pc.userData.carRig;
+      this.parkedVehicles.push({
+        isHero: false, label: rig ? rig.label : 'VICE COUPE',
+        mesh: pc, rig, topSpeed: 46, nitroSpeed: 62, accel: 21, grip: 0.94,
+        x, y: 0.02, z, yaw: 0.08
+      });
     });
 
     // H. Patrol Helicopter Circling Downtown & Starfish Island
@@ -3430,14 +4360,17 @@ class ViceCity3DApp {
       this.addCircleCollider(fx, fz, 6.5);
     });
 
-    // K. Beachfront Vice Tiki Bar Cabana & Beach Volleyball Court
+    // K. Beachfront Vice Tiki Bar Cabana & Beach Volleyball Court (with solid colliders!)
     const tiki = createTikiBeachBar(pinkNeon, cyanNeon, maxAniso);
     tiki.position.set(23.5, -0.18, -254);
     this.scene.add(tiki);
+    this.addBoxCollider(20.6, 26.4, -256.8, -251.2);
 
     const vball = createVolleyballCourt();
     vball.position.set(24.8, -0.16, -124);
     this.scene.add(vball);
+    this.addCircleCollider(24.8, -128.5, 0.45);
+    this.addCircleCollider(24.8, -119.5, 0.45);
 
     // L. 3 Overhead Neon District Gateway Arches (VICE POINT, DOWNTOWN VICE, LITTLE HAVANA)
     const arches = [
@@ -3477,19 +4410,65 @@ class ViceCity3DApp {
     underBridgeGlow.position.set(69.4, -0.92, -300);
     this.scene.add(underBridgeGlow);
 
-    // O. Rooftop Illuminated Neon Billboards on Key City Skyline Towers
-    [
-      { x: -24.5, y: 27.2, z: -190, rotY: Math.PI / 2, title: 'VICE RADIO 86.5', sub: 'SYNTHWAVE ALL NIGHT', hex: '#FF2E88' },
-      { x: -64,   y: 41.5, z: -220, rotY: Math.PI / 2, title: 'OCEAN DRIVE',     sub: 'GOLDEN HOUR TOUR',    hex: '#21E6D1' }
-    ].forEach((bb) => {
-      const bTex = makeNeonSignTexture(bb.title, bb.sub, bb.hex, maxAniso, false);
-      const bMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(14, 3.2),
-        new THREE.MeshStandardMaterial({ map: bTex, emissive: 0xffffff, emissiveMap: bTex, emissiveIntensity: 0.92, side: THREE.DoubleSide })
-      );
-      bMesh.position.set(bb.x, bb.y, bb.z);
-      bMesh.rotation.y = bb.rotY;
-      this.scene.add(bMesh);
+    // O. 28 Realistic 16:9 Illuminated Parody Image Billboards Across Vice City (Rooftops + Avenues + Beachfront!)
+    const viceBillboardMats = getImageBillboardMaterials(maxAniso);
+    const viceBillboardSpecs = [
+      // Ocean Drive Beachfront & Skyline (Hero opening corridor — immediately visible from Start!)
+      { x: 20.6,   y: 0.0,  z: -48,  rotY: -0.34, idx: 0,  w: 12.8, poleH: 7.4,  rooftop: false }, // 01 Deadbull (Beachfront South)
+      { x: -24.5,  y: 16.4, z: -116, rotY: 0.36,  idx: 1,  w: 12.8, poleH: 3.6,  rooftop: true  }, // 02 Rotflix Watching (Colony Roof)
+      { x: 20.6,   y: 0.0,  z: -154, rotY: -0.32, idx: 3,  w: 12.8, poleH: 7.6,  rooftop: false }, // 04 SugarShock Fizz Cola
+      { x: -24.5,  y: 18.4, z: -190, rotY: 0.34,  idx: 9,  w: 13.6, poleH: 3.8,  rooftop: true  }, // 10 Edison Motors (Ammu-Nation Roof)
+      { x: -64.0,  y: 32.4, z: -60,  rotY: 0.95,  idx: 12, w: 14.4, poleH: 3.8,  rooftop: true  }, // 13 Swiggity (Vice Plaza Tower)
+      { x: -64.0,  y: 38.4, z: -220, rotY: 1.18,  idx: 17, w: 14.4, poleH: 4.0,  rooftop: true  }, // 18 Loot Vuitton (Biscayne Tower)
+      { x: 20.6,   y: 0.0,  z: -264, rotY: -0.36, idx: 8,  w: 12.8, poleH: 7.6,  rooftop: false }, // 09 Gainz Gym (Before Causeway)
+      { x: -24.5,  y: 24.4, z: -252, rotY: 0.34,  idx: 10, w: 12.8, poleH: 3.6,  rooftop: true  }, // 11 Edison Drives Itself (Clevelander Roof)
+      { x: 136.0,  y: 0.16, z: -280, rotY: -1.18, idx: 11, w: 12.8, poleH: 7.4,  rooftop: false }, // 12 Chai-Bros ₹500 (Starfish Island)
+      { x: 20.6,   y: 0.0,  z: -386, rotY: -0.32, idx: 4,  w: 12.8, poleH: 7.6,  rooftop: false }, // 05 Amaze-Con (Malibu / Pier)
+      { x: -24.5,  y: 24.4, z: -512, rotY: 0.34,  idx: 22, w: 13.6, poleH: 3.6,  rooftop: true  }, // 23 Strawberry 15 Pro Sweet (Breakwater)
+      { x: 20.6,   y: 0.0,  z: -560, rotY: -0.32, idx: 15, w: 12.8, poleH: 7.6,  rooftop: false }, // 16 Cluck Bucket (Ocean Beach Mid)
+      { x: -24.5,  y: 26.4, z: -676, rotY: 0.34,  idx: 25, w: 13.6, poleH: 3.6,  rooftop: true  }, // 26 iBerry Duo Oct23 (North Palms)
+      { x: 20.6,   y: 0.0,  z: -744, rotY: -0.32, idx: 6,  w: 12.8, poleH: 7.6,  rooftop: false }, // 07 Drip-Kart (North Beach)
+      { x: -24.5,  y: 18.4, z: -846, rotY: 0.34,  idx: 31, w: 13.6, poleH: 3.6,  rooftop: true  }, // 46 Valraise The Movie (El Swanko)
+      { x: 20.6,   y: 0.0,  z: -992, rotY: -0.34, idx: 24, w: 12.8, poleH: 7.6,  rooftop: false }, // 25 Clownkings Burger (North Point Mall)
+
+      // Washington Ave & Downtown Vice (Midtown + Financial District)
+      { x: -82.5,  y: 0.0,  z: -102, rotY: -0.34, idx: 2,  w: 12.0, poleH: 7.4,  rooftop: false }, // 03 Rotflix Binge (Washington South)
+      { x: -111.0, y: 0.0,  z: -260, rotY: 0.34,  idx: 7,  w: 12.0, poleH: 7.4,  rooftop: false }, // 08 Insta-Brag (Washington Central)
+      { x: -64.0,  y: 22.4, z: -380, rotY: -1.15, idx: 13, w: 13.6, poleH: 3.6,  rooftop: true  }, // 14 Nomato (Poinciana Roof facing Wash Ave)
+      { x: -64.0,  y: 20.4, z: -540, rotY: -1.15, idx: 23, w: 13.6, poleH: 3.6,  rooftop: true  }, // 24 Strawberry 15 Pro Seeds (Wash Mall)
+      { x: -175.0, y: 0.0,  z: -182, rotY: -0.34, idx: 19, w: 12.8, poleH: 7.6,  rooftop: false }, // 20 Slacker (Downtown Hwy)
+      { x: -210.0, y: 0.0,  z: -340, rotY: 0.34,  idx: 20, w: 12.8, poleH: 7.6,  rooftop: false }, // 21 KRED (Downtown West)
+      { x: -175.0, y: 0.0,  z: -660, rotY: -0.34, idx: 27, w: 12.8, poleH: 7.6,  rooftop: false }, // 28 Numb-Zac (Uptown Downtown)
+
+      // West Bayside, Little Haiti, Vice Port & Escobar Int'l Airport
+      { x: -240.0, y: 22.4, z: -60,  rotY: 0.85,  idx: 14, w: 13.6, poleH: 3.6,  rooftop: true  }, // 15 Zapto (Bayside Mall Roof)
+      { x: -240.0, y: 24.4, z: -380, rotY: 0.85,  idx: 28, w: 13.6, poleH: 3.6,  rooftop: true  }, // 38 Shinjuku Future Pod (Vice Arena)
+      { x: -366.0, y: 0.0,  z: -338, rotY: -0.34, idx: 18, w: 12.8, poleH: 7.6,  rooftop: false }, // 19 El's Pawn (Little Haiti)
+      { x: -466.0, y: 0.0,  z: -180, rotY: -0.34, idx: 21, w: 12.8, poleH: 7.6,  rooftop: false }, // 22 Crazy Cal's Cars (Vice Port Expy)
+      { x: -48.0,  y: 0.0,  z: 4.5,  rotY: 0.25,  idx: 16, w: 12.8, poleH: 7.6,  rooftop: false }, // 17 Pay-Dayum (Airport Blvd East)
+      { x: -146.0, y: 0.0,  z: 4.5,  rotY: -0.25, idx: 5,  w: 12.8, poleH: 7.6,  rooftop: false }, // 06 Just Gourd It Lauki (Airport Blvd)
+      { x: -64.0,  y: 22.4, z: 260,  rotY: 0.65,  idx: 32, w: 13.6, poleH: 3.6,  rooftop: true  }, // 49 Lumiere Seoul (South Marina Plaza)
+      { x: -111.0, y: 0.0,  z: -832, rotY: 0.34,  idx: 33, w: 12.8, poleH: 7.6,  rooftop: false }, // 56 Rouge Obsession (North Washington)
+      { x: -272.0, y: 0.0,  z: -740, rotY: -0.34, idx: 30, w: 12.8, poleH: 7.6,  rooftop: false }, // 42 Ryujin Whisky (North Bayside)
+      { x: -366.0, y: 0.0,  z: -740, rotY: -0.34, idx: 29, w: 12.8, poleH: 7.6,  rooftop: false }, // 41 Capsule Hotel Mirai (Little Haiti North)
+      { x: -210.0, y: 0.0,  z: -910, rotY: 0.34,  idx: 26, w: 12.8, poleH: 7.6,  rooftop: false }  // 27 iBerry Duo Harvest (North Downtown)
+    ];
+
+    viceBillboardSpecs.forEach((bb) => {
+      const mat = viceBillboardMats[bb.idx % viceBillboardMats.length];
+      const mesh = buildImageBillboardMesh(mat, {
+        width: bb.w,
+        height: (bb.w * 9) / 16,
+        poleHeight: bb.poleH,
+        rooftop: bb.rooftop,
+        doubleSided: !bb.rooftop
+      });
+      mesh.position.set(bb.x, bb.y, bb.z);
+      mesh.rotation.y = bb.rotY;
+      this.scene.add(mesh);
+      if (!bb.rooftop) {
+        this.addCircleCollider(bb.x, bb.z, 2.2);
+      }
     });
   }
 
@@ -3617,6 +4596,24 @@ class ViceCity3DApp {
     for (let i = 0; i < 6; i++) {
       addPed(-138 + i * 12, 0.04, 57 + (i % 2) * 3.5, i % 2 === 0 ? 1 : -1, false, i + 170, 'x', -142, -74, false);
     }
+    // 10 Living Vice Hollow Community Villagers Strolling the Plaza, Diner, Chapel & Cottages!
+    if (this.village && this.village.npcSpawns) {
+      this.village.npcSpawns.forEach((sp, i) => {
+        const gy = getTerrainHeight(sp.x, sp.z) + 0.08;
+        const axis = i % 2 === 0 ? 'x' : 'z';
+        const span = 7.5;
+        addPed(
+          sp.x, gy, sp.z,
+          i % 2 === 0 ? 1 : -1,
+          false,
+          i + 210,
+          axis,
+          (axis === 'x' ? sp.x : sp.z) - span,
+          (axis === 'x' ? sp.x : sp.z) + span,
+          false
+        );
+      });
+    }
   }
 
   spawnParticle(x, y, z, vx, vy, vz, colorHex, size, life, grow, gravity = 0) {
@@ -3713,24 +4710,130 @@ class ViceCity3DApp {
     }
   }
 
-  // ROCK-SOLID 3-POINT ORIENTED CAR HULL COLLISION SOLVER (2 PASSES — ZERO CLIPPING!)
-  resolveWorldCollisions() {
+  // ROCK-SOLID SUBSTEPPED 3-POINT ORIENTED CAR HULL COLLISION SOLVER (O(1) SPATIAL GRID — ZERO PASS-THROUGH!)
+  resolveWorldCollisions(isSubstep = false) {
     const cs = this.carState;
     const fwdX = -Math.sin(cs.yaw);
     const fwdZ = -Math.cos(cs.yaw);
-    const hullOffsets = [1.42, 0.0, -1.42]; // Front bumper, chassis center, rear bumper
-    const hullR = 1.06;
+    const actIsBike = Boolean(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+    const hullOffsets = actIsBike ? [0.65, -0.65] : [1.45, 0.0, -1.45];
+    const hullR = actIsBike ? 0.56 : 1.08;
     let totalPush = 0;
+    let hitCliffWall = false;
 
-    for (let pass = 0; pass < 2; pass++) {
-      // 1. Expanded World Perimeter Bounds (South Marina, Vice Port, North Mall & Roadable Mount Vice!)
-      if (cs.x < -495.5) { cs.x = -495.5; totalPush += 0.5; }
-      if (cs.z > 364) { cs.z = 364; totalPush += 0.5; }
-      if (cs.z < -1478) { cs.z = -1478; totalPush += 0.5; }
-      if (cs.z < -1115 && cs.x > 40) { cs.x = 40; totalPush += 0.5; }
+    const localBoxes = this.colliderGrid.queryBoxes(cs.x, cs.z, 5.5);
+    const localCircles = this.colliderGrid.queryCircles(cs.x, cs.z, 5.5);
 
-      // 2. East Ocean Islands Water Perimeter (Starfish -300, Vice Key -620 & Prawn Island -940; Carnival Pier -430 is open!)
-      if (cs.x > 126 && Math.abs(cs.z + 430) > 19.0) {
+    for (let pass = 0; pass < 3; pass++) {
+      // 1. Full Great State of Leonida Outer Perimeter Bounds (3.8km x 5.4km continuous open world!)
+      if (cs.x < LEONIDA_PROJ.minX + 20) { cs.x = LEONIDA_PROJ.minX + 20; totalPush += 0.55; }
+      if (cs.x > LEONIDA_PROJ.maxX - 20) { cs.x = LEONIDA_PROJ.maxX - 20; totalPush += 0.55; }
+      if (cs.z < LEONIDA_PROJ.minZ + 20) { cs.z = LEONIDA_PROJ.minZ + 20; totalPush += 0.55; }
+      if (cs.z > LEONIDA_PROJ.maxZ - 20) { cs.z = LEONIDA_PROJ.maxZ - 20; totalPush += 0.55; }
+
+      // 1b. BULLETPROOF SOLID MOUNTAIN CLIFF WALLS & GUARDRAILS (Mount Vice, Sierra West & Mount Kalaga!)
+      const inLegacyMt = isInLegacyMountains(cs.x, cs.z);
+      const inCoreVice = isInCoreViceFootprint(cs.x, cs.z);
+      const leoHwHit = (!inCoreVice && !inLegacyMt) ? closestLeonidaHighway(cs.x, cs.z) : null;
+      if (inLegacyMt && !cs.airborne && !this.cheats.flyingCars) {
+        const mvHit = closestAnyMountainRoad(cs.x, cs.z);
+        if (mvHit.dist > 6.55 && mvHit.dist < 8.4 && mvHit.roadY > 4.5) {
+          const hHere = getTerrainHeight(cs.x, cs.z);
+          if (hHere < mvHit.roadY - 0.65) {
+            const eps = 0.8;
+            const dXp = closestAnyMountainRoad(cs.x + eps, cs.z).dist;
+            const dXm = closestAnyMountainRoad(cs.x - eps, cs.z).dist;
+            const dZp = closestAnyMountainRoad(cs.x, cs.z + eps).dist;
+            const dZm = closestAnyMountainRoad(cs.x, cs.z - eps).dist;
+            const gx = dXp - dXm, gz = dZp - dZm;
+            const gLen = Math.hypot(gx, gz) || 1;
+            const pushBack = (mvHit.dist - 6.5);
+            cs.x -= (gx / gLen) * pushBack;
+            cs.z -= (gz / gLen) * pushBack;
+            totalPush += pushBack * 0.7;
+          }
+        }
+        if (mvHit.dist > 7.9) {
+          // Climbable up to ~45 deg; cleanly deflect off sheer cliff faces (>47 deg) & sudden rock steps so bumpers NEVER merge into mountains!
+          const hC = this.getSurfaceY(cs.x, cs.z, false);
+          const hPx = this.getSurfaceY(cs.x + 1.8, cs.z, false);
+          const hMx = this.getSurfaceY(cs.x - 1.8, cs.z, false);
+          const hPz = this.getSurfaceY(cs.x, cs.z + 1.8, false);
+          const hMz = this.getSurfaceY(cs.x, cs.z - 1.8, false);
+          const gradX = (hPx - hMx) / 3.6;
+          const gradZ = (hPz - hMz) / 3.6;
+          const slope = Math.hypot(gradX, gradZ);
+          const moveSign = cs.speed < -0.5 ? -1 : 1;
+          const dirX = -Math.sin(cs.yaw) * moveSign;
+          const dirZ = -Math.cos(cs.yaw) * moveSign;
+          const hAhead = this.getSurfaceY(cs.x + dirX * 2.35, cs.z + dirZ * 2.35, false);
+          const fwdSlope = (hAhead - hC) / 2.35;
+          if ((slope > 1.06 && hC > 1.0) || (fwdSlope > 1.08 && hAhead > 1.5)) {
+            const nx = slope > 0.12 ? (gradX / slope) : dirX;
+            const nz = slope > 0.12 ? (gradZ / slope) : dirZ;
+            const excess = Math.max(slope - 1.02, fwdSlope - 1.04, 0.08);
+            const push = Math.min(1.65, excess * 1.45 + 0.16);
+            cs.x -= nx * push;
+            cs.z -= nz * push;
+            const intoWall = (dirX * nx + dirZ * nz) * Math.abs(cs.speed);
+            if (intoWall > 0) cs.speed *= 0.62;
+            totalPush += push;
+            hitCliffWall = true;
+          }
+        }
+      } else if (!inCoreVice && !inLegacyMt && !cs.airborne && !this.cheats.flyingCars) {
+        // Climbable up to ~45 deg on Mount Kalaga & Leonida ridges; deflect off sheer cliff walls (>47 deg) & sudden rock faces!
+        const onLeoRoad = leoHwHit && leoHwHit.dist <= leoHwHit.width * 0.65;
+        if (!onLeoRoad) {
+          const hC = this.getSurfaceY(cs.x, cs.z, false);
+          const moveSign = cs.speed < -0.5 ? -1 : 1;
+          const dirX = -Math.sin(cs.yaw) * moveSign;
+          const dirZ = -Math.cos(cs.yaw) * moveSign;
+          const hAhead = this.getSurfaceY(cs.x + dirX * 2.35, cs.z + dirZ * 2.35, false);
+          const fwdSlope = (hAhead - hC) / 2.35;
+          if (hC > 1.0 || hAhead > 1.8) {
+            const hPx = this.getSurfaceY(cs.x + 2.0, cs.z, false);
+            const hMx = this.getSurfaceY(cs.x - 2.0, cs.z, false);
+            const hPz = this.getSurfaceY(cs.x, cs.z + 2.0, false);
+            const hMz = this.getSurfaceY(cs.x, cs.z - 2.0, false);
+            const gradX = (hPx - hMx) / 4.0;
+            const gradZ = (hPz - hMz) / 4.0;
+            const slope = Math.hypot(gradX, gradZ);
+            if (slope > 1.06 || fwdSlope > 1.08) {
+              const nx = slope > 0.12 ? (gradX / slope) : dirX;
+              const nz = slope > 0.12 ? (gradZ / slope) : dirZ;
+              const excess = Math.max(slope - 1.02, fwdSlope - 1.04, 0.08);
+              const push = Math.min(1.65, excess * 1.45 + 0.16);
+              cs.x -= nx * push;
+              cs.z -= nz * push;
+              const intoWall = (dirX * nx + dirZ * nz) * Math.abs(cs.speed);
+              if (intoWall > 0) cs.speed *= 0.62;
+              totalPush += push;
+              hitCliffWall = true;
+            }
+          }
+        }
+        // Leonida Shoreline & Ocean Bridge Containment (Disabled when SEAWAYS cheat is active!)
+        if (!this.cheats.seaways && !onLeoRoad) {
+          const lf = getLandFactor(cs.x, cs.z);
+          if (lf < 0.245) {
+            // Gently steer back toward shore or bridge deck
+            const eps = 3.5;
+            const gx = getLandFactor(cs.x + eps, cs.z) - getLandFactor(cs.x - eps, cs.z);
+            const gz = getLandFactor(cs.x, cs.z + eps) - getLandFactor(cs.x, cs.z - eps);
+            const gLen = Math.hypot(gx, gz);
+            if (gLen > 0.0005) {
+              const push = Math.min(2.6, (0.255 - lf) * 18.0 + 0.35);
+              cs.x += (gx / gLen) * push;
+              cs.z += (gz / gLen) * push;
+              totalPush += push * 0.5;
+            }
+          }
+        }
+      }
+
+      // 2. Core Vice East Ocean Islands Water Perimeter (Disabled when SEAWAYS cheat is active!)
+      if (!this.cheats.seaways && inCoreVice && cs.x > 126 && Math.abs(cs.z + 430) > 19.0) {
         const isPrawn = cs.z < -780;
         const isViceKey = !isPrawn && cs.z < -460;
         const icx = isPrawn ? 164 : (isViceKey ? 156 : 152);
@@ -3747,14 +4850,15 @@ class ViceCity3DApp {
         }
       }
 
-      // 3. Test all 3 hull spheres against every solid AABB (Buildings, Showrooms, Bridge Rails, Seawall, Arch)
+      // 3. Test all hull spheres against local O(1) Solid AABBs (Buildings, Cottages, Barricades, Showrooms, Bridge Rails, Seawall)
       for (let h = 0; h < hullOffsets.length; h++) {
         const off = hullOffsets[h];
         const px = cs.x + fwdX * off;
         const pz = cs.z + fwdZ * off;
 
-        for (let i = 0; i < this.boxColliders.length; i++) {
-          const b = this.boxColliders[i];
+        for (let i = 0; i < localBoxes.length; i++) {
+          const b = localBoxes[i];
+          if (this.cheats.seaways && b.minX >= 16.5 && b.maxX <= 19.5) continue;
           const cx = THREE.MathUtils.clamp(px, b.minX, b.maxX);
           const cz = THREE.MathUtils.clamp(pz, b.minZ, b.maxZ);
           const dx = px - cx;
@@ -3768,7 +4872,6 @@ class ViceCity3DApp {
               cs.z += (dz / dist) * push;
               totalPush += push;
             } else {
-              // Deep inside fallback -> push to closest face
               const pL = px - b.minX, pR = b.maxX - px, pT = pz - b.minZ, pB = b.maxZ - pz;
               const m = Math.min(pL, pR, pT, pB);
               if (m === pL) cs.x -= pL + hullR;
@@ -3780,9 +4883,9 @@ class ViceCity3DApp {
           }
         }
 
-        // 4. Test all 3 hull spheres against every solid Cylinder/Circle Prop (Palm Trunks, Lamps, Poles, Hydrants, Lighthouse)
-        for (let i = 0; i < this.circleColliders.length; i++) {
-          const c = this.circleColliders[i];
+        // 4. Test all hull spheres against local O(1) Solid Cylinders (Trees, Boulders, Palms, Lamps, Silo, Water Tower, Well, Umbrellas)
+        for (let i = 0; i < localCircles.length; i++) {
+          const c = localCircles[i];
           const dx = px - c.x;
           const dz = pz - c.z;
           const minD = hullR + c.r;
@@ -3795,25 +4898,71 @@ class ViceCity3DApp {
             totalPush += push;
           }
         }
+
+        // 5. SOLID DYNAMIC COLLISIONS: Parked Vehicles (Cars/Bikes/Taxis), Police Cruisers & Parked Airport Aircraft!
+        const pushAgainstVehicle = (vx, vz, vyaw, halfL, halfW) => {
+          const dxC = px - vx, dzC = pz - vz;
+          if (Math.abs(dxC) > halfL + hullR + 1.0 || Math.abs(dzC) > halfL + hullR + 1.0) return;
+          const vfX = -Math.sin(vyaw), vfZ = -Math.cos(vyaw);
+          const vrX = Math.cos(vyaw), vrZ = -Math.sin(vyaw);
+          const localF = dxC * vfX + dzC * vfZ;
+          const localR = dxC * vrX + dzC * vrZ;
+          const clF = THREE.MathUtils.clamp(localF, -halfL, halfL);
+          const clR = THREE.MathUtils.clamp(localR, -halfW, halfW);
+          const df = localF - clF, dr = localR - clR;
+          const cSq = df * df + dr * dr;
+          if (cSq < hullR * hullR) {
+            if (cSq > 0.00001) {
+              const d = Math.sqrt(cSq);
+              const push = hullR - d;
+              const pf = (df / d) * push, pr = (dr / d) * push;
+              cs.x += vfX * pf + vrX * pr;
+              cs.z += vfZ * pf + vrZ * pr;
+              totalPush += push;
+            } else {
+              cs.x += vrX * (hullR + halfW);
+              cs.z += vrZ * (hullR + halfW);
+              totalPush += hullR;
+            }
+          }
+        };
+
+        for (let i = 0; i < this.parkedVehicles.length; i++) {
+          const pv = this.parkedVehicles[i];
+          if (!pv || pv === this.activeVehicle || !pv.mesh || !pv.mesh.visible) continue;
+          const isB = Boolean(pv.rig && pv.rig.isBike);
+          pushAgainstVehicle(pv.x, pv.z, pv.yaw, isB ? 1.15 : 2.32, isB ? 0.48 : 1.04);
+        }
+        for (let i = 0; i < this.policeUnits.length; i++) {
+          const pu = this.policeUnits[i];
+          if (!pu || !pu.mesh || !pu.mesh.visible) continue;
+          pushAgainstVehicle(pu.x, pu.z, pu.yaw, 2.42, 1.08);
+        }
+        if (this.flyablePlanes) {
+          for (let i = 0; i < this.flyablePlanes.length; i++) {
+            const pl = this.flyablePlanes[i];
+            if (!pl || pl === this.activePlane || pl.y > 4.0) continue;
+            pushAgainstVehicle(pl.x, pl.z, pl.yaw, pl.kind === 'airliner' ? 8.5 : 4.2, pl.kind === 'airliner' ? 3.2 : 1.8);
+          }
+        }
       }
     }
 
     if (totalPush > 0.02) {
       const impactSpd = Math.abs(cs.speed);
-      if (impactSpd > 9 && this.impactCooldown <= 0) {
+      if (!isSubstep && impactSpd > 8 && this.impactCooldown <= 0) {
         this.impactCooldown = 0.25;
         this.camShake = Math.min(0.42, impactSpd * 0.01);
         this.audio.impact(Math.min(1, impactSpd / 40));
         for (let k = 0; k < 6; k++) {
           this.spawnParticle(
-            cs.x + fwdX * 1.8, 0.55, cs.z + fwdZ * 1.8,
+            cs.x + fwdX * 1.8, cs.y + 0.55, cs.z + fwdZ * 1.8,
             (Math.random() - 0.5) * 6, 2.0 + Math.random() * 3.0, (Math.random() - 0.5) * 6,
             0xffb44c, 0.36, 0.42, 0.2, 9.8
           );
         }
       }
-      // Realistic wall-slide / bounce damping
-      cs.speed *= totalPush > 0.45 ? -0.22 : 0.72;
+      cs.speed *= (totalPush > 0.42 || hitCliffWall) ? -0.18 : 0.68;
     }
   }
 
@@ -3832,6 +4981,43 @@ class ViceCity3DApp {
     if (this.el && this.el.lampAuto) this.el.lampAuto.classList.remove('on-auto');
   }
 
+  getSurfaceY(x, z, isFoot = false) {
+    let h = getTerrainHeight(x, z);
+    if (this.mountVice && this.mountVice.sampleMeshHeight) {
+      const mh = this.mountVice.sampleMeshHeight(x, z);
+      if (mh !== null && mh > h) h = mh;
+    }
+    if (this.sierraWest && this.sierraWest.sampleMeshHeight) {
+      const sh = this.sierraWest.sampleMeshHeight(x, z);
+      if (sh !== null && sh > h) h = sh;
+    }
+    if (this.leonidaWorld && this.leonidaWorld.sampleMeshHeight) {
+      const lh = this.leonidaWorld.sampleMeshHeight(x, z);
+      if (lh !== null && lh > h) h = lh;
+    }
+    if (isInCoreViceFootprint(x, z)) {
+      let minAve = Infinity;
+      for (let i = 0; i < AVENUES.length; i++) {
+        const d = Math.abs(x - AVENUES[i]);
+        if (d < minAve) minAve = d;
+      }
+      let minCross = Infinity;
+      for (let i = 0; i < CROSS_STREETS.length; i++) {
+        const d = Math.abs(z - CROSS_STREETS[i]);
+        if (d < minCross) minCross = d;
+      }
+      const onRoad = minAve <= ROAD_H + 0.35 || minCross <= ROAD_H + 0.35;
+      if (onRoad) return Math.max(h, 0.04);
+      if (x <= 26 && z <= 220 && z >= -1100) return Math.max(h, isFoot ? 0.17 : 0.14);
+      return Math.max(h, 0.04);
+    }
+    if (isInLegacyMountains(x, z)) {
+      const mvHit = closestAnyMountainRoad(x, z);
+      if (mvHit && mvHit.dist < 7.6) return Math.max(h, mvHit.roadY + 0.10);
+    }
+    return h;
+  }
+
   fastTravelTo(wp) {
     if (!wp) return;
     this.started = true;
@@ -3845,18 +5031,43 @@ class ViceCity3DApp {
     }
     if (this.mode !== 'car') this.setMode('car');
     this.cancelAutopilot();
-    this.carState.x = wp.x;
-    this.carState.z = wp.z;
-    const mvHit = wp.z < -1104 ? closestMountainRoad(wp.x, wp.z) : null;
-    this.carState.y = getTerrainHeight(wp.x, wp.z) + (mvHit && mvHit.dist < 7.2 ? 0.08 : 0);
+    let tx = wp.x;
+    let tz = wp.z;
+    // Guarantee dry ground or bridge deck when fast-traveling anywhere in Leonida!
+    if (!isInCoreViceFootprint(tx, tz) && !isInLegacyMountains(tx, tz)) {
+      const hw = closestLeonidaHighway(tx, tz);
+      if (getLandFactor(tx, tz) < 0.27 && hw.dist > hw.width * 0.6) {
+        for (let r = 25; r <= 240; r += 25) {
+          let found = false;
+          for (let a = 0; a < 8; a++) {
+            const ang = (a / 8) * Math.PI * 2;
+            const cx = tx + Math.cos(ang) * r;
+            const cz = tz + Math.sin(ang) * r;
+            if (getLandFactor(cx, cz) >= 0.32 || closestLeonidaHighway(cx, cz).dist < 8) {
+              tx = cx; tz = cz; found = true; break;
+            }
+          }
+          if (found) break;
+        }
+      }
+    }
+    this.carState.x = tx;
+    this.carState.z = tz;
+    this.carState.y = this.getSurfaceY(tx, tz, false) + 0.06;
     this.carState.vy = 0;
     this.carState.airborne = false;
     this.carState.yaw = wp.yaw || 0;
     this.carState.speed = 0;
     this.snapCameraNext = true;
     const vehMesh = this.activeVehicle ? this.activeVehicle.mesh : this.car.root;
-    vehMesh.position.set(wp.x, this.carState.y, wp.z);
+    vehMesh.position.set(tx, this.carState.y, tz);
     vehMesh.rotation.y = this.carState.yaw;
+    if (!isInCoreViceFootprint(tx, tz) && !isInLegacyMountains(tx, tz)) {
+      const lz = getLeonidaZone(tx, tz);
+      this.lastHudZone = lz.zone;
+      if (this.el.zone) this.el.zone.textContent = lz.zone;
+      if (this.el.radarStreet) this.el.radarStreet.textContent = lz.street;
+    }
     this.drawRadar();
     this.audio.pickup();
     this.el.combo.innerHTML = `ARRIVED · ${wp.label} <span>GPS</span>`;
@@ -3864,9 +5075,30 @@ class ViceCity3DApp {
     this.streakTimer = 2.4;
   }
 
+  handleLeonidaToll(ev) {
+    if (!ev) return;
+    const fee = ev.fee || 25;
+    const isEvasion = (ev.speedKmh > 110) || (this.cash < fee);
+    if (isEvasion) {
+      this.wantedStars = Math.min(5, Math.max(1, this.wantedStars + 1));
+      this.wantedDecay = 22.0;
+      if (this.el.wanted) this.el.wanted.classList.add('active');
+      if (this.el.stars) this.el.stars.forEach((s, i) => s.classList.toggle('lit', i < this.wantedStars));
+      if (this.audio && typeof this.audio.impact === 'function') this.audio.impact(0.75);
+      this.el.combo.innerHTML = `TOLL EVASION · ${ev.title} <span>+★ WANTED</span>`;
+    } else {
+      this.cash = Math.max(0, this.cash - fee);
+      if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+      if (this.audio && typeof this.audio.pickup === 'function') this.audio.pickup();
+      this.el.combo.innerHTML = `TOLL TAX PAID -$${fee} · ${ev.title} <span>E-PASS</span>`;
+    }
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.2;
+  }
+
   syncReticleVisibility() {
     if (!this.el || !this.el.crosshair) return;
-    const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && this.mode !== 'ride' && this.wastedTimer <= 0;
+    const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && !this.weaponWheelOpen && this.mode !== 'ride' && this.wastedTimer <= 0;
     const armed = this.mode === 'foot' && this.weapon !== 'fists' && this.weapon !== 'bat';
     this.el.crosshair.classList.toggle('look-on', playing);
     this.el.crosshair.classList.toggle('on', playing && armed);
@@ -3913,7 +5145,27 @@ class ViceCity3DApp {
       if (this.el && this.el.rideBar) this.el.rideBar.classList.remove('on');
     }
     this.fireHeld = false;
-    this.player.root.visible = isFoot || isRide;
+    const isRidingBike = nextMode === 'car' && Boolean(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+    this.player.root.visible = isFoot || isRide || isRidingBike;
+    if (!isRidingBike && this.player && this.player.root && this.player.root.parent !== this.scene) {
+      this.scene.add(this.player.root);
+      this.player.root.scale.set(1, 1, 1);
+      this.player.root.rotation.set(0, this.playerState.yaw, 0);
+      // Cleanly reset seated motorcycle straddle bones & body offset when dismounting to foot!
+      const pM = this.player;
+      if (pM.body) { pM.body.position.set(0, 0, 0); pM.body.rotation.set(0, 0, 0); }
+      if (pM.chest) pM.chest.rotation.set(0, 0, 0);
+      if (pM.head) pM.head.rotation.set(0, 0, 0);
+      if (pM.armL) { pM.armL.rotation.set(0, 0, 0); if (pM.armL.userData && pM.armL.userData.elbow) pM.armL.userData.elbow.rotation.set(0, 0, 0); }
+      if (pM.armR) { pM.armR.rotation.set(0, 0, 0); if (pM.armR.userData && pM.armR.userData.elbow) pM.armR.userData.elbow.rotation.set(0, 0, 0); }
+      if (pM.legL) { pM.legL.rotation.set(0, 0, 0); if (pM.legL.userData && pM.legL.userData.knee) pM.legL.userData.knee.rotation.set(0, 0, 0); }
+      if (pM.legR) { pM.legR.rotation.set(0, 0, 0); if (pM.legR.userData && pM.legR.userData.knee) pM.legR.userData.knee.rotation.set(0, 0, 0); }
+    }
+    if (isRidingBike && this.activeVehicle.rig.riderSeat) {
+      this.activeVehicle.rig.riderSeat.add(this.player.root);
+      this.player.root.position.set(0, -0.26, 0.14);
+      this.player.root.rotation.set(0, 0, 0); // Face FORWARD (-Z) toward handlebars!
+    }
     if (this.parachuteMesh && !isFoot) this.parachuteMesh.visible = false;
     // Show sculpted seated protagonist inside whichever vehicle we're driving (and hide when exited!)
     if (this.supercar && this.supercar.playerDriverMesh) {
@@ -3946,10 +5198,16 @@ class ViceCity3DApp {
     const armed = isFoot && this.weapon !== 'fists' && this.weapon !== 'bat';
     this.syncReticleVisibility();
     const curWep = WEAPONS.find((w) => w.id === this.weapon);
-    if (this.el.gtaWepPill) {
-      this.el.gtaWepPill.textContent = isPlane
-        ? 'AIRCRAFT PILOT'
-        : (isRide ? 'CARNIVAL RIDE' : (isFoot ? (curWep ? curWep.label.toUpperCase() : 'FISTS') : 'DRIVE-BY UZI'));
+    const hudWepLabel = isPlane
+      ? 'AIRCRAFT PILOT'
+      : (isRide ? 'CARNIVAL RIDE' : (isFoot ? (curWep ? curWep.label.toUpperCase() : 'FISTS') : 'DRIVE-BY UZI'));
+    if (this.el.gtaWepTxt) {
+      this.el.gtaWepTxt.textContent = hudWepLabel;
+    } else if (this.el.gtaWepPill) {
+      this.el.gtaWepPill.textContent = hudWepLabel;
+    }
+    if (this.el.gtaWepIco) {
+      this.el.gtaWepIco.innerHTML = getWeaponWheelSvg(isFoot ? (curWep ? curWep.id : 'fists') : 'smg');
     }
     if (this.el.carName && !isPlane) {
       this.el.carName.textContent = (this.activeVehicle && this.activeVehicle.label) || 'VICE SUPERCAR';
@@ -3972,14 +5230,95 @@ class ViceCity3DApp {
       : (isRide
         ? 'Mouse 360° Scenic Look · E / F Exit Carnival Ride'
         : (isFoot
-          ? 'WASD Walk · Mouse Look · 1–7 Weapons · Click Punch/Fire · E Talk/Ride/Play · F Car / Plane'
-          : 'WASD Drive · Click Drive-By Uzi · R Radio · T/Y Sky · F Exit Car · G Map'));
+          ? 'WASD Walk · Mouse Look · TAB Weapon Wheel · Click Punch/Fire · E Talk/Ride/Play · F Car / Plane'
+          : 'WASD Drive · Click Drive-By Uzi · TAB Weapon Wheel · R Radio · T/Y Sky · F Exit Car'));
     if (this.el.touchGo) this.el.touchGo.textContent = isPlane ? 'THRUST' : (isFoot ? 'WALK' : 'DRIVE');
     if (this.el.touchAct) this.el.touchAct.textContent = isPlane ? 'CLIMB' : (isFoot ? (armed ? 'FIRE' : 'HIT') : 'NOS');
     if (this.el.touchVeh) this.el.touchVeh.textContent = isPlane ? 'BAIL' : (isFoot ? 'BOARD' : 'FOOT');
     if (!isFoot) this.el.carPrompt.classList.remove('on');
-    this.audio.setRadioInCar(!isFoot && !isRide);
+    if (isPlane || isRide) this.closeWeaponWheel(false);
+    this.audio.setRadioInCar(this.isInCar());
     this.updateRadioHUD();
+  }
+
+  isInCar() {
+    return this.mode === 'car' && !(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+  }
+
+  openWeaponWheel(holdMode = false) {
+    if (!this.isOpen || !this.started || !this.el || !this.el.weaponWheel) return;
+    if (!this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen || this.miniGameHubOpen || this.taxiModalOpen || this.activeDialogue || this.mode === 'ride' || this.mode === 'plane' || this.wastedTimer > 0) return;
+    this.weaponWheelOpen = true;
+    this.weaponWheelHoldMode = Boolean(holdMode);
+    this.fireHeld = false;
+    this.weaponWheelHadPointerLock = Boolean(this.pointerLocked);
+    this.weaponWheelVecX = 0;
+    this.weaponWheelVecY = -1;
+    const curIdx = Math.max(0, WEAPONS.findIndex((w) => w.id === this.weapon));
+    this.el.weaponWheel.hidden = false;
+    requestAnimationFrame(() => {
+      if (this.weaponWheelOpen && this.el && this.el.weaponWheel) {
+        this.el.weaponWheel.classList.add('open');
+      }
+    });
+    this.setWeaponWheelHover(curIdx, false);
+    this.syncReticleVisibility();
+  }
+
+  closeWeaponWheel(commit = true) {
+    if (!this.weaponWheelOpen) return;
+    const picked = WEAPONS[this.weaponWheelHover];
+    this.weaponWheelOpen = false;
+    this.weaponWheelHoldMode = false;
+    if (this.el && this.el.weaponWheel) {
+      this.el.weaponWheel.classList.remove('open');
+      this.el.weaponWheel.hidden = true;
+    }
+    if (commit && picked) {
+      this.setWeapon(picked.id);
+      this.audio.wheelSelect();
+    }
+    this.syncReticleVisibility();
+  }
+
+  setWeaponWheelHover(idx, playSound = true) {
+    const clamped = ((idx % WEAPONS.length) + WEAPONS.length) % WEAPONS.length;
+    const changed = clamped !== this.weaponWheelHover;
+    this.weaponWheelHover = clamped;
+    const w = WEAPONS[clamped];
+    if (!w || !this.el) return;
+    if (this.el.wwWedges) {
+      this.el.wwWedges.forEach((el, i) => {
+        el.classList.toggle('active', i === clamped);
+        el.classList.toggle('equipped', WEAPONS[i].id === this.weapon);
+      });
+    }
+    if (this.el.wwSlots) {
+      this.el.wwSlots.forEach((el, i) => {
+        el.classList.toggle('active', i === clamped);
+        el.classList.toggle('equipped', WEAPONS[i].id === this.weapon);
+      });
+    }
+    if (this.el.wwCat) this.el.wwCat.textContent = w.category.toUpperCase();
+    if (this.el.wwTitle) this.el.wwTitle.textContent = w.label.toUpperCase();
+    if (this.el.wwAmmo) this.el.wwAmmo.textContent = w.ammo === 'MELEE' ? 'MELEE' : `AMMO ${w.ammo}`;
+    if (this.el.wwDmg) this.el.wwDmg.style.width = `${w.stats.dmg}%`;
+    if (this.el.wwRate) this.el.wwRate.style.width = `${w.stats.rate}%`;
+    if (this.el.wwRange) this.el.wwRange.style.width = `${w.stats.range}%`;
+    if (this.el.wwAcc) this.el.wwAcc.style.width = `${w.stats.acc}%`;
+    if (changed && playSound) this.audio.wheelTick();
+  }
+
+  updateWeaponWheelFromVector(vx, vy) {
+    const mag = Math.hypot(vx, vy);
+    if (mag < 26) return;
+    const step = (Math.PI * 2) / WEAPONS.length;
+    let ang = Math.atan2(vy, vx) + Math.PI / 2;
+    if (ang < 0) ang += Math.PI * 2;
+    const idx = Math.floor((ang + step * 0.5) / step) % WEAPONS.length;
+    if (idx !== this.weaponWheelHover) {
+      this.setWeaponWheelHover(idx, true);
+    }
   }
 
   setWeapon(id) {
@@ -3990,8 +5329,10 @@ class ViceCity3DApp {
     if (this.player && this.player.setWeapon) this.player.setWeapon(wep.id);
     this.el.wepBtns.forEach((b) => b.classList.toggle('active', b.dataset.wep === wep.id));
     this.el.footWepLbl.textContent = wep.label.toUpperCase();
-    if (this.el.gtaWepPill && this.mode === 'foot') {
-      this.el.gtaWepPill.textContent = wep.label.toUpperCase();
+    if (this.mode === 'foot') {
+      if (this.el.gtaWepTxt) this.el.gtaWepTxt.textContent = wep.label.toUpperCase();
+      else if (this.el.gtaWepPill) this.el.gtaWepPill.textContent = wep.label.toUpperCase();
+      if (this.el.gtaWepIco) this.el.gtaWepIco.innerHTML = getWeaponWheelSvg(wep.id);
     }
     this.el.punchBtn.textContent = wep.id === 'fists' ? 'Punch [LMB]' : (wep.id === 'bat' ? 'Swing [LMB]' : 'Fire [LMB]');
     const armed = this.mode === 'foot' && wep.id !== 'fists' && wep.id !== 'bat';
@@ -4005,7 +5346,7 @@ class ViceCity3DApp {
   }
 
   fireWeapon() {
-    if (!this.started || !this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen || this.miniGameHubOpen || this.activeDialogue || this.mode === 'ride' || this.wastedTimer > 0) return;
+    if (!this.started || !this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen || this.miniGameHubOpen || this.weaponWheelOpen || this.activeDialogue || this.mode === 'ride' || this.wastedTimer > 0) return;
 
     // DRIVE-BY UZI SHOOTING FROM ANY CAR!
     if (this.mode === 'car') {
@@ -4599,9 +5940,11 @@ class ViceCity3DApp {
   }
 
   selectRadioStation(idx) {
+    if (!this.isInCar()) return;
     const prevIdx = this.audio.radioIdx;
     const nextIdx = ((idx % RADIO_STATIONS.length) + RADIO_STATIONS.length) % RADIO_STATIONS.length;
     this.radioTuneRot += (nextIdx - prevIdx || 1) * 72;
+    this.audio.setRadioInCar(true);
     if (!this.audio.enabled) {
       this.audio.setEnabled(true);
       this.el.audioBtn.textContent = 'Audio: On';
@@ -4609,15 +5952,17 @@ class ViceCity3DApp {
       this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
     }
     this.audio.setRadioStation(nextIdx);
-    this.audio.setRadioInCar(this.mode === 'car');
     this.updateRadioHUD();
   }
 
   cycleRadio(delta = 1) {
+    if (!this.isInCar()) return;
     this.selectRadioStation(this.audio.radioIdx + delta);
   }
 
   toggleRadioPower() {
+    if (!this.isInCar()) return;
+    this.audio.setRadioInCar(true);
     if (!this.audio.enabled) {
       this.audio.setEnabled(true);
       this.audio.setRadioPower(true);
@@ -4627,23 +5972,31 @@ class ViceCity3DApp {
     } else {
       this.audio.setRadioPower(!this.audio.radioPower);
     }
-    this.audio.setRadioInCar(this.mode === 'car');
     this.updateRadioHUD();
   }
 
   setRadioVolume(v) {
+    if (!this.isInCar()) return;
     this.audio.setRadioVolume(v);
     this.updateRadioHUD();
   }
 
   updateRadioHUD() {
     if (!this.el || !this.el.radioDeck) return;
+    const inCar = this.isInCar();
+    this.el.radioDeck.hidden = !inCar;
+    this.el.radioDeck.classList.toggle('hidden-radio', !inCar);
+    if (!inCar) {
+      this.el.radioDeck.classList.remove('open', 'on', 'rj-live');
+      return;
+    }
     const st = this.audio.getRadioStation();
-    const isPlaying = this.audio.enabled && this.audio.radioPower && this.mode === 'car';
+    const isPlaying = this.audio.canPlayRadio();
+    const activeRJ = isPlaying ? this.audio.getActiveRJ() : null;
     this.el.radF.textContent = st.freq;
     this.el.radN.textContent = isPlaying
-      ? st.name
-      : (this.mode === 'foot' ? `${st.name} · in car` : `${st.name} · paused`);
+      ? (activeRJ ? activeRJ.short : st.name)
+      : `${st.name} · paused`;
     const pct = (((parseFloat(st.freq) - 87.5) / (108 - 87.5)) * 100).toFixed(1);
     this.el.radNd.style.setProperty('--np', `${pct}%`);
     this.el.radPres.forEach((b, i) => b.setAttribute('aria-pressed', String(i === this.audio.radioIdx)));
@@ -4651,57 +6004,71 @@ class ViceCity3DApp {
     this.el.radVol.style.setProperty('--r', `${(this.audio.radioVolume * 2.7 - 135).toFixed(1)}deg`);
     this.el.radVol.setAttribute('aria-valuenow', String(this.audio.radioVolume));
     this.el.radioDeck.classList.toggle('on', isPlaying);
-    this.el.radioDeck.classList.toggle('dim', this.mode === 'foot');
+    this.el.radioDeck.classList.toggle('rj-live', Boolean(activeRJ));
+    this.el.radioDeck.classList.remove('dim');
   }
 
-  setTimeOfDay(idx) {
+  setTimeOfDay(idx, silent = false) {
     this.timeIdx = ((idx % TIME_PRESETS.length) + TIME_PRESETS.length) % TIME_PRESETS.length;
     const tp = TIME_PRESETS[this.timeIdx];
-    this.el.timeBtn.textContent = `${tp.icon} ${tp.label} [T]`;
-    this.el.timeBtn.classList.toggle('on', this.timeIdx === 2);
+    this.dayTime = tp.hour;
+    if (this.el.timeBtn) {
+      this.el.timeBtn.textContent = `${tp.icon} ${tp.label} [T]`;
+      this.el.timeBtn.classList.toggle('on', this.timeIdx === 2);
+    }
     if (this.timeIdx === 2 && !this.lightsOn) this.toggleLights();
-    this.el.combo.innerHTML = `TIME · ${tp.label.toUpperCase()} <span>SKY</span>`;
-    this.el.combo.classList.add('on');
-    this.streakTimer = 1.8;
+    if (!silent && this.el.combo) {
+      this.el.combo.innerHTML = `TIME · ${tp.label.toUpperCase()} <span>AUTO CYCLE</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 1.8;
+    }
   }
 
-  setWeather(idx) {
+  setWeather(idx, silent = false) {
     this.weatherIdx = ((idx % WEATHER_PRESETS.length) + WEATHER_PRESETS.length) % WEATHER_PRESETS.length;
     const wp = WEATHER_PRESETS[this.weatherIdx];
-    this.el.weatherBtn.textContent = `${wp.icon} ${wp.label} [Y]`;
-    this.el.weatherBtn.classList.toggle('on', this.weatherIdx > 0);
+    this.autoWeatherTimer = 50 + Math.random() * 22;
+    if (this.el.weatherBtn) {
+      this.el.weatherBtn.textContent = `${wp.icon} ${wp.label} [Y]`;
+      this.el.weatherBtn.classList.toggle('on', this.weatherIdx > 0);
+    }
     this.audio.setRainLevel(wp.rain);
-    if (this.rainLines) this.rainLines.mesh.visible = wp.rain > 0;
-    if (this.weatherIdx === 2 && !this.lightsOn) this.toggleLights();
-    this.el.combo.innerHTML = `WEATHER · ${wp.label.toUpperCase()} <span>MIAMI</span>`;
-    this.el.combo.classList.add('on');
-    this.streakTimer = 1.8;
+    if (this.rainLines) this.rainLines.mesh.visible = wp.rain > 0.04;
+    if (this.weatherIdx === 3 && !this.lightsOn) this.toggleLights();
+    if (!silent && this.el.combo) {
+      this.el.combo.innerHTML = `WEATHER · ${wp.label.toUpperCase()} <span>LEONIDA</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 1.8;
+    }
   }
 
   applyHoverLook(dx, dy = 0) {
+    // Clamp spikes for silky-smooth velocity-damped GTA camera look without jump glitches
+    const cdx = THREE.MathUtils.clamp(dx, -64, 64);
+    const cdy = THREE.MathUtils.clamp(dy, -48, 48);
     if (this.mode === 'foot') {
-      this.orbitYawOffset -= dx * 0.0042;
+      this.targetOrbitYaw -= cdx * 0.0044;
     } else {
-      this.orbitYawOffset = THREE.MathUtils.clamp(this.orbitYawOffset - dx * 0.0036, -2.8, 2.8);
+      this.targetOrbitYaw = THREE.MathUtils.clamp(this.targetOrbitYaw - cdx * 0.0038, -2.85, 2.85);
     }
-    this.orbitPitchOffset = THREE.MathUtils.clamp(this.orbitPitchOffset + dy * 0.0024, -0.32, 0.68);
+    this.targetOrbitPitch = THREE.MathUtils.clamp(this.targetOrbitPitch + cdy * 0.0026, -0.34, 0.70);
     this.lastLookTime = performance.now();
   }
 
-  findNearestVehicleTarget(maxDist = 6.5) {
+  findNearestVehicleTarget(maxDist = 5.4) {
     const ps = this.playerState;
     const cs = this.carState;
     let best = null;
     let bestD = maxDist;
 
-    // 0. Check flyable airport airplanes (generous boarding radius around wings/airstair!)
+    // 0. Check flyable airport airplanes (boarding radius around wings/airstair!)
     if (this.flyablePlanes) {
       for (let i = 0; i < this.flyablePlanes.length; i++) {
         const pl = this.flyablePlanes[i];
         if (pl.y > 4.0) continue;
         const d = Math.hypot(pl.x - ps.x, pl.z - ps.z);
-        if (d < maxDist + 4.2 && (!best || d - 2.4 < bestD)) {
-          bestD = Math.max(0.1, d - 2.4);
+        if (d < maxDist + 3.4 && (!best || d - 2.0 < bestD)) {
+          bestD = Math.max(0.1, d - 2.0);
           best = { kind: 'plane', plane: pl, label: pl.label, dist: d };
         }
       }
@@ -4723,7 +6090,7 @@ class ViceCity3DApp {
       bestD = dCur;
       best = { kind: 'active', vehicle: this.activeVehicle, label: this.activeVehicle.label, dist: dCur };
     }
-    // 3. Check previously abandoned / parked vehicles (including your Red Supercar!)
+    // 3. Check parked vehicles (including Two-Wheelers, Police Cruiser, Kaufman Cab & Coupes!)
     for (let i = 0; i < this.parkedVehicles.length; i++) {
       const pv = this.parkedVehicles[i];
       const d = Math.hypot(pv.x - ps.x, pv.z - ps.z);
@@ -4807,8 +6174,11 @@ class ViceCity3DApp {
     if (kind === 'exit') {
       this.setMode('foot');
       this.player.root.visible = true;
-      ps.x = seatX; ps.z = seatZ; ps.y = 0; ps.yaw = carYaw;
-      this.player.root.position.set(ps.x, 0, ps.z);
+      ps.x = seatX; ps.z = seatZ;
+      ps.y = this.getSurfaceY(seatX, seatZ, true);
+      ps.vy = 0; ps.grounded = true;
+      ps.yaw = carYaw;
+      this.player.root.position.set(ps.x, ps.y, ps.z);
       this.audio.carDoor();
     }
 
@@ -4942,7 +6312,8 @@ class ViceCity3DApp {
         }
       }
 
-      p.root.position.set(ps.x, 0, ps.z);
+      ps.y = this.getSurfaceY(ps.x, ps.z, true);
+      p.root.position.set(ps.x, ps.y, ps.z);
       p.root.rotation.y = ps.yaw;
       if (p.chest) p.chest.rotation.set(0, 0, 0);
       if (p.head) p.head.rotation.set(0, 0, 0);
@@ -4977,7 +6348,10 @@ class ViceCity3DApp {
       ps.yaw = lerpAngle(a.carYaw, a.carYaw, stepU);
       p.body.position.y = -0.28 * (1 - stepU);
       p.body.scale.setScalar(0.86 + 0.14 * stepU);
-      p.root.position.set(ps.x, 0, ps.z);
+      ps.y = this.getSurfaceY(ps.x, ps.z, true);
+      ps.vy = 0;
+      ps.grounded = true;
+      p.root.position.set(ps.x, ps.y, ps.z);
       p.root.rotation.y = ps.yaw;
       if (t >= a.dur) {
         if (doorPivot) doorPivot.rotation.y = 0;
@@ -5005,7 +6379,8 @@ class ViceCity3DApp {
         p.body.position.y = -0.34 * su;
         p.body.scale.setScalar(1 - su * 0.15);
       }
-      p.root.position.set(ps.x, 0, ps.z);
+      ps.y = this.getSurfaceY(ps.x, ps.z, true);
+      p.root.position.set(ps.x, ps.y, ps.z);
       p.root.rotation.y = ps.yaw;
       if (t >= a.dur) {
         if (doorPivot) doorPivot.rotation.y = 0;
@@ -5042,6 +6417,7 @@ class ViceCity3DApp {
     if (rig.driverMesh) rig.driverMesh.visible = false;
     if (rig.driverDoorPivot) rig.driverDoorPivot.rotation.y = 0;
 
+    const stolenY = this.getSurfaceY(tc.position.x, tc.position.z, false) + 0.04;
     this.activeVehicle = {
       isHero: false,
       label: rig.label,
@@ -5052,13 +6428,13 @@ class ViceCity3DApp {
       accel: rig.accel || 18,
       grip: rig.grip || 0.94,
       x: tc.position.x,
-      y: 0,
+      y: stolenY,
       z: tc.position.z,
       yaw: tc.rotation.y
     };
 
     cs.x = tc.position.x;
-    cs.y = 0;
+    cs.y = stolenY;
     cs.z = tc.position.z;
     cs.vy = 0;
     cs.airborne = false;
@@ -5161,7 +6537,7 @@ class ViceCity3DApp {
       this.syncPlaneTransform(pl, 0.016, this.clock.getElapsedTime());
       ps.x = pl.x - rx * 5.2;
       ps.z = pl.z - rz * 5.2;
-      ps.y = 0;
+      ps.y = this.getSurfaceY(ps.x, ps.z, true);
       ps.vx = 0; ps.vz = 0; ps.vy = 0;
       ps.yaw = pl.yaw;
       ps.grounded = true;
@@ -5234,9 +6610,22 @@ class ViceCity3DApp {
     if (this.mode === 'car') {
       this.cancelAutopilot();
       cs.speed *= 0.12;
-      this.startVehicleDoorAnim('exit', this.activeVehicle);
+      if (this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike) {
+        // Quick clean motorcycle dismount to the left side!
+        const rx = Math.cos(cs.yaw), rz = -Math.sin(cs.yaw);
+        ps.x = cs.x - rx * 1.45;
+        ps.z = cs.z - rz * 1.45;
+        ps.y = this.getSurfaceY(ps.x, ps.z, true);
+        ps.vy = 0; ps.grounded = true;
+        ps.yaw = cs.yaw;
+        this.setMode('foot');
+        this.player.root.position.set(ps.x, ps.y, ps.z);
+        this.audio.carDoor();
+      } else {
+        this.startVehicleDoorAnim('exit', this.activeVehicle);
+      }
     } else {
-      const target = this.findNearestVehicleTarget(6.6);
+      const target = this.findNearestVehicleTarget(5.4);
       if (target && target.kind === 'plane') {
         this.enterPlane(target.plane);
         return;
@@ -5246,18 +6635,31 @@ class ViceCity3DApp {
         return;
       }
       if (target && target.kind === 'parked') {
-        this.startVehicleDoorAnim('parked', target.vehicle, target.index);
+        if (target.vehicle && target.vehicle.rig && target.vehicle.rig.isBike) {
+          this.enterParkedVehicle(target.vehicle, target.index);
+        } else {
+          this.startVehicleDoorAnim('parked', target.vehicle, target.index);
+        }
         return;
       }
       const distCar = Math.hypot(ps.x - cs.x, ps.z - cs.z);
-      if (distCar <= 6.6) {
-        this.startVehicleDoorAnim('enter', this.activeVehicle);
+      if (distCar <= 5.4) {
+        if (this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike) {
+          this.orbitYawOffset = 0;
+          this.orbitPitchOffset = 0;
+          this.setMode('car');
+          this.audio.carDoor();
+        } else {
+          this.startVehicleDoorAnim('enter', this.activeVehicle);
+        }
         return;
       }
       if (!forceEnter) {
-        this.el.combo.innerHTML = `BACK TO ${this.activeVehicle.label} <span>DRIVER SEAT</span>`;
+        // STRICT REALISTIC BOARDING: Never teleport into a faraway car when pressing [F]!
+        this.el.combo.innerHTML = `NO VEHICLE NEARBY <span>WALK CLOSER OR CALL TAXI [X]</span>`;
         this.el.combo.classList.add('on');
-        this.streakTimer = 1.8;
+        this.streakTimer = 2.0;
+        return;
       }
       this.orbitYawOffset = 0;
       this.orbitPitchOffset = 0;
@@ -5267,7 +6669,7 @@ class ViceCity3DApp {
   }
 
   isPointBlocked(x, z, r = 0.45) {
-    if (x < -495 || z > 362 || z < -1476) return true;
+    if (x < LEONIDA_PROJ.minX + 18 || x > LEONIDA_PROJ.maxX - 18 || z > LEONIDA_PROJ.maxZ - 18 || z < LEONIDA_PROJ.minZ + 18) return true;
     for (let i = 0; i < this.boxColliders.length; i++) {
       const b = this.boxColliders[i];
       if (x > b.minX - r && x < b.maxX + r && z > b.minZ - r && z < b.maxZ + r) return true;
@@ -5284,65 +6686,118 @@ class ViceCity3DApp {
     const cs = this.carState;
     const r = 0.44;
 
-    // 1. Expanded World Perimeter (including Roadable Mount Vice Summit up to Z = -1478!)
-    if (ps.x < -495.5) ps.x = -495.5;
-    if (ps.z > 364) ps.z = 364;
-    if (ps.z < -1478) ps.z = -1478;
-    const onCarnivalPier = Math.abs(ps.z + 430) <= 18.5 && ps.x > 16;
-    if (onCarnivalPier) {
-      ps.x = Math.min(ps.x, 140.0);
-    } else if (ps.x > 126) {
-      const isPrawn = ps.z < -780;
-      const isViceKey = !isPrawn && ps.z < -460;
-      const icx = isPrawn ? 164 : (isViceKey ? 156 : 152);
-      const icz = isPrawn ? -940 : (isViceKey ? -620 : -300);
-      const iRad = isPrawn ? 40.5 : (isViceKey ? 35.5 : 33.5);
-      const distI = Math.hypot(ps.x - icx, ps.z - icz);
-      if (distI > iRad) {
-        ps.x = icx + ((ps.x - icx) / distI) * iRad;
-        ps.z = icz + ((ps.z - icz) / distI) * iRad;
-      }
-    } else if (ps.x > 31 && Math.abs(ps.z + 300) > 9.5 && Math.abs(ps.z + 620) > 9.5 && Math.abs(ps.z + 940) > 9.5) {
-      ps.x = 31;
-    }
+    // 1. Full Great State of Leonida On-Foot Perimeter Bounds & Shoreline Containment
+    if (ps.x < LEONIDA_PROJ.minX + 18) ps.x = LEONIDA_PROJ.minX + 18;
+    if (ps.x > LEONIDA_PROJ.maxX - 18) ps.x = LEONIDA_PROJ.maxX - 18;
+    if (ps.z < LEONIDA_PROJ.minZ + 18) ps.z = LEONIDA_PROJ.minZ + 18;
+    if (ps.z > LEONIDA_PROJ.maxZ - 18) ps.z = LEONIDA_PROJ.maxZ - 18;
 
-    // 2. Solid Building / Wall AABBs
-    for (let i = 0; i < this.boxColliders.length; i++) {
-      const b = this.boxColliders[i];
-      if (b.minX >= 17.0 && b.maxX <= 18.3) continue;
-      const cx = THREE.MathUtils.clamp(ps.x, b.minX, b.maxX);
-      const cz = THREE.MathUtils.clamp(ps.z, b.minZ, b.maxZ);
-      const dx = ps.x - cx, dz = ps.z - cz;
-      const dSq = dx * dx + dz * dz;
-      if (dSq < r * r && dSq > 0.00001) {
-        const d = Math.sqrt(dSq);
-        ps.x += (dx / d) * (r - d);
-        ps.z += (dz / d) * (r - d);
+    const inCoreViceFoot = isInCoreViceFootprint(ps.x, ps.z);
+    const inLegacyMtFoot = isInLegacyMountains(ps.x, ps.z);
+    if (inLegacyMtFoot || (!inCoreViceFoot && this.getSurfaceY(ps.x, ps.z, true) > 16)) {
+      const hPx = this.getSurfaceY(ps.x + 1.2, ps.z, true);
+      const hMx = this.getSurfaceY(ps.x - 1.2, ps.z, true);
+      const hPz = this.getSurfaceY(ps.x, ps.z + 1.2, true);
+      const hMz = this.getSurfaceY(ps.x, ps.z - 1.2, true);
+      const gx = (hPx - hMx) / 2.4, gz = (hPz - hMz) / 2.4;
+      const slope = Math.hypot(gx, gz);
+      const onMtRd = inLegacyMtFoot ? closestAnyMountainRoad(ps.x, ps.z).dist <= 7.4 : closestLeonidaHighway(ps.x, ps.z).dist <= 9.0;
+      // Only block sheer near-vertical rock overhangs (>61 deg); allow smooth on-foot mountain hiking everywhere!
+      if (slope > 1.85 && !onMtRd) {
+        const push = Math.min(0.65, 0.25 + (slope - 1.85) * 0.5);
+        ps.x -= (gx / slope) * push;
+        ps.z -= (gz / slope) * push;
+        const vUp = (ps.vx || 0) * (gx / slope) + (ps.vz || 0) * (gz / slope);
+        if (vUp > 0) {
+          ps.vx -= (gx / slope) * vUp;
+          ps.vz -= (gz / slope) * vUp;
+        }
       }
     }
-
-    // 3. Solid Cylinders (Palms, Fountains, Lamps, Hydrants, Lighthouse, ATC Tower)
-    for (let i = 0; i < this.circleColliders.length; i++) {
-      const c = this.circleColliders[i];
-      const dx = ps.x - c.x, dz = ps.z - c.z;
-      const minD = r + c.r;
-      const dSq = dx * dx + dz * dz;
-      if (dSq < minD * minD && dSq > 0.00001) {
-        const d = Math.sqrt(dSq);
-        ps.x += (dx / d) * (minD - d);
-        ps.z += (dz / d) * (minD - d);
+    if (inCoreViceFoot) {
+      const onCarnivalPier = Math.abs(ps.z + 430) <= 18.5 && ps.x > 16;
+      if (onCarnivalPier) {
+        ps.x = Math.min(ps.x, 140.0);
+      } else if (ps.x > 126) {
+        const isPrawn = ps.z < -780;
+        const isViceKey = !isPrawn && ps.z < -460;
+        const icx = isPrawn ? 164 : (isViceKey ? 156 : 152);
+        const icz = isPrawn ? -940 : (isViceKey ? -620 : -300);
+        const iRad = isPrawn ? 40.5 : (isViceKey ? 35.5 : 33.5);
+        const distI = Math.hypot(ps.x - icx, ps.z - icz);
+        if (distI > iRad) {
+          ps.x = icx + ((ps.x - icx) / distI) * iRad;
+          ps.z = icz + ((ps.z - icz) / distI) * iRad;
+        }
+      } else if (ps.x > 31 && Math.abs(ps.z + 300) > 9.5 && Math.abs(ps.z + 620) > 9.5 && Math.abs(ps.z + 940) > 9.5) {
+        ps.x = 31;
+      }
+    } else if (!inLegacyMtFoot) {
+      const hwF = closestLeonidaHighway(ps.x, ps.z);
+      if (hwF.dist > hwF.width * 0.65 && getLandFactor(ps.x, ps.z) < 0.24) {
+        const eps = 3.0;
+        const gx = getLandFactor(ps.x + eps, ps.z) - getLandFactor(ps.x - eps, ps.z);
+        const gz = getLandFactor(ps.x, ps.z + eps) - getLandFactor(ps.x, ps.z - eps);
+        const gLen = Math.hypot(gx, gz);
+        if (gLen > 0.0005) {
+          ps.x += (gx / gLen) * 1.1;
+          ps.z += (gz / gLen) * 1.1;
+        }
       }
     }
 
-    // 4. Active Vehicle & Parked Vehicles Solid Bodies
-    const pushOutCar = (vx, vz, vyaw) => {
+    // 2. O(1) Spatial-Hashed Solid Building / Wall / Barricade AABBs & Solid Cylinders (2 passes for crisp zero-clip corners)
+    const nearBoxes = this.colliderGrid.queryBoxes(ps.x, ps.z, 3.5);
+    const nearCircles = this.colliderGrid.queryCircles(ps.x, ps.z, 3.5);
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < nearBoxes.length; i++) {
+        const b = nearBoxes[i];
+        if (b.minX >= 17.0 && b.maxX <= 18.3) continue;
+        const cx = THREE.MathUtils.clamp(ps.x, b.minX, b.maxX);
+        const cz = THREE.MathUtils.clamp(ps.z, b.minZ, b.maxZ);
+        const dx = ps.x - cx, dz = ps.z - cz;
+        const dSq = dx * dx + dz * dz;
+        if (dSq < r * r) {
+          if (dSq > 0.00001) {
+            const d = Math.sqrt(dSq);
+            ps.x += (dx / d) * (r - d);
+            ps.z += (dz / d) * (r - d);
+          } else {
+            const dL = Math.abs(ps.x - b.minX), dR = Math.abs(b.maxX - ps.x);
+            const dT = Math.abs(ps.z - b.minZ), dB = Math.abs(b.maxZ - ps.z);
+            const m = Math.min(dL, dR, dT, dB);
+            if (m === dL) ps.x = b.minX - r;
+            else if (m === dR) ps.x = b.maxX + r;
+            else if (m === dT) ps.z = b.minZ - r;
+            else ps.z = b.maxZ + r;
+          }
+        }
+      }
+
+      // 3. Solid Cylinders (Mountain Pines, Boulders, Palms, Wishing Well, Lamps, Water Tower, Silo, Umbrellas)
+      for (let i = 0; i < nearCircles.length; i++) {
+        const c = nearCircles[i];
+        const dx = ps.x - c.x, dz = ps.z - c.z;
+        const minD = r + c.r;
+        const dSq = dx * dx + dz * dz;
+        if (dSq < minD * minD && dSq > 0.00001) {
+          const d = Math.sqrt(dSq);
+          ps.x += (dx / d) * (minD - d);
+          ps.z += (dz / d) * (minD - d);
+        }
+      }
+    }
+
+    // 4. Active Vehicle, Parked Vehicles, Moving Traffic Cars, VCPD Cruisers & Parked Aircraft Solid Bodies!
+    const pushOutCar = (vx, vz, vyaw, halfL = 2.35, halfW = 1.05) => {
       const dxC = ps.x - vx, dzC = ps.z - vz;
+      if (Math.abs(dxC) > halfL + 2.0 || Math.abs(dzC) > halfL + 2.0) return;
       const fwdX = -Math.sin(vyaw), fwdZ = -Math.cos(vyaw);
       const rightX = Math.cos(vyaw), rightZ = -Math.sin(vyaw);
       const localF = dxC * fwdX + dzC * fwdZ;
       const localR = dxC * rightX + dzC * rightZ;
-      const clF = THREE.MathUtils.clamp(localF, -2.35, 2.35);
-      const clR = THREE.MathUtils.clamp(localR, -1.05, 1.05);
+      const clF = THREE.MathUtils.clamp(localF, -halfL, halfL);
+      const clR = THREE.MathUtils.clamp(localR, -halfW, halfW);
       const df = localF - clF, dr = localR - clR;
       const cSq = df * df + dr * dr;
       if (cSq < r * r && cSq > 0.00001) {
@@ -5353,10 +6808,28 @@ class ViceCity3DApp {
         ps.z += fwdZ * pf + rightZ * pr;
       }
     };
-    pushOutCar(cs.x, cs.z, cs.yaw);
+    const actIsBike = this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike;
+    pushOutCar(cs.x, cs.z, cs.yaw, actIsBike ? 1.15 : 2.35, actIsBike ? 0.45 : 1.05);
     for (let i = 0; i < this.parkedVehicles.length; i++) {
       const pv = this.parkedVehicles[i];
-      pushOutCar(pv.x, pv.z, pv.yaw);
+      const isB = pv && pv.rig && pv.rig.isBike;
+      pushOutCar(pv.x, pv.z, pv.yaw, isB ? 1.15 : 2.35, isB ? 0.45 : 1.05);
+    }
+    for (let i = 0; i < this.traffic.length; i++) {
+      const tc = this.traffic[i];
+      if (!tc || !tc.visible) continue;
+      pushOutCar(tc.position.x, tc.position.z, tc.rotation.y, 2.3, 1.02);
+    }
+    for (let i = 0; i < this.policeUnits.length; i++) {
+      const pu = this.policeUnits[i];
+      if (pu && pu.mesh && pu.mesh.visible) pushOutCar(pu.x, pu.z, pu.yaw, 2.45, 1.08);
+    }
+    if (this.flyablePlanes) {
+      for (let i = 0; i < this.flyablePlanes.length; i++) {
+        const pl = this.flyablePlanes[i];
+        if (!pl || pl === this.activePlane || pl.y > 4.0) continue;
+        pushOutCar(pl.x, pl.z, pl.yaw, 4.4, 2.1);
+      }
     }
   }
 
@@ -5583,8 +7056,58 @@ class ViceCity3DApp {
     addEdge(p1, p2);
     addEdge(p2, p3);
 
+    // 2b. Full State of Leonida Interstate & Town Street Graph (seamlessly stitched into Vice City!)
+    const needsLeonidaGraph = !isInCoreViceFootprint(cs.x, cs.z) || !isInCoreViceFootprint(wp.x, wp.z);
+    const leoNodes = [];
+    if (needsLeonidaGraph) {
+      for (let hi = 0; hi < LEONIDA_HIGHWAYS.length; hi++) {
+        const hw = LEONIDA_HIGHWAYS[hi];
+        const pts = hw.pts;
+        let prevIdx = -1;
+        const step = hw.isTownRoad ? Math.max(1, Math.floor(pts.length / 4)) : Math.max(2, Math.floor(pts.length / 22));
+        for (let i = 0; i < pts.length; i += step) {
+          const idx = addNode(`L_${hi}_${i}`, pts[i].x, pts[i].z);
+          leoNodes.push(idx);
+          if (prevIdx !== -1) addEdge(prevIdx, idx);
+          prevIdx = idx;
+        }
+        const lastP = pts[pts.length - 1];
+        const endIdx = addNode(`L_${hi}_END`, lastP.x, lastP.z);
+        leoNodes.push(endIdx);
+        if (prevIdx !== -1) addEdge(prevIdx, endIdx);
+      }
+      // Stitch intersecting highways, town streets & all 6 Vice City gateway intersections
+      for (let i = 0; i < leoNodes.length; i++) {
+        const a = nodes[leoNodes[i]];
+        for (let j = i + 1; j < leoNodes.length; j++) {
+          const b = nodes[leoNodes[j]];
+          if (Math.hypot(a.x - b.x, a.z - b.z) < 92) addEdge(leoNodes[i], leoNodes[j]);
+        }
+        if (a.x > -580 && a.x < 100 && a.z > -1200 && a.z < 460) {
+          for (let ai = 0; ai < AVENUES.length; ai++) {
+            for (let ci = 0; ci < CROSS_STREETS.length; ci++) {
+              const gIdx = gridIdx[`${ai}_${ci}`];
+              const g = nodes[gIdx];
+              if (Math.hypot(a.x - g.x, a.z - g.z) < 120) addEdge(leoNodes[i], gIdx);
+            }
+          }
+        }
+      }
+    }
+
     // Helper: snap any arbitrary (x, z) onto its nearest clear road centerline segment
     const attachPoint = (tag, px, pz) => {
+      if (needsLeonidaGraph && !isInCoreViceFootprint(px, pz)) {
+        const id = addNode(tag, px, pz);
+        let bestIdx = -1, bestD = Infinity;
+        for (let i = 0; i < leoNodes.length; i++) {
+          const n = nodes[leoNodes[i]];
+          const d = Math.hypot(px - n.x, pz - n.z);
+          if (d < bestD) { bestD = d; bestIdx = leoNodes[i]; }
+        }
+        if (bestIdx !== -1) addEdge(id, bestIdx);
+        return { idx: id, segKey: `LEO_${bestIdx}`, x: px, z: pz };
+      }
       if (px > 10) {
         const isPrawn = pz < -780;
         const isViceKey = !isPrawn && pz < -460;
@@ -5698,7 +7221,7 @@ class ViceCity3DApp {
     this.lastAutoDist = -1;
     this.el.autoBar.classList.add('on');
     this.el.navBar.classList.add('on');
-    this.el.lampAuto.classList.add('on-auto');
+    if (this.el.lampAuto) this.el.lampAuto.classList.add('on-auto');
     this.el.autoText.textContent = `GPS Auto-Drive → ${wp.label}`;
     if (this.navBeacon) {
       this.navBeacon.group.position.set(wp.x, 0, wp.z);
@@ -5723,168 +7246,39 @@ class ViceCity3DApp {
   drawFullMap() {
     const ctx = this.fullMapCtx;
     if (!ctx) return;
-    const w = 520, h = 520;
+    const w = 460, h = 620;
     const cs = this.carState;
+    const act = this.mode === 'plane' && this.activePlane
+      ? this.activePlane
+      : (this.mode === 'foot' ? this.playerState : cs);
 
-    // Expanded World bounds including Mount Vice Mountain Range: X in [-525, 232], Z in [-1505, 390]
-    const minX = -525, maxX = 232, minZ = -1505, maxZ = 390;
-    const pad = 14;
-    const scale = Math.min((w - pad * 2) / (maxX - minX), (h - pad * 2) / (maxZ - minZ));
-    const offX = (w - (maxX - minX) * scale) * 0.5;
-    const offY = (h - (maxZ - minZ) * scale) * 0.5;
-    const toMap = (wx, wz) => [offX + (wx - minX) * scale, offY + (wz - minZ) * scale];
-    this._fullMapMeta = { minX, minZ, scale, offX, offY };
+    const spanX = LEONIDA_PROJ.maxX - LEONIDA_PROJ.minX;
+    const spanZ = LEONIDA_PROJ.maxZ - LEONIDA_PROJ.minZ;
+    // Exact 1:1 Linear World-to-Vector-Atlas Projection
+    const toMap = (wx, wz) => [
+      ((wx - LEONIDA_PROJ.minX) / spanX) * w,
+      ((wz - LEONIDA_PROJ.minZ) / spanZ) * h
+    ];
+    this._fullMapMeta = { w, h, mode: 'leonida-vector' };
 
-    // Ocean gradient backdrop
-    const oceanGrad = ctx.createLinearGradient(0, 0, w, h);
-    oceanGrad.addColorStop(0, '#071b2e');
-    oceanGrad.addColorStop(1, '#0e364f');
-    ctx.fillStyle = oceanGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Coastal turquoise shallows + sandy Miami beach + expanded mainland + Mount Vice Wilderness
-    const [landLeft, landTop] = toMap(-500, -1130);
-    const [mtTopX, mtTopY] = toMap(-505, -1488);
-    const [mtRightX] = toMap(42, -1488);
-    const [beachRight, landBot] = toMap(30, 368);
-    const [cityRight] = toMap(15, 368);
-    // Mount Vice Alpine Mountain Terrain & Elevation Contours
-    ctx.fillStyle = '#243a2c';
-    ctx.fillRect(mtTopX, mtTopY, mtRightX - mtTopX, landTop - mtTopY + 4);
-    const [pkX, pkY] = toMap(-228, -1432);
-    [155, 110, 68, 32].forEach((r, idx) => {
-      ctx.fillStyle = idx === 3 ? '#7c7870' : (idx === 2 ? '#595852' : (idx === 1 ? '#364d36' : '#2c4430'));
-      ctx.beginPath(); ctx.ellipse(pkX, pkY, r * scale * 1.15, r * scale * 0.85, 0, 0, Math.PI * 2); ctx.fill();
-    });
-    // Switchback Mountain Highway Ribbon on Full Map
-    ctx.strokeStyle = '#FFD36B';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    MOUNT_VICE_ROAD.forEach((rp, idx) => {
-      const [rx, ry] = toMap(rp.x, rp.z);
-      if (idx === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(33, 230, 209, 0.14)';
-    ctx.fillRect(cityRight, landTop, 38 * scale, landBot - landTop);
-    ctx.fillRect(landLeft - 24 * scale, landTop, 24 * scale, landBot - landTop);
-    ctx.fillStyle = '#c8a97e';
-    ctx.fillRect(cityRight, landTop, (beachRight - cityRight), landBot - landTop);
-    ctx.fillStyle = '#1b1826';
-    ctx.fillRect(landLeft, landTop, cityRight - landLeft, landBot - landTop);
-
-    // Shaded city blocks (between all 6 avenues & 10 cross streets)
-    ctx.fillStyle = '#252136';
-    for (let ai = 0; ai < AVENUES.length - 1; ai++) {
-      for (let ci = 0; ci < CROSS_STREETS.length - 1; ci++) {
-        if (ci === 1 && ai < 3) continue; // Airport tarmac
-        const [bx1, by1] = toMap(AVENUES[ai + 1] + 10, CROSS_STREETS[ci + 1] + 10);
-        const [bx2, by2] = toMap(AVENUES[ai] - 10, CROSS_STREETS[ci] - 10);
-        ctx.fillRect(bx1, by1, bx2 - bx1, by2 - by1);
-      }
+    // Blit our 100% custom procedural GTA-style vector map (zero static image!)
+    if (this.leonidaMapCanvas) {
+      ctx.drawImage(this.leonidaMapCanvas, 0, 0, w, h);
+    } else {
+      ctx.fillStyle = '#1b4768';
+      ctx.fillRect(0, 0, w, h);
     }
 
-    // Vice City International Airport Tarmac, Terminal, Jetways & Runway
-    const [apX1, apY1] = toMap(-276, 30);
-    const [apX2, apY2] = toMap(-12, 170);
-    ctx.fillStyle = '#2a2a38';
-    ctx.fillRect(apX1, apY1, apX2 - apX1, apY2 - apY1);
-    const [termX1, termY1] = toMap(-142, 34);
-    const [termX2, termY2] = toMap(-74, 52);
-    ctx.fillStyle = '#38c8d8';
-    ctx.fillRect(termX1, termY1, termX2 - termX1, termY2 - termY1);
-    const [rw1, ry1] = toMap(-268, 114);
-    const [rw2] = toMap(-20, 114);
-    ctx.strokeStyle = 'rgba(255, 211, 107, 0.78)';
-    ctx.lineWidth = 2.4;
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath(); ctx.moveTo(rw1, ry1); ctx.lineTo(rw2, ry1); ctx.stroke();
-    ctx.setLineDash([]);
-    // Parked & Flying Airliner silhouettes on Full Map
-    const jetsOnMap = [[-127, 78, '#FF2E88'], [-88, 78, '#21E6D1'], [-38, 70, '#FFD36B']];
-    if (this.flyingJet) jetsOnMap.push([this.flyingJet.root.position.x, this.flyingJet.root.position.z, '#FF8A2A']);
-    jetsOnMap.forEach(([jx, jz, col]) => {
-      const [mjx, mjy] = toMap(jx, jz);
-      ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(mjx, mjy, 3.2, 0, Math.PI * 2); ctx.fill();
-    });
-
-    // Vice Pier Carnival Fair Deck (X = 17.5..141.5, Z = -448..-412)
-    const [pierX1, pierY1] = toMap(17.5, -448);
-    const [pierX2, pierY2] = toMap(141.5, -412);
-    ctx.fillStyle = '#6f4e37';
-    ctx.fillRect(pierX1, pierY1, pierX2 - pierX1, pierY2 - pierY1);
-    ctx.strokeStyle = '#FF2E88';
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(pierX1, pierY1, pierX2 - pierX1, pierY2 - pierY1);
-
-    // Starfish Island (-300), Vice Key Resort (-620) & Prawn Island Film Studios (-940)
-    [[152, -300, 37], [156, -620, 39], [164, -940, 43]].forEach(([cx, cz, rad]) => {
-      const [ix, iy] = toMap(cx, cz);
-      ctx.fillStyle = 'rgba(33, 230, 209, 0.2)';
-      ctx.beginPath(); ctx.arc(ix, iy, (rad + 7) * scale, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#c8a97e';
-      ctx.beginPath(); ctx.arc(ix, iy, rad * scale, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#2a2438';
-      ctx.beginPath(); ctx.arc(ix, iy, (rad - 8) * scale, 0, Math.PI * 2); ctx.fill();
-    });
-
-    // Roads (6 Avenues + 10 Cross Streets + 3 Neon Causeway Bridges)
-    ctx.strokeStyle = 'rgba(232, 228, 240, 0.56)';
-    ctx.lineWidth = Math.max(2.6, ROAD_W * scale);
-    ctx.lineCap = 'round';
-    AVENUES.forEach((ax) => {
-      const [x1, y1] = toMap(ax, 360);
-      const [x2, y2] = toMap(ax, -1120);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    });
-    CROSS_STREETS.forEach((cz) => {
-      const [x1, y1] = toMap(-486, cz);
-      const [x2, y2] = toMap(8, cz);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    });
-    [[-300, '#21E6D1'], [-620, '#FF2E88'], [-940, '#FFD36B']].forEach(([bz, col]) => {
-      const [bx1, by1] = toMap(4, bz);
-      const [bx2, by2] = toMap(152, bz);
-      ctx.strokeStyle = col;
-      ctx.lineWidth = Math.max(2.8, 14 * scale);
-      ctx.beginPath(); ctx.moveTo(bx1, by1); ctx.lineTo(bx2, by2); ctx.stroke();
-    });
-
-    // District labels across full 6x10 Vice City
-    ctx.fillStyle = 'rgba(255, 245, 238, 0.54)';
-    ctx.font = '700 8px "JetBrains Mono", monospace';
-    ctx.textAlign = 'center';
-    [
-      ['SOUTH MARINA', -48, 265],
-      ['OCEAN BEACH', -48, -60],
-      ['VICE POINT', -48, -380],
-      ['NORTH MALL', -120, -1015],
-      ['DOWNTOWN', -144, -220],
-      ['LITTLE HAVANA', -144, -535],
-      ['WEST BAYSIDE', -240, -295],
-      ['LITTLE HAITI', -348, -425],
-      ['VICE PORT', -432, -195],
-      ["INT'L AIRPORT", -144, 146],
-      ['CARNIVAL PIER', 82, -460],
-      ['STARFISH', 152, -356],
-      ['VICE KEY', 156, -678],
-      ['PRAWN STUDIOS', 164, -1005],
-      ['MOUNT VICE 66M', -228, -1454]
-    ].forEach(([lbl, wx, wz]) => {
-      const [lx, ly] = toMap(wx, wz);
-      ctx.fillText(lbl, lx, ly);
-    });
-
-    // Active GPS route polyline
+    // Active GPS route polyline across the State of Leonida
     if (this.autopilotQueue.length > 0) {
       ctx.save();
       ctx.strokeStyle = '#FF2E88';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3.4;
+      ctx.shadowColor = '#FF2E88';
+      ctx.shadowBlur = 8;
       ctx.setLineDash([7, 5]);
       ctx.beginPath();
-      const [sx, sy] = toMap(cs.x, cs.z);
+      const [sx, sy] = toMap(act.x, act.z);
       ctx.moveTo(sx, sy);
       for (let i = 0; i < this.autopilotQueue.length; i++) {
         const [qx, qy] = toMap(this.autopilotQueue[i].x, this.autopilotQueue[i].z);
@@ -5894,87 +7288,13 @@ class ViceCity3DApp {
       ctx.restore();
     }
 
-    // Piles of Cash ($100 Green Bill Stacks), Weapon Pickups, Ramps & Boost Pads
-    this.tokens.forEach((tk) => {
-      if (tk.collected) return;
-      const [tx, ty] = toMap(tk.x, tk.z);
-      ctx.fillStyle = '#22C55E';
-      ctx.fillRect(tx - 5, ty - 3.6, 10, 7.2);
-      ctx.strokeStyle = '#072213';
-      ctx.lineWidth = 1.0;
-      ctx.strokeRect(tx - 5, ty - 3.6, 10, 7.2);
-      ctx.fillStyle = '#062010';
-      ctx.font = '900 7px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('$', tx, ty + 2.4);
-    });
-    this.weaponPickups.forEach((wp) => {
-      const [wx, wy] = toMap(wp.x, wp.z);
-      ctx.fillStyle = '#FF2E88';
-      ctx.beginPath();
-      ctx.moveTo(wx, wy - 5.5); ctx.lineTo(wx + 5.5, wy); ctx.lineTo(wx, wy + 5.5); ctx.lineTo(wx - 5.5, wy); ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#FFF5EE'; ctx.lineWidth = 1; ctx.stroke();
-    });
-    this.ramps.forEach((rp) => {
-      const [rx, ry] = toMap(rp.x, rp.z);
-      ctx.fillStyle = '#FF8A2A';
-      ctx.beginPath();
-      ctx.moveTo(rx, ry - 4); ctx.lineTo(rx + 3.5, ry + 3); ctx.lineTo(rx - 3.5, ry + 3); ctx.closePath();
-      ctx.fill();
-    });
-    this.boostPads.forEach((bp) => {
-      const [px, py] = toMap(bp.x, bp.z);
-      ctx.fillStyle = '#21E6D1';
-      ctx.fillRect(px - 2.2, py - 2.2, 4.4, 4.4);
-    });
-
-    // Unique Landmarks on Full Map (Carnival Ferris Wheel, Int'l Airport, Fountain Plazas, Tiki Bar, Lighthouse)
-    [
-      [121, -430, '#FF2E88', 'F'],
-      [-108, 42, '#21E6D1', '✈'],
-      [-48, -60, '#21E6D1', '✦'],
-      [-48, -380, '#21E6D1', '✦'],
-      [23.5, -254, '#FF8A2A', 'T'],
-      [177, -300, '#FF465A', 'L']
-    ].forEach(([lx, lz, col, sym]) => {
-      const [mx, my] = toMap(lx, lz);
-      ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(mx, my, 5.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#0B0418';
-      ctx.font = '800 7.5px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(sym, mx, my + 2.6);
-    });
-
-    // Numbered Showroom Pins
-    SHOWROOMS.forEach((sr) => {
-      const [sx, sy] = toMap(sr.x, sr.z);
-      const vis = this.visited.has(sr.id);
-      ctx.fillStyle = vis ? '#FFD36B' : sr.accentHex;
-      ctx.beginPath(); ctx.arc(sx, sy, 8.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#0B0418';
-      ctx.font = '800 9px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(sr.num, sx, sy + 3.2);
-    });
-
-    // Enterable Building Doorway Pins & Flyable Aircraft Pins on Full Map
-    if (this.enterableBuildings) {
-      this.enterableBuildings.forEach((eb) => {
-        const [ex, ey] = toMap(eb.doorX, eb.doorZ);
-        ctx.fillStyle = '#34E89E';
-        ctx.fillRect(ex - 5, ey - 5, 10, 10);
-        ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.4;
-        ctx.strokeRect(ex - 5, ey - 5, 10, 10);
-      });
-    }
+    // Flyable Aircraft Pins across all 4 Leonida Airports
     if (this.flyablePlanes) {
       this.flyablePlanes.forEach((pl) => {
         const [ax, ay] = toMap(pl.x, pl.z);
         ctx.fillStyle = '#FFD36B';
-        ctx.beginPath(); ctx.arc(ax, ay, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ax, ay, 6.2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.4; ctx.stroke();
         ctx.fillStyle = '#0B0418';
         ctx.font = '800 8px sans-serif';
         ctx.textAlign = 'center';
@@ -5982,62 +7302,74 @@ class ViceCity3DApp {
       });
     }
 
+    // Numbered Portfolio Showroom Pins (Vice Beach / Vice City)
+    SHOWROOMS.forEach((sr) => {
+      const [sx, sy] = toMap(sr.x, sr.z);
+      const vis = this.visited.has(sr.id);
+      ctx.fillStyle = vis ? '#FFD36B' : sr.accentHex;
+      ctx.beginPath(); ctx.arc(sx, sy, 6.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#0B0418';
+      ctx.font = '800 7.5px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(sr.num, sx, sy + 2.6);
+    });
+
     // Parked Supercar Marker when roaming on foot or flying
     if (this.mode !== 'car') {
       const [cx, cy] = toMap(cs.x, cs.z);
       ctx.fillStyle = '#21E6D1';
-      ctx.fillRect(cx - 4.5, cy - 6.5, 9, 13);
-      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.6;
-      ctx.strokeRect(cx - 4.5, cy - 6.5, 9, 13);
+      ctx.fillRect(cx - 4, cy - 5.5, 8, 11);
+      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 4, cy - 5.5, 8, 11);
     }
 
-    // Active Actor (Player, Car, or Flying Airplane) Chevron
-    const act = this.mode === 'plane' && this.activePlane ? this.activePlane : (this.mode === 'foot' ? this.playerState : cs);
+    // Active Actor (Player, Car, or Flying Airplane) Glowing Chevron
     const [px, py] = toMap(act.x, act.z);
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(-act.yaw);
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 6;
     ctx.fillStyle = this.mode === 'plane' ? '#FFD36B' : '#FFF5EE';
     ctx.beginPath();
-    ctx.moveTo(0, -9); ctx.lineTo(6.5, 7); ctx.lineTo(0, 3.5); ctx.lineTo(-6.5, 7); ctx.closePath();
+    ctx.moveTo(0, -10); ctx.lineTo(7, 7.5); ctx.lineTo(0, 3.8); ctx.lineTo(-7, 7.5); ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = this.mode === 'plane' ? '#FF2E88' : (this.mode === 'foot' ? '#21E6D1' : '#FF2E88'); ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = this.mode === 'plane' ? '#FF2E88' : (this.mode === 'foot' ? '#21E6D1' : '#FF2E88');
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
     ctx.restore();
 
-    // Subtle tactical GPS latitude/longitude grid + Time/Weather badge on Full Map
-    ctx.strokeStyle = 'rgba(33, 230, 209, 0.07)';
-    ctx.lineWidth = 1;
-    for (let g = 40; g < w; g += 48) {
-      ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, h); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(w, g); ctx.stroke();
-    }
-    const tpLbl = `${TIME_PRESETS[this.timeIdx].icon} ${TIME_PRESETS[this.timeIdx].label.toUpperCase()} · ${WEATHER_PRESETS[this.weatherIdx].icon} ${WEATHER_PRESETS[this.weatherIdx].label.toUpperCase()}`;
-    ctx.fillStyle = 'rgba(10, 5, 22, 0.78)';
-    ctx.fillRect(10, 10, 152, 22);
-    ctx.strokeStyle = 'rgba(33, 230, 209, 0.34)';
-    ctx.strokeRect(10, 10, 152, 22);
+    // Time/Weather & Live Vector GPS Badge
+    const tpLbl = `${TIME_PRESETS[this.timeIdx].icon} ${TIME_PRESETS[this.timeIdx].label.toUpperCase()} · ${WEATHER_PRESETS[this.weatherIdx].icon} ${WEATHER_PRESETS[this.weatherIdx].label.toUpperCase()} · LEONIDA GPS`;
+    ctx.fillStyle = 'rgba(10, 5, 22, 0.86)';
+    ctx.fillRect(10, 10, 232, 22);
+    ctx.strokeStyle = 'rgba(33, 230, 209, 0.48)';
+    ctx.strokeRect(10, 10, 232, 22);
     ctx.fillStyle = '#21E6D1';
-    ctx.font = '700 9.5px "JetBrains Mono", monospace';
+    ctx.font = '700 9px "JetBrains Mono", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(tpLbl, 18, 24);
+    ctx.fillText(tpLbl, 17, 24);
 
-    // Update live distances in sidebar
+    // Update live distances in sidebar (km when >= 1000m)
     this.el.fmDists.forEach((el) => {
       const wp = WAYPOINTS.find((w) => w.id === el.dataset.fmDist);
-      if (wp) el.textContent = `${Math.round(Math.hypot(wp.x - act.x, wp.z - act.z))}m`;
+      if (!wp) return;
+      const d = Math.round(Math.hypot(wp.x - act.x, wp.z - act.z));
+      el.textContent = d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
     });
   }
 
   drawRadar() {
     const ctx = this.radarCtx;
     if (!ctx) return;
-    const w = 212, h = 184;
+    const w = 240, h = 154;
     ctx.clearRect(0, 0, w, h);
 
-    // Deep Atlantic Ocean Gradient
+    // Deep Atlantic/Gulf Ocean Gradient
     const oceanGrad = ctx.createLinearGradient(0, 0, w, h);
-    oceanGrad.addColorStop(0, '#071b2e');
-    oceanGrad.addColorStop(1, '#0d314b');
+    oceanGrad.addColorStop(0, '#0a2238');
+    oceanGrad.addColorStop(1, '#123a59');
     ctx.fillStyle = oceanGrad;
     ctx.fillRect(0, 0, w, h);
 
@@ -6045,29 +7377,69 @@ class ViceCity3DApp {
     const act = this.mode === 'plane' && this.activePlane
       ? this.activePlane
       : ((this.mode === 'foot' || this.mode === 'ride') ? this.playerState : cs);
-    const scale = this.mode === 'plane' ? 0.24 : (this.mode === 'foot' ? 0.68 : (this.mode === 'ride' ? 0.56 : 0.46));
+    const inViceCore = isInCoreViceFootprint(act.x, act.z) || isInLegacyMountains(act.x, act.z);
+    const scale = this.mode === 'plane' ? 0.14 : (this.mode === 'foot' ? 0.68 : (inViceCore ? 0.46 : 0.28));
     const toRadar = (wx, wz) => [w * 0.5 + (wx - act.x) * scale, h * 0.5 + (wz - act.z) * scale];
 
-    // Shallows, Miami Beach Sand, Turquoise Coastline & Mainland
-    const [coastX] = toRadar(14, act.z);
-    const [beachX] = toRadar(30, act.z);
-    const [shallowX] = toRadar(44, act.z);
-    ctx.fillStyle = 'rgba(33, 230, 209, 0.18)';
-    ctx.fillRect(0, 0, Math.max(0, Math.min(w, shallowX)), h);
-    ctx.fillStyle = '#c8a77b';
-    ctx.fillRect(0, 0, Math.max(0, Math.min(w, beachX)), h);
-    ctx.fillStyle = '#191626';
-    ctx.fillRect(0, 0, Math.max(0, Math.min(w, coastX)), h);
-    if (beachX > 0 && beachX < w) {
-      ctx.strokeStyle = 'rgba(33, 230, 209, 0.55)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(beachX, 0); ctx.lineTo(beachX, h); ctx.stroke();
+    // Live Zoomed Slice of our 100% Custom Procedural Vector Map Canvas!
+    if (this.leonidaMapCanvas) {
+      const cw = this.leonidaMapCanvas.width;
+      const ch = this.leonidaMapCanvas.height;
+      const spanX = LEONIDA_PROJ.maxX - LEONIDA_PROJ.minX;
+      const spanZ = LEONIDA_PROJ.maxZ - LEONIDA_PROJ.minZ;
+      const u = (act.x - LEONIDA_PROJ.minX) / spanX;
+      const v = (act.z - LEONIDA_PROJ.minZ) / spanZ;
+      const worldSpanX = w / scale;
+      const worldSpanZ = h / scale;
+      const srcW = (worldSpanX / spanX) * cw;
+      const srcH = (worldSpanZ / spanZ) * ch;
+      const srcX = u * cw - srcW * 0.5;
+      const srcY = v * ch - srcH * 0.5;
+      ctx.save();
+      ctx.globalAlpha = inViceCore ? 0.42 : 0.96;
+      ctx.drawImage(this.leonidaMapCanvas, srcX, srcY, srcW, srcH, 0, 0, w, h);
+      ctx.restore();
+      if (!inViceCore) {
+        ctx.fillStyle = 'rgba(8, 12, 24, 0.16)';
+        ctx.fillRect(0, 0, w, h);
+        // Crisp live-vector local town streets & highways overlay at exact radar scale
+        LEONIDA_HIGHWAYS.forEach((hw) => {
+          ctx.strokeStyle = hw.isTownRoad ? 'rgba(218, 224, 238, 0.78)' : 'rgba(255, 220, 125, 0.9)';
+          ctx.lineWidth = hw.isTownRoad ? Math.max(1.8, hw.width * scale) : Math.max(2.6, hw.width * scale * 0.95);
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (let i = 0; i < hw.pts.length; i++) {
+            const [rx, ry] = toRadar(hw.pts[i].x, hw.pts[i].z);
+            if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+          }
+          ctx.stroke();
+        });
+      }
     }
 
-    // Mount Vice Mountain Range & Winding Switchback Highway on Tactical Minimap
+    // Core Vice City detailed street blocks & beaches (blended cleanly when inside Vice City!)
+    if (inViceCore) {
+      const [coastX] = toRadar(14, act.z);
+      const [beachX] = toRadar(30, act.z);
+      const [shallowX] = toRadar(44, act.z);
+      ctx.fillStyle = 'rgba(33, 230, 209, 0.16)';
+      ctx.fillRect(0, 0, Math.max(0, Math.min(w, shallowX)), h);
+      ctx.fillStyle = 'rgba(200, 167, 123, 0.82)';
+      ctx.fillRect(0, 0, Math.max(0, Math.min(w, beachX)), h);
+      ctx.fillStyle = 'rgba(25, 22, 38, 0.82)';
+      ctx.fillRect(0, 0, Math.max(0, Math.min(w, coastX)), h);
+      if (beachX > 0 && beachX < w) {
+        ctx.strokeStyle = 'rgba(33, 230, 209, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(beachX, 0); ctx.lineTo(beachX, h); ctx.stroke();
+      }
+    }
+
+    // Mount Vice Mountain Range & Winding Switchback Loop Highway on Tactical Minimap
     const [rmX1, rmY1] = toRadar(-505, -1488);
     const [rmX2, rmY2] = toRadar(42, -1115);
-    if (rmY2 > 0 && rmY1 < h && rmX2 > 0 && rmX1 < w) {
+    if (inViceCore && rmY2 > 0 && rmY1 < h && rmX2 > 0 && rmX1 < w) {
       ctx.fillStyle = '#213728';
       ctx.fillRect(rmX1, rmY1, rmX2 - rmX1, rmY2 - rmY1);
       const [rpkX, rpkY] = toRadar(-228, -1432);
@@ -6077,6 +7449,25 @@ class ViceCity3DApp {
       ctx.lineWidth = 3.2;
       ctx.beginPath();
       MOUNT_VICE_ROAD.forEach((rp, idx) => {
+        const [rx, ry] = toRadar(rp.x, rp.z);
+        if (idx === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+      });
+      ctx.stroke();
+    }
+
+    // Separate Western Mountain Range: Sierra West Redrock Peaks & Continuous Loop Highway on Tactical Minimap
+    const [rswX1, rswY1] = toRadar(-885, -760);
+    const [rswX2, rswY2] = toRadar(-496, 240);
+    if (inViceCore && rswY2 > 0 && rswY1 < h && rswX2 > 0 && rswX1 < w) {
+      ctx.fillStyle = '#4a3123';
+      ctx.fillRect(rswX1, rswY1, rswX2 - rswX1, rswY2 - rswY1);
+      const [rswPkX, rswPkY] = toRadar(-772, -210);
+      ctx.fillStyle = '#8b573b';
+      ctx.beginPath(); ctx.ellipse(rswPkX, rswPkY, 64 * scale, 110 * scale, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 138, 42, 0.9)';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      SIERRA_WEST_ROAD.forEach((rp, idx) => {
         const [rx, ry] = toRadar(rp.x, rp.z);
         if (idx === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
       });
@@ -6319,6 +7710,20 @@ class ViceCity3DApp {
         ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.2; ctx.stroke();
       }
     }
+    // Flashing Red/Blue VCPD Police Cruiser Blips on Minimap Radar!
+    if (this.policeUnits && this.policeUnits.length > 0) {
+      const flashBlue = Math.floor(performance.now() / 180) % 2 === 0;
+      for (let i = 0; i < this.policeUnits.length; i++) {
+        const pu = this.policeUnits[i];
+        if (!pu.mesh || !pu.mesh.visible) continue;
+        const [px, py] = toRadar(pu.x, pu.z);
+        const clx = THREE.MathUtils.clamp(px, 8, w - 8);
+        const cly = THREE.MathUtils.clamp(py, 8, h - 8);
+        ctx.fillStyle = flashBlue ? '#2288FF' : '#FF2442';
+        ctx.beginPath(); ctx.arc(clx, cly, 4.6, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.2; ctx.stroke();
+      }
+    }
 
     // Player / Car / Plane Directional Chevron + View Cone
     ctx.save();
@@ -6354,6 +7759,14 @@ class ViceCity3DApp {
     this.el.beginBtn.addEventListener('click', () => {
       this.started = true;
       this.el.startOv.hidden = true;
+      if (!this.audio.enabled) {
+        this.audio.setRadioInCar(this.isInCar());
+        this.audio.setEnabled(true);
+        this.el.audioBtn.textContent = 'Audio: On';
+        this.el.audioBtn.classList.add('on');
+        this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
+        this.updateRadioHUD();
+      }
       this.syncReticleVisibility();
       this.flashLockTip();
     });
@@ -6385,6 +7798,43 @@ class ViceCity3DApp {
     this.el.wepBtns.forEach((btn) => btn.addEventListener('click', () => this.setWeapon(btn.dataset.wep)));
     this.el.punchBtn.addEventListener('click', () => this.fireWeapon());
     this.el.kickBtn.addEventListener('click', () => this.triggerMeleeAttack('kick'));
+    if (this.el.footWheelBtn) {
+      this.el.footWheelBtn.addEventListener('click', () => {
+        if (this.weaponWheelOpen) this.closeWeaponWheel(true);
+        else this.openWeaponWheel(false);
+      });
+    }
+    if (this.el.gtaWepPill) {
+      this.el.gtaWepPill.addEventListener('click', () => {
+        if (this.weaponWheelOpen) this.closeWeaponWheel(true);
+        else this.openWeaponWheel(false);
+      });
+    }
+    if (this.el.wwWedges) {
+      this.el.wwWedges.forEach((el, idx) => {
+        el.addEventListener('pointerenter', () => { if (this.weaponWheelOpen) this.setWeaponWheelHover(idx, true); });
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.setWeaponWheelHover(idx, false);
+          this.closeWeaponWheel(true);
+        });
+      });
+    }
+    if (this.el.wwSlots) {
+      this.el.wwSlots.forEach((el, idx) => {
+        el.addEventListener('pointerenter', () => { if (this.weaponWheelOpen) this.setWeaponWheelHover(idx, true); });
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.setWeaponWheelHover(idx, false);
+          this.closeWeaponWheel(true);
+        });
+      });
+    }
+    if (this.el.weaponWheel) {
+      this.el.weaponWheel.addEventListener('click', (e) => {
+        if (e.target === this.el.weaponWheel) this.closeWeaponWheel(true);
+      });
+    }
     // GTA 5 NPC Dialogue, Carnival Pier Ride & Mini-Games Launcher Bindings
     if (this.el.dlgClose) this.el.dlgClose.addEventListener('click', () => this.closeNpcDialogue());
     if (this.el.dlgChoices) {
@@ -6401,6 +7851,14 @@ class ViceCity3DApp {
       });
     }
     if (this.el.mgAbort) this.el.mgAbort.addEventListener('click', () => this.endMiniGame(false, 'CHALLENGE ABORTED'));
+    // Kaufman Cabs Interactive Taxi Service Bindings
+    if (this.el.taxiBtn) this.el.taxiBtn.addEventListener('click', () => { if (this.taxiModalOpen) this.closeTaxiModal(); else this.openTaxiModal(); });
+    if (this.el.taxiClose) this.el.taxiClose.addEventListener('click', () => this.closeTaxiModal());
+    if (this.el.taxiDests) {
+      this.el.taxiDests.forEach((btn) => {
+        btn.addEventListener('click', () => this.takeTaxiRide(btn.dataset.taxiDest, Number(btn.dataset.taxiFare || 25)));
+      });
+    }
     // Main Website Car Radio Interactions (Tap LCD to fold/open, Pwr/Vol knob drag+click, Tune knob & 5 presets)
     this.el.radLcd.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -6541,26 +7999,60 @@ class ViceCity3DApp {
       });
     });
 
+    const applyFullMapFilter = () => {
+      const tab = this.activeCountyTab || 'ALL';
+      const q = (this.el.fmSearch ? this.el.fmSearch.value : '').trim().toLowerCase();
+      let shown = 0;
+      this.el.fmRows.forEach((row) => {
+        const cty = row.dataset.fmCounty || '';
+        const matchTab = tab === 'ALL'
+          || (tab === 'MARIANA' ? (cty === 'Mariana County' || cty === 'Leonida Keys') : cty === tab);
+        const matchQ = !q || (row.dataset.fmQ || '').includes(q);
+        const vis = matchTab && matchQ;
+        row.hidden = !vis;
+        if (vis) shown++;
+      });
+      if (this.el.fmCount) this.el.fmCount.textContent = `${shown} Places`;
+    };
+    this.el.fmTabs.forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        this.activeCountyTab = tabBtn.dataset.fmTab || 'ALL';
+        this.el.fmTabs.forEach((b) => b.classList.toggle('active', b === tabBtn));
+        applyFullMapFilter();
+      });
+    });
+    if (this.el.fmSearch) {
+      this.el.fmSearch.addEventListener('input', applyFullMapFilter);
+      this.el.fmSearch.addEventListener('keydown', (e) => e.stopPropagation());
+    }
+
     this.el.fullMapCanvas.addEventListener('click', (e) => {
       if (!this._fullMapMeta) return;
       const rect = this.el.fullMapCanvas.getBoundingClientRect();
-      const cx = ((e.clientX - rect.left) / rect.width) * 520;
-      const cy = ((e.clientY - rect.top) / rect.height) * 520;
-      const { minX, minZ, scale, offX, offY } = this._fullMapMeta;
-      const wx = minX + (cx - offX) / scale;
-      const wz = minZ + (cy - offY) / scale;
+      const u = THREE.MathUtils.clamp((e.clientX - rect.left) / rect.width, 0.02, 0.98);
+      const v = THREE.MathUtils.clamp((e.clientY - rect.top) / rect.height, 0.02, 0.98);
+      const wx = LEONIDA_PROJ.minX + u * (LEONIDA_PROJ.maxX - LEONIDA_PROJ.minX);
+      const wz = LEONIDA_PROJ.minZ + v * (LEONIDA_PROJ.maxZ - LEONIDA_PROJ.minZ);
+      const zInfo = getLeonidaZone(wx, wz);
       this.started = true; this.el.startOv.hidden = true;
       this.closeFullMap();
-      this.planAutopilotTo({ id: 'custom', label: 'Map Pin', zone: 'Custom Waypoint', x: THREE.MathUtils.clamp(wx, -485, 190), z: THREE.MathUtils.clamp(wz, -1110, 355), yaw: 0 });
+      this.planAutopilotTo({
+        id: 'custom',
+        label: zInfo.street || 'Leonida Pin',
+        zone: zInfo.zone || 'State of Leonida',
+        x: THREE.MathUtils.clamp(wx, LEONIDA_PROJ.minX + 30, LEONIDA_PROJ.maxX - 30),
+        z: THREE.MathUtils.clamp(wz, LEONIDA_PROJ.minZ + 30, LEONIDA_PROJ.maxZ - 30),
+        yaw: 0
+      });
     });
 
     this.el.audioBtn.addEventListener('click', () => {
       const next = !this.audio.enabled;
+      this.audio.setRadioInCar(this.isInCar());
       this.audio.setEnabled(next);
       this.el.audioBtn.textContent = next ? 'Audio: On' : 'Audio: Off';
       this.el.audioBtn.classList.toggle('on', next);
       this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
-      this.audio.setRadioInCar(this.mode === 'car');
       this.updateRadioHUD();
     });
 
@@ -6614,6 +8106,24 @@ class ViceCity3DApp {
     });
     window.addEventListener('pointermove', (e) => {
       if (!this.isOpen) return;
+      if (this.weaponWheelOpen) {
+        if (this.el.uiCursor && !this.pointerLocked) {
+          this.el.uiCursor.style.transform = `translate3d(${(e.clientX - 3).toFixed(1)}px, ${(e.clientY - 2).toFixed(1)}px, 0)`;
+          this.el.uiCursor.classList.add('on');
+          this.el.uiCursor.classList.remove('hover-ui');
+        }
+        if (this.pointerLocked) {
+          this.weaponWheelVecX = THREE.MathUtils.clamp(this.weaponWheelVecX + (e.movementX || 0) * 1.15, -140, 140);
+          this.weaponWheelVecY = THREE.MathUtils.clamp(this.weaponWheelVecY + (e.movementY || 0) * 1.15, -140, 140);
+          this.updateWeaponWheelFromVector(this.weaponWheelVecX, this.weaponWheelVecY);
+        } else if (this.el.wwShell) {
+          const rect = this.el.wwShell.getBoundingClientRect();
+          const cx = rect.left + rect.width * 0.5;
+          const cy = rect.top + rect.height * 0.5;
+          this.updateWeaponWheelFromVector(e.clientX - cx, e.clientY - cy);
+        }
+        return;
+      }
       if (e.pointerType === 'mouse') {
         // 1. Pointer-Locked 360° Free-Look (Uses raw hardware movementX/Y, zero UI cursor!)
         if (this.pointerLocked) {
@@ -6669,7 +8179,13 @@ class ViceCity3DApp {
       if (this.el && this.el.uiCursor) this.el.uiCursor.classList.remove('on');
     });
     window.addEventListener('wheel', (e) => {
-      if (!this.isOpen || this.mode !== 'foot' || !this.started || !this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen) return;
+      if (!this.isOpen || !this.started || !this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen) return;
+      if (this.weaponWheelOpen) {
+        const dir = e.deltaY > 0 ? 1 : -1;
+        this.setWeaponWheelHover((this.weaponWheelHover + dir + WEAPONS.length) % WEAPONS.length, true);
+        return;
+      }
+      if (this.mode !== 'foot') return;
       const idx = WEAPONS.findIndex((w) => w.id === this.weapon);
       const next = (idx + (e.deltaY > 0 ? 1 : -1) + WEAPONS.length) % WEAPONS.length;
       this.setWeapon(WEAPONS[next].id);
@@ -6677,9 +8193,15 @@ class ViceCity3DApp {
 
     window.addEventListener('keydown', (e) => {
       if (!this.isOpen) return;
+      // Classic GTA Vice City Real-Time Cheat Code Listener (type any code like PANZER, ASPIRINE, LEAVEMEALONE, COMEFLYWITHME, SEAWAYS!)
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key && e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+        this.handleCheatKey(e.key.toUpperCase());
+      }
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (this.activeDialogue) this.closeNpcDialogue();
+        if (this.weaponWheelOpen) this.closeWeaponWheel(false);
+        else if (this.taxiModalOpen) this.closeTaxiModal();
+        else if (this.activeDialogue) this.closeNpcDialogue();
         else if (this.miniGameHubOpen) this.closeMiniGameHub();
         else if (this.projectsHubOpen) this.closeProjectsHub();
         else if (this.fullMapOpen) this.closeFullMap();
@@ -6687,6 +8209,18 @@ class ViceCity3DApp {
         else this.close();
         return;
       }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (!e.repeat && !this.weaponWheelOpen) this.openWeaponWheel(true);
+        return;
+      }
+      if (this.weaponWheelOpen && e.key >= '1' && e.key <= '7') {
+        e.preventDefault();
+        this.setWeaponWheelHover(Number(e.key) - 1, false);
+        this.closeWeaponWheel(true);
+        return;
+      }
+      if (this.taxiModalOpen) return;
       if (this.activeDialogue) {
         if (e.key === '1' || e.key === '2' || e.key === '3') {
           e.preventDefault();
@@ -6696,6 +8230,13 @@ class ViceCity3DApp {
         if (e.key === 'e' || e.key === 'E') {
           e.preventDefault();
           this.closeNpcDialogue();
+          return;
+        }
+      }
+      if (e.key === 'x' || e.key === 'X') {
+        if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue) {
+          e.preventDefault();
+          this.openTaxiModal();
           return;
         }
       }
@@ -6722,6 +8263,13 @@ class ViceCity3DApp {
         }
         if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen) {
           if (this.mode === 'foot') {
+            // Check if hailing a nearby Yellow Kaufman Cab Taxi!
+            const nearVeh = this.findNearestVehicleTarget(6.2);
+            if (nearVeh && ((nearVeh.vehicle && nearVeh.vehicle.isTaxi) || (nearVeh.mesh && nearVeh.mesh.userData && nearVeh.mesh.userData.carType === 'taxi'))) {
+              e.preventDefault();
+              this.openTaxiModal();
+              return;
+            }
             const nearRide = this.findNearestPierRide(8.5);
             if (nearRide) { e.preventDefault(); this.boardPierRide(nearRide); return; }
             const nearNpc = this.findNearestTalkableNpc(4.6);
@@ -6736,7 +8284,10 @@ class ViceCity3DApp {
         if (!this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && this.el.modal.hidden) this.toggleVehicle(false);
         return;
       }
-      if (e.key === 'r' || e.key === 'R') { e.preventDefault(); this.cycleRadio(1); return; }
+      if (e.key === 'r' || e.key === 'R') {
+        if (this.isInCar()) { e.preventDefault(); this.cycleRadio(1); }
+        return;
+      }
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); this.setTimeOfDay(this.timeIdx + 1); return; }
       if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); this.setWeather(this.weatherIdx + 1); return; }
 
@@ -6747,11 +8298,12 @@ class ViceCity3DApp {
           return;
         }
         if (e.key === 'q' || e.key === 'Q') {
-          const idx = WEAPONS.findIndex((w) => w.id === this.weapon);
-          this.setWeapon(WEAPONS[(idx + 1) % WEAPONS.length].id);
+          e.preventDefault();
+          if (this.weaponWheelOpen) this.closeWeaponWheel(true);
+          else this.openWeaponWheel(false);
           return;
         }
-        if (e.key === 'j' || e.key === 'J' || e.key === 'x' || e.key === 'X' || e.key === 'e' || e.key === 'E') {
+        if (e.key === 'j' || e.key === 'J' || e.key === 'e' || e.key === 'E') {
           e.preventDefault();
           this.fireWeapon();
           this.fireHeld = true;
@@ -6764,7 +8316,7 @@ class ViceCity3DApp {
         }
       }
       if (e.key === 'Enter' && this.activeShowroom && this.el.modal.hidden && !this.fullMapOpen) { e.preventDefault(); this.openShowroomModal(this.activeShowroom); return; }
-      if (e.key === 'Tab') { e.preventDefault(); this.el.dockToggle.click(); return; }
+      if (e.key === '`') { e.preventDefault(); this.el.dockToggle.click(); return; }
       if (e.key === 'v' || e.key === 'V') { this.cycleCamera(); return; }
       if (e.key === 'c' || e.key === 'C') { this.setPaint((this.paintIdx + 1) % PAINTS.length); return; }
       if (e.key === 'l' || e.key === 'L') { this.toggleLights(); return; }
@@ -6802,6 +8354,11 @@ class ViceCity3DApp {
     });
 
     window.addEventListener('keyup', (e) => {
+      if (e.key === 'Tab' && this.weaponWheelOpen && this.weaponWheelHoldMode) {
+        e.preventDefault();
+        this.closeWeaponWheel(true);
+        return;
+      }
       const k = e.key.toLowerCase();
       if (k === 'w' || e.key === 'ArrowUp') this.keys.up = false;
       if (k === 's' || e.key === 'ArrowDown') this.keys.down = false;
@@ -6831,7 +8388,7 @@ class ViceCity3DApp {
   toggleLights() {
     this.lightsOn = !this.lightsOn;
     this.el.lightsBtn.classList.toggle('on', this.lightsOn);
-    this.el.lampLights.classList.toggle('on-lights', this.lightsOn);
+    if (this.el.lampLights) this.el.lampLights.classList.toggle('on-lights', this.lightsOn);
     this.car.headLights.forEach((s) => { s.intensity = this.lightsOn ? 1.85 : 0; });
     this.car.headLensMat.emissiveIntensity = this.lightsOn ? 1.35 : 0.06;
   }
@@ -6896,6 +8453,10 @@ class ViceCity3DApp {
       }
 
       const dist = Math.round(Math.hypot(sr.parkX - act.x, sr.parkZ - act.z));
+      if (dist > 540) {
+        btn.style.transform = 'translate3d(-9999px, -9999px, 0)';
+        continue;
+      }
       _projVec.set(sr.x, 14.5, sr.z).project(this.camera);
 
       // Hide pins behind the camera or too far behind frustum
@@ -6982,6 +8543,7 @@ class ViceCity3DApp {
 
   close() {
     if (!this.isOpen) return;
+    this.closeWeaponWheel(false);
     this.isOpen = false;
     this.releasePointerLock();
     if (this.el.uiCursor) this.el.uiCursor.classList.remove('on');
@@ -7125,6 +8687,7 @@ class ViceCity3DApp {
   }
 
   findNearestMiniGamePad(maxDist = 6.5) {
+    if (this.activeMiniGame) return null;
     const act = this.mode === 'foot' ? this.playerState : this.carState;
     let best = null, bestD = maxDist;
     for (let i = 0; i < this.miniGamePads.length; i++) {
@@ -7146,6 +8709,8 @@ class ViceCity3DApp {
     this.el.dlgName.textContent = ped.name || prof.name;
     this.el.dlgRole.textContent = ped.role || prof.role;
     this.el.dlgLine.textContent = prof.greeting;
+    if (this.el.carPrompt) this.el.carPrompt.classList.remove('on');
+    if (this.el.footHud) this.el.footHud.classList.remove('on');
     this.el.dlg.classList.add('on');
     this.audio.pickup();
     this.syncReticleVisibility();
@@ -7195,6 +8760,7 @@ class ViceCity3DApp {
     }
     this.activeDialogue = null;
     if (this.el.dlg) this.el.dlg.classList.remove('on');
+    if (this.mode === 'foot' && this.el.footHud) this.el.footHud.classList.add('on');
     this.syncReticleVisibility();
   }
 
@@ -7233,14 +8799,27 @@ class ViceCity3DApp {
     this.activeRide = null;
     this.el.rideBar.classList.remove('on');
     this.setMode('foot');
-    this.playerState.x = r.exitX;
-    this.playerState.z = r.exitZ;
-    this.playerState.y = 0.16;
+    let ex = r.exitX, ez = r.exitZ;
+    if (r.ropewayKey) {
+      const rw = r.ropewayKey === 'mountVice' ? this.mountViceRopeway : (this.leonidaWorld && this.leonidaWorld.kalagaRopeway);
+      if (rw) {
+        const dBase = Math.hypot(this.playerState.x - rw.baseBoardPos.x, this.playerState.z - rw.baseBoardPos.z);
+        const dTop = Math.hypot(this.playerState.x - rw.summitBoardPos.x, this.playerState.z - rw.summitBoardPos.z);
+        const dst = dTop < dBase ? rw.summitBoardPos : rw.baseBoardPos;
+        ex = dst.x; ez = dst.z;
+      }
+    }
+    const ey = Math.max(0.16, this.getSurfaceY(ex, ez, true) + 0.16);
+    this.playerState.x = ex;
+    this.playerState.z = ez;
+    this.playerState.y = ey;
     this.playerState.vy = 0;
     this.playerState.grounded = true;
-    this.player.root.position.set(r.exitX, 0.16, r.exitZ);
+    this.player.root.position.set(ex, ey, ez);
     this.player.root.rotation.set(0, -Math.PI / 2, 0);
     this.snapCameraNext = true;
+    if (this.el && this.el.combo) this.el.combo.classList.remove('on');
+    this.streakTimer = 0;
     this.drawRadar();
     this.audio.carDoor();
   }
@@ -7279,15 +8858,16 @@ class ViceCity3DApp {
       this.setMode('foot');
       this.setWeapon('rifle');
       this.playerState.x = 91.5;
-      this.playerState.z = -442.8;
+      this.playerState.z = -444.0;
       this.playerState.y = 0.16;
       this.playerState.vy = 0;
       this.playerState.grounded = true;
       this.playerState.yaw = 0; // Facing North straight out over open Atlantic Ocean!
       this.orbitYawOffset = 0;
       this.orbitPitchOffset = -0.02;
-      this.player.root.position.set(91.5, 0.16, -442.8);
+      this.player.root.position.set(91.5, 0.16, -444.0);
       this.player.root.rotation.y = 0;
+      if (this.el && this.el.carPrompt) this.el.carPrompt.classList.remove('on');
 
       const targets = [];
       const meshes = [];
@@ -7375,7 +8955,7 @@ class ViceCity3DApp {
       this.el.mgStat.textContent = 'GATE 1 / 10';
       this.el.mgTimer.textContent = '95.0s';
       this.el.mgHud.classList.add('on');
-      this.el.combo.innerHTML = `HILLCLIMB RACE GO! <span>CLIMB TO 66M SUMMIT</span>`;
+      this.el.combo.innerHTML = `HILLCLIMB RACE GO! <span>CLIMB TO 118M SUMMIT</span>`;
       this.el.combo.classList.add('on');
       this.streakTimer = 2.8;
       this.snapCameraNext = true;
@@ -7533,13 +9113,642 @@ class ViceCity3DApp {
     this.streakTimer = 3.6;
   }
 
+  /* ==========================================================================
+     KAUFMAN CABS TAXI SERVICE, COMPLETE VICE CITY CHEAT CODES,
+     VCPD POLICE PURSUIT AI, WILDLIFE ANIMALS & MALIBU CLUB DISCO ENGINE
+     ========================================================================== */
+  openTaxiModal() {
+    if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (_) {} }
+    this.closeNpcDialogue();
+    this.closeMiniGameHub();
+    if (this.fullMapOpen) this.toggleFullMap(false);
+    this.taxiModalOpen = true;
+    if (this.el.taxiOv) this.el.taxiOv.hidden = false;
+    this.syncReticleVisibility();
+  }
+
+  closeTaxiModal() {
+    this.taxiModalOpen = false;
+    if (this.el.taxiOv) this.el.taxiOv.hidden = true;
+    this.syncReticleVisibility();
+  }
+
+  takeTaxiRide(destId, fare = 25) {
+    const TAXI_SPOTS = {
+      'malibu-club': { x: -13.0, z: -344.0, label: 'The Malibu Club' },
+      'north-mall':  { x: -13.0, z: -1018.0, label: 'North Point Mall' },
+      'pier':        { x:  12.0, z: -430.0, label: 'Vice Carnival Pier' },
+      'airport':     { x: -16.0, z:   86.0, label: "Escobar Int'l Airport" },
+      'village':     { x: -382.0, z: -1178.0, label: 'Vice Hollow Community' },
+      'forest':      { x: -418.0, z: -1036.0, label: 'Vice Pines Forest' },
+      'mount-vice':  { x: -222.0, z: -1434.0, label: 'Mount Vice Summit (118m)' },
+      'sierra-west': { x: -764.0, z: -206.0, label: 'Sierra West Peaks (96m)' },
+      'ammunation':  { x: -12.5, z: -190.0, label: 'Ammu-Nation Ocean Dr' },
+      'start':       { x: -12.5, z:  -48.0, label: 'Ocean Drive Beachfront' }
+    };
+    const spot = TAXI_SPOTS[destId] || TAXI_SPOTS.start;
+    this.closeTaxiModal();
+    this.cancelAutopilot();
+    if (this.mode === 'ride') this.exitPierRide();
+    if (this.mode === 'plane' && this.activePlane) {
+      this.activePlane.resetTimer = 0.2;
+      this.activePlane = null;
+    }
+    const charged = this.cash >= fare ? fare : 0;
+    if (charged > 0) {
+      this.cash -= charged;
+      if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+    }
+    this.setMode('foot');
+    const gy = getTerrainHeight(spot.x, spot.z) + 0.08;
+    this.playerState.x = spot.x;
+    this.playerState.z = spot.z;
+    this.playerState.y = gy;
+    this.playerState.vy = 0;
+    this.playerState.grounded = true;
+    this.player.root.position.set(spot.x, gy, spot.z);
+    this.orbitYawOffset = 0;
+    this.orbitPitchOffset = 0.04;
+    this.snapCameraNext = true;
+    this.started = true;
+    if (this.el.startOv) this.el.startOv.hidden = true;
+    this.audio.horn();
+    this.audio.carDoor();
+    this.el.combo.innerHTML = `KAUFMAN CABS ARRIVED · ${spot.label.toUpperCase()} <span>${charged > 0 ? `-$${charged}` : 'VIP FREE'}</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.2;
+    this.drawRadar();
+  }
+
+  showCheatToast(label) {
+    if (this.el.cheatMsg) this.el.cheatMsg.textContent = label;
+    if (this.el.cheatToast) this.el.cheatToast.classList.add('on');
+    this.cheatToastTimer = 3.4;
+    this.audio.cheatChime();
+  }
+
+  handleCheatKey(letter) {
+    if (!letter || letter.length !== 1) return;
+    this.cheatBuffer = (this.cheatBuffer + letter.toUpperCase()).slice(-34);
+    for (let i = 0; i < VICE_CHEAT_CODES.length; i++) {
+      const entry = VICE_CHEAT_CODES[i];
+      if (this.cheatBuffer.endsWith(entry.code)) {
+        this.cheatBuffer = '';
+        this.activateCheatCode(entry.code);
+        return;
+      }
+    }
+  }
+
+  spawnCheatVehicle(action) {
+    const act = this.mode === 'foot' ? this.playerState : this.carState;
+    const yaw = act.yaw || 0;
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    const sx = THREE.MathUtils.clamp(act.x + fx * 6.4, -482, 185);
+    const sz = THREE.MathUtils.clamp(act.z + fz * 6.4, -1462, 344);
+    const sy = getTerrainHeight(sx, sz) + 0.08;
+
+    let entry = null;
+    if (action === 'spawn_tank') {
+      const rig = createRhinoTank();
+      rig.root.position.set(sx, sy, sz);
+      rig.root.rotation.y = yaw + Math.PI * 0.5;
+      this.scene.add(rig.root);
+      entry = {
+        isHero: false, isTank: true, label: 'RHINO TANK',
+        mesh: rig.root, rig, topSpeed: 34, nitroSpeed: 44, accel: 16, grip: 1.05,
+        x: sx, y: sy, z: sz, yaw: yaw + Math.PI * 0.5
+      };
+    } else if (action === 'spawn_pcj' || action === 'spawn_sanchez' || action === 'spawn_faggio') {
+      const kind = action === 'spawn_sanchez' ? 'sanchez' : (action === 'spawn_faggio' ? 'faggio' : 'pcj600');
+      const col = kind === 'sanchez' ? 0x34e89e : (kind === 'faggio' ? 0x21e6d1 : 0xff2e88);
+      const rig = createMotorcycle(kind, col);
+      rig.root.position.set(sx, sy, sz);
+      rig.root.rotation.y = yaw;
+      this.scene.add(rig.root);
+      entry = {
+        isHero: false, isBike: true, label: rig.label,
+        mesh: rig.root, rig, topSpeed: rig.topSpeed, nitroSpeed: rig.topSpeed * 1.32,
+        accel: rig.accel, grip: rig.grip, x: sx, y: sy, z: sz, yaw
+      };
+    } else {
+      const specs = {
+        spawn_sabre:    { col: 0xff3b2f, kind: 'muscle', label: 'SABRE TURBO', top: 56, acc: 26 },
+        spawn_hotring:  { col: 0x21e6d1, kind: 'convertible', label: 'HOTRING RACER', top: 64, acc: 30 },
+        spawn_infernus: { col: 0xffd36b, kind: 'convertible', label: 'INFERNUS GT', top: 68, acc: 32 },
+        spawn_hearse:   { col: 0x1b1d26, kind: 'sedan', label: 'ROMERO HEARSE', top: 38, acc: 16 },
+        spawn_limo:     { col: 0x20182a, kind: 'sedan', label: 'LOVE FIST LIMO', top: 44, acc: 18 },
+        spawn_caddy:    { col: 0xf4f6fa, kind: 'convertible', label: 'CADDY GOLF CART', top: 26, acc: 15 },
+        spawn_banger:   { col: 0xff7a1a, kind: 'muscle', label: 'BLOODRING BANGER', top: 52, acc: 24 },
+        spawn_trash:    { col: 0x2f6b48, kind: 'suv', label: 'TRASHMASTER', top: 32, acc: 14 }
+      };
+      const sp = specs[action] || specs.spawn_sabre;
+      const mesh = createTrafficCar(sp.col, sp.kind);
+      if (action === 'spawn_limo') mesh.scale.set(1.0, 1.0, 1.38);
+      if (action === 'spawn_caddy') mesh.scale.set(0.76, 0.82, 0.72);
+      if (action === 'spawn_trash') mesh.scale.set(1.22, 1.28, 1.35);
+      mesh.position.set(sx, sy, sz);
+      mesh.rotation.y = yaw;
+      this.scene.add(mesh);
+      const rig = mesh.userData.carRig || { root: mesh, bodyGroup: mesh, wheelSpinGroups: [], frontSteerGroups: [] };
+      entry = {
+        isHero: false, label: sp.label, mesh, rig,
+        topSpeed: sp.top, nitroSpeed: sp.top * 1.28, accel: sp.acc, grip: 0.96,
+        x: sx, y: sy, z: sz, yaw
+      };
+    }
+
+    if (entry) {
+      this.parkedVehicles.push(entry);
+      for (let k = 0; k < 12; k++) {
+        this.spawnParticle(
+          sx + (Math.random() - 0.5) * 2.4, sy + 0.6, sz + (Math.random() - 0.5) * 2.4,
+          (Math.random() - 0.5) * 4.5, 2.2 + Math.random() * 2.4, (Math.random() - 0.5) * 4.5,
+          0xffd36b, 0.65, 0.65, 0.6, 8.2
+        );
+      }
+      this.drawRadar();
+    }
+    return entry;
+  }
+
+  activateCheatCode(rawCode) {
+    const code = String(rawCode || '').trim().toUpperCase();
+    const entry = VICE_CHEAT_CODES.find((c) => c.code === code);
+    if (!entry) return false;
+    const act = entry.action;
+
+    if (act === 'health') {
+      this.playerHp = 100;
+      this.updateHealthHUD();
+    } else if (act === 'hesoyam') {
+      this.playerHp = 100;
+      this.playerArmor = 100;
+      this.cash += 250000;
+      this.updateHealthHUD();
+      if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+    } else if (act === 'armor') {
+      this.playerArmor = 100;
+      this.updateHealthHUD();
+    } else if (act === 'clearwanted') {
+      this.wantedStars = 0;
+      this.wantedDecay = 0;
+      this.updateWantedHUD(0);
+      this.clearPoliceUnits();
+    } else if (act === 'raisewanted') {
+      this.wantedStars = Math.min(5, this.wantedStars + 2);
+      this.wantedDecay = 22.0;
+      this.updateWantedHUD(0);
+      this.ensurePoliceDispatch(true);
+    } else if (act === 'wasted') {
+      this.triggerWasted();
+    } else if (act === 'thugstools') {
+      this.setWeapon('bat');
+    } else if (act === 'protools') {
+      this.playerArmor = 100;
+      this.updateHealthHUD();
+      this.setWeapon('rifle');
+    } else if (act === 'nuttertools') {
+      this.playerArmor = 100;
+      this.updateHealthHUD();
+      this.setWeapon('bazooka');
+    } else if (act.startsWith('spawn_')) {
+      this.spawnCheatVehicle(act);
+    } else if (act === 'flyingcars') {
+      this.cheats.flyingCars = !this.cheats.flyingCars;
+    } else if (act === 'seaways') {
+      this.cheats.seaways = !this.cheats.seaways;
+    } else if (act === 'bigbang') {
+      const ref = this.mode === 'foot' ? this.playerState : this.carState;
+      for (let i = 0; i < this.traffic.length; i++) {
+        const tc = this.traffic[i];
+        if (tc.userData.vehState !== 'wrecked' && Math.hypot(tc.position.x - ref.x, tc.position.z - ref.z) < 92) {
+          this.detonateVehicle(tc, 'BIG BANG');
+        }
+      }
+      for (let i = this.policeUnits.length - 1; i >= 0; i--) {
+        const pu = this.policeUnits[i];
+        if (Math.hypot(pu.x - ref.x, pu.z - ref.z) < 92) {
+          this.triggerExplosion(pu.x, pu.y + 0.9, pu.z, 1.25);
+          this.scene.remove(pu.rig.root);
+          this.policeUnits.splice(i, 1);
+        }
+      }
+    } else if (act === 'greenlight') {
+      this.cheats.greenLight = !this.cheats.greenLight;
+    } else if (act === 'grip') {
+      this.cheats.grip = !this.cheats.grip;
+    } else if (act === 'pinkcars' || act === 'blackcars') {
+      const hex = act === 'pinkcars' ? 0xff4db8 : 0x181920;
+      for (let i = 0; i < this.traffic.length; i++) {
+        const rig = this.traffic[i].userData && this.traffic[i].userData.carRig;
+        if (rig && rig.paintMat) rig.paintMat.color.setHex(hex);
+      }
+    } else if (act === 'fasttraffic') {
+      this.cheats.fastTraffic = !this.cheats.fastTraffic;
+    } else if (act === 'slowmo') {
+      this.cheats.slowMo = !this.cheats.slowMo;
+      if (this.cheats.slowMo) this.cheats.fastMo = false;
+    } else if (act === 'fastmo') {
+      this.cheats.fastMo = !this.cheats.fastMo;
+      if (this.cheats.fastMo) this.cheats.slowMo = false;
+    } else if (act === 'fastclock') {
+      this.cheats.fastClock = !this.cheats.fastClock;
+    } else if (act === 'riot' || act === 'hostilepeds' || act === 'armedpeds') {
+      if (act === 'riot') this.cheats.riot = !this.cheats.riot;
+      if (act === 'hostilepeds') this.cheats.hostilePeds = !this.cheats.hostilePeds;
+      if (act === 'armedpeds') this.cheats.armedPeds = !this.cheats.armedPeds;
+      const ref = this.mode === 'foot' ? this.playerState : this.carState;
+      for (let i = 0; i < this.pedestrians.length; i++) {
+        const p = this.pedestrians[i];
+        if (Math.hypot(p.x - ref.x, p.z - ref.z) < 42 && p.state === 'walk') {
+          p.fighter = true;
+          p.state = 'fight';
+          p.stateTimer = 24.0;
+          p.attackCooldown = 0.6 + Math.random() * 0.8;
+        }
+      }
+    } else if (act === 'fannymagnet') {
+      this.cheats.fannyMagnet = !this.cheats.fannyMagnet;
+    } else if (act === 'weather_sunset' || act === 'weather_noon' || act === 'weather_night') {
+      const targetT = act === 'weather_noon' ? 1 : (act === 'weather_night' ? 2 : 0);
+      this.setTimeOfDay(targetT, true);
+      this.setWeather(0, true);
+      this.cheats.heavyFog = false;
+    } else if (act === 'weather_rain') {
+      this.setWeather(3, true);
+    } else if (act === 'weather_fog') {
+      this.cheats.heavyFog = !this.cheats.heavyFog;
+    }
+
+    this.showCheatToast(entry.label);
+    return true;
+  }
+
+  clearPoliceUnits() {
+    for (let i = 0; i < this.policeUnits.length; i++) {
+      this.scene.remove(this.policeUnits[i].rig.root);
+    }
+    this.policeUnits.length = 0;
+    for (let i = 0; i < this.policeCops.length; i++) {
+      this.scene.remove(this.policeCops[i].root);
+    }
+    this.policeCops.length = 0;
+  }
+
+  ensurePoliceDispatch(force = false) {
+    if (this.wantedStars <= 0 && !force) return;
+    const targetCount = Math.min(3, Math.max(force ? 1 : 0, this.wantedStars));
+    const act = this.mode === 'plane' && this.activePlane
+      ? this.activePlane
+      : (this.mode === 'foot' || this.mode === 'ride' ? this.playerState : this.carState);
+
+    while (this.policeUnits.length < targetCount) {
+      const idx = this.policeUnits.length;
+      const ang = (act.yaw || 0) + (idx === 0 ? 0.35 : (idx === 1 ? -0.45 : Math.PI));
+      const dist = 34 + idx * 14;
+      const px = THREE.MathUtils.clamp(act.x - Math.sin(ang) * dist, -478, 16);
+      const pz = THREE.MathUtils.clamp(act.z - Math.cos(ang) * dist, -1440, 338);
+      const py = getTerrainHeight(px, pz) + 0.04;
+      const rig = createPoliceCruiser(4);
+      const yaw = Math.atan2(-(act.x - px), -(act.z - pz));
+      rig.root.position.set(px, py, pz);
+      rig.root.rotation.y = yaw;
+      this.scene.add(rig.root);
+      this.policeUnits.push({
+        rig, x: px, y: py, z: pz, yaw, speed: 14,
+        wheelSpin: 0, ramCooldown: 0, copDeployed: false
+      });
+    }
+  }
+
+  updatePolice(dt, elapsed) {
+    if (this.wantedStars <= 0) {
+      if (this.policeUnits.length > 0 || this.policeCops.length > 0) this.clearPoliceUnits();
+      return;
+    }
+
+    this.policeDispatchTimer -= dt;
+    if (this.policeDispatchTimer <= 0) {
+      this.policeDispatchTimer = 2.8;
+      this.ensurePoliceDispatch(false);
+    }
+
+    // Periodic VCPD wailing siren while chased
+    this.policeSirenTimer -= dt;
+    if (this.policeSirenTimer <= 0 && this.policeUnits.length > 0) {
+      this.policeSirenTimer = 2.4;
+      this.audio.policeSiren();
+    }
+
+    const isFoot = this.mode === 'foot';
+    const act = this.mode === 'plane' && this.activePlane
+      ? this.activePlane
+      : (isFoot || this.mode === 'ride' ? this.playerState : this.carState);
+
+    const flashPhase = Math.floor(elapsed * 8.5) % 2;
+
+    for (let i = 0; i < this.policeUnits.length; i++) {
+      const pu = this.policeUnits[i];
+      if (pu.ramCooldown > 0) pu.ramCooldown = Math.max(0, pu.ramCooldown - dt);
+
+      // Alternating VCPD Red/Blue Roof Lightbar Strobe
+      if (pu.rig.redLightMat && pu.rig.blueLightMat) {
+        const redOn = (flashPhase + i) % 2 === 0;
+        pu.rig.redLightMat.emissiveIntensity = redOn ? 3.2 : 0.22;
+        pu.rig.blueLightMat.emissiveIntensity = redOn ? 0.22 : 3.2;
+      }
+
+      const dx = act.x - pu.x, dz = act.z - pu.z;
+      const dist = Math.hypot(dx, dz) || 0.01;
+      const desiredYaw = Math.atan2(-dx, -dz);
+      let dYaw = desiredYaw - pu.yaw;
+      while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+      while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      pu.yaw += THREE.MathUtils.clamp(dYaw, -2.4 * dt, 2.4 * dt);
+
+      const stopDist = isFoot ? 11.5 : 5.2;
+      const maxPursuit = 20 + this.wantedStars * 4.5;
+      const targetSpd = dist > stopDist ? maxPursuit : (dist > stopDist - 3 ? 4.5 : 0);
+      pu.speed = THREE.MathUtils.damp(pu.speed, targetSpd, 4.2, dt);
+
+      const nextX = THREE.MathUtils.clamp(pu.x - Math.sin(pu.yaw) * pu.speed * dt, -486, 175);
+      const nextZ = THREE.MathUtils.clamp(pu.z - Math.cos(pu.yaw) * pu.speed * dt, -1455, 348);
+      if (!this.isPointBlocked(nextX, nextZ, 1.35)) {
+        pu.x = nextX;
+        pu.z = nextZ;
+      } else {
+        pu.yaw += 1.4 * dt;
+        pu.speed *= 0.45;
+      }
+      pu.y = getTerrainHeight(pu.x, pu.z) + 0.04;
+      pu.rig.root.position.set(pu.x, pu.y, pu.z);
+      pu.rig.root.rotation.y = pu.yaw;
+
+      pu.wheelSpin -= pu.speed * dt * 2.6;
+      if (pu.rig.wheelSpinGroups) {
+        for (let w = 0; w < pu.rig.wheelSpinGroups.length; w++) pu.rig.wheelSpinGroups[w].rotation.x = pu.wheelSpin;
+      }
+
+      // Ram player car if cruiser closes in during car chase
+      if (!isFoot && this.mode === 'car' && dist < 3.6 && pu.ramCooldown <= 0) {
+        pu.ramCooldown = 1.6;
+        this.carState.x += (dx / dist) * 1.1;
+        this.carState.z += (dz / dist) * 1.1;
+        this.camShake = Math.max(this.camShake, 0.24);
+        this.audio.impact(0.65);
+        this.damagePlayer(5);
+      }
+
+      // Deploy VCPD officer on foot if player is on foot & cruiser pulls up!
+      if (isFoot && dist < 16.0 && !pu.copDeployed && this.policeCops.length < 3) {
+        pu.copDeployed = true;
+        const copRig = createPedestrian(0x2d4a7c, 0x1b2434, 0xd9a17a, 0x1a1a22, false);
+        const cx = pu.x + Math.cos(pu.yaw) * 2.2;
+        const cz = pu.z - Math.sin(pu.yaw) * 2.2;
+        const cy = getTerrainHeight(cx, cz);
+        copRig.root.position.set(cx, cy, cz);
+        this.scene.add(copRig.root);
+        this.policeCops.push({
+          ...copRig, x: cx, y: cy, z: cz, yaw: pu.yaw,
+          walkPhase: 0, attackCd: 0.7, name: 'VCPD Officer'
+        });
+      }
+
+      // Relocate cruiser closer if player drove way ahead (>155m)
+      if (dist > 155) {
+        const reAng = (act.yaw || 0) + (i === 0 ? 0.3 : -0.35);
+        pu.x = THREE.MathUtils.clamp(act.x - Math.sin(reAng) * 58, -478, 16);
+        pu.z = THREE.MathUtils.clamp(act.z - Math.cos(reAng) * 58, -1440, 338);
+        pu.y = getTerrainHeight(pu.x, pu.z) + 0.04;
+      }
+    }
+
+    // Update deployed VCPD officers pursuing on foot
+    for (let i = this.policeCops.length - 1; i >= 0; i--) {
+      const cop = this.policeCops[i];
+      if (cop.attackCd > 0) cop.attackCd = Math.max(0, cop.attackCd - dt);
+      const dx = act.x - cop.x, dz = act.z - cop.z;
+      const d = Math.hypot(dx, dz) || 0.01;
+      if (d > 70) {
+        this.scene.remove(cop.root);
+        this.policeCops.splice(i, 1);
+        continue;
+      }
+      cop.yaw = Math.atan2(dx, dz);
+      cop.root.rotation.y = cop.yaw;
+      if (d > 2.0) {
+        const spd = 4.5;
+        cop.x = THREE.MathUtils.clamp(cop.x + (dx / d) * spd * dt, -488, 185);
+        cop.z = THREE.MathUtils.clamp(cop.z + (dz / d) * spd * dt, -1462, 348);
+        cop.y = getTerrainHeight(cop.x, cop.z);
+        cop.walkPhase += dt * spd * 2.2;
+        const sw = Math.sin(cop.walkPhase);
+        cop.legL.rotation.x = -sw * 0.55;
+        cop.legR.rotation.x = sw * 0.55;
+        cop.armL.rotation.x = sw * 0.48;
+        cop.armR.rotation.x = -sw * 0.48;
+      } else if (isFoot && cop.attackCd <= 0 && this.wastedTimer <= 0) {
+        cop.attackCd = 1.25;
+        this.damagePlayer(8, cop);
+      }
+      cop.root.position.set(cop.x, cop.y, cop.z);
+    }
+  }
+
+  updateWildlife(dt, elapsed) {
+    if (!this.wildlife || this.wildlife.length === 0) return;
+    const act = this.mode === 'foot' || this.mode === 'ride' ? this.playerState : this.carState;
+    for (let i = 0; i < this.wildlife.length; i++) {
+      const w = this.wildlife[i];
+      const dx = w.x - act.x, dz = w.z - act.z;
+      const dSq = dx * dx + dz * dz;
+      const vis = dSq < 21000;
+      if (w.root.visible !== vis) w.root.visible = vis;
+      if (!vis) continue;
+
+      const dist = Math.sqrt(dSq) || 0.1;
+      let targetYaw = w.yaw;
+      let targetSpd = 0;
+
+      if (dist < 11.5 && w.kind !== 'dog') {
+        // Deer, Boars & Flamingos flee gracefully away from approaching player/vehicles
+        w.state = 'flee';
+        w.stateTimer = 2.6;
+        targetYaw = Math.atan2(-dx, -dz);
+        targetSpd = w.fleeSpeed;
+      } else if (w.state === 'flee') {
+        w.stateTimer -= dt;
+        targetSpd = w.fleeSpeed * 0.78;
+        if (w.stateTimer <= 0) { w.state = 'wander'; w.stateTimer = 3.0; }
+      } else {
+        w.stateTimer -= dt;
+        if (w.stateTimer <= 0) {
+          if (w.state === 'graze') {
+            w.state = 'wander';
+            w.stateTimer = 2.8 + Math.random() * 4.2;
+            const toHomeX = w.homeX - w.x, toHomeZ = w.homeZ - w.z;
+            if (Math.hypot(toHomeX, toHomeZ) > 18) {
+              w.wanderYaw = Math.atan2(-toHomeX, -toHomeZ) + (Math.random() - 0.5) * 0.7;
+            } else {
+              w.wanderYaw = Math.random() * Math.PI * 2;
+            }
+          } else {
+            w.state = 'graze';
+            w.stateTimer = 1.8 + Math.random() * 3.0;
+          }
+        }
+        if (w.state === 'wander') {
+          targetYaw = w.wanderYaw !== undefined ? w.wanderYaw : w.yaw;
+          targetSpd = w.baseSpeed;
+        }
+      }
+
+      let dY = targetYaw - w.yaw;
+      while (dY > Math.PI) dY -= Math.PI * 2;
+      while (dY < -Math.PI) dY += Math.PI * 2;
+      w.yaw += dY * Math.min(1, dt * 5.2);
+      w.speed = THREE.MathUtils.damp(w.speed, targetSpd, 6.0, dt);
+
+      if (w.speed > 0.08) {
+        w.x = THREE.MathUtils.clamp(w.x - Math.sin(w.yaw) * w.speed * dt, -484, 34);
+        w.z = THREE.MathUtils.clamp(w.z - Math.cos(w.yaw) * w.speed * dt, -1450, 340);
+        w.y = getTerrainHeight(w.x, w.z);
+        w.walkPhase += dt * w.speed * (w.kind === 'flamingo' ? 4.2 : 3.1);
+        const sw = Math.sin(w.walkPhase) * (w.state === 'flee' ? 0.68 : 0.42);
+        for (let li = 0; li < w.legs.length; li++) {
+          w.legs[li].rotation.x = (li % 2 === 0 ? sw : -sw);
+        }
+        w.bodyGrp.position.y = Math.abs(Math.cos(w.walkPhase)) * (w.state === 'flee' ? 0.12 : 0.04);
+      } else {
+        for (let li = 0; li < w.legs.length; li++) {
+          w.legs[li].rotation.x = THREE.MathUtils.damp(w.legs[li].rotation.x, 0, 8, dt);
+        }
+        w.bodyGrp.position.y = 0;
+      }
+
+      if (w.headGrp) {
+        w.headGrp.rotation.x = w.state === 'graze'
+          ? 0.34 + Math.sin(elapsed * 2.4 + i) * 0.08
+          : Math.sin(elapsed * 2.2 + i) * 0.06;
+      }
+      if (w.tailMesh) {
+        w.tailMesh.rotation.z = Math.sin(elapsed * (w.kind === 'dog' ? 11.5 : 4.2) + i) * (w.kind === 'dog' ? 0.45 : 0.14);
+      }
+      w.root.position.set(w.x, w.y, w.z);
+      w.root.rotation.y = w.yaw;
+    }
+  }
+
+  updateMalibuClub(dt, elapsed) {
+    const act = this.mode === 'foot' ? this.playerState : this.carState;
+    // 1. Standalone The Malibu Club Disco Floor, Mirror Ball, Spotlight Cones & 5-Piece Stage Band
+    if (this.malibuExtras && Math.hypot(act.x + 30.0, act.z + 344) < 105) {
+      const m = this.malibuExtras;
+      if (m.discoPivot) m.discoPivot.rotation.y += dt * 1.18;
+      const beat = Math.floor(elapsed * 2.15);
+      if (m.tiles) {
+        for (let i = 0; i < m.tiles.length; i++) {
+          const t = m.tiles[i];
+          const colIdx = (t.baseIdx + beat) % m.palette.length;
+          t.mesh.material.color.setHex(m.palette[colIdx]);
+          t.mesh.material.opacity = 0.50 + 0.36 * (0.5 + 0.5 * Math.sin(elapsed * 5.4 + t.phase));
+        }
+      }
+      if (m.dancers) {
+        for (let i = 0; i < m.dancers.length; i++) {
+          const d = m.dancers[i];
+          const b = Math.sin(elapsed * 6.4 + d.phase);
+          d.group.position.y = d.baseY + Math.abs(b) * (d.isDJ ? 0.06 : 0.12);
+          d.group.rotation.y += (d.isDJ ? Math.sin(elapsed * 2.2 + d.phase) * 0.22 * dt : Math.sin(elapsed * 1.8 + d.phase) * 0.65 * dt);
+          d.armL.rotation.z = d.isDJ ? 0.28 : 0.45 + b * 0.55;
+          d.armR.rotation.z = d.isDJ ? -0.28 : -0.45 - b * 0.55;
+          d.armL.rotation.x = d.isDJ ? -0.82 + b * 0.25 : b * 0.38;
+          d.armR.rotation.x = d.isDJ ? -0.82 - b * 0.25 : -b * 0.38;
+        }
+      }
+    }
+    // 2. Standalone Huge 2-Story North Point Mall Animations (Spinning Raffle Infernus, Fountain Spray & Shoppers!)
+    if (this.northPointMall && Math.hypot(act.x + 50.0, act.z + 1018) < 130) {
+      const nm = this.northPointMall;
+      if (nm.raffleCar) nm.raffleCar.rotation.y += dt * 0.65;
+      if (nm.fountainSpray) {
+        const s = 0.92 + Math.sin(elapsed * 6.0) * 0.10;
+        nm.fountainSpray.scale.set(s, 0.95 + Math.cos(elapsed * 7.5) * 0.08, s);
+      }
+      if (nm.shoppers) {
+        for (let i = 0; i < nm.shoppers.length; i++) {
+          const sp = nm.shoppers[i];
+          const travel = Math.sin(elapsed * 0.42 + sp.phase) * sp.range * 0.5;
+          if (sp.axis === 'x') {
+            sp.group.position.x = sp.baseX + travel;
+            sp.group.rotation.y = Math.cos(elapsed * 0.42 + sp.phase) >= 0 ? Math.PI / 2 : -Math.PI / 2;
+          } else {
+            sp.group.position.z = sp.baseZ + travel;
+            sp.group.rotation.y = Math.cos(elapsed * 0.42 + sp.phase) >= 0 ? 0 : Math.PI;
+          }
+          sp.group.position.y = 0.16 + Math.abs(Math.sin(elapsed * 5.2 + sp.phase)) * 0.05;
+        }
+      }
+    }
+    // 3. Drifting 3D Alpine Mountain Mist & Cloud Layers on Mount Vice (118m) & Sierra West (96m)
+    if (this.mountVice && this.mountVice.mistClouds) {
+      this.mountVice.mistClouds.position.x = Math.sin(elapsed * 0.08) * 14.0;
+    }
+    if (this.sierraWest && this.sierraWest.mistClouds) {
+      this.sierraWest.mistClouds.position.z = Math.cos(elapsed * 0.07) * 14.0;
+    }
+  }
+
   update(dt, elapsed) {
+    // GTA 5 Weapon Wheel bullet-time slow-motion + cheat speed modifiers
+    if (this.weaponWheelOpen) dt *= 0.22;
+    if (this.cheats.slowMo) dt *= 0.52;
+    else if (this.cheats.fastMo) dt *= 1.55;
+    // Continuous Automatic Day/Night 24-Hour Clock (~2.5 minutes per full GTA day, accelerated by FASTCLOCK cheat!)
+    if (this.autoDayNight) {
+      const daySpeed = this.cheats.fastClock ? 1.15 : 0.16;
+      this.dayTime = (this.dayTime + dt * daySpeed) % 24;
+    }
+    // Continuous Automatic Dynamic Weather Cycle (Clear -> Thick Mist -> Rain -> Thunderstorm -> Clearing!)
+    if (this.autoWeather && this.started) {
+      this.autoWeatherTimer -= dt;
+      if (this.autoWeatherTimer <= 0) {
+        const pool = [0, 1, 2, 3].filter((w) => w !== this.weatherIdx);
+        // Slightly favor clear/mist while regularly cycling into tropical rain & storms
+        const nextW = (this.weatherIdx >= 2 && Math.random() < 0.58)
+          ? (Math.random() < 0.55 ? 0 : 1)
+          : pool[Math.floor(Math.random() * pool.length)];
+        this.weatherIdx = nextW;
+        this.autoWeatherTimer = 42 + Math.random() * 20;
+        const wpNow = WEATHER_PRESETS[this.weatherIdx];
+        if (this.el.weatherBtn) {
+          this.el.weatherBtn.textContent = `${wpNow.icon} ${wpNow.label} [Y]`;
+          this.el.weatherBtn.classList.toggle('on', this.weatherIdx > 0);
+        }
+      }
+    }
+    if (this.cheatToastTimer > 0) {
+      this.cheatToastTimer = Math.max(0, this.cheatToastTimer - dt);
+      if (this.cheatToastTimer <= 0 && this.el.cheatToast) this.el.cheatToast.classList.remove('on');
+    }
+
     const cs = this.carState;
     const ps = this.playerState;
     const isFoot = this.mode === 'foot';
     const isRide = this.mode === 'ride' && Boolean(this.activeRide);
     const isPlane = this.mode === 'plane' && Boolean(this.activePlane);
     const act = isPlane ? this.activePlane : ((isFoot || isRide) ? ps : cs);
+
+    this.updatePolice(dt, elapsed);
+    this.updateWildlife(dt, elapsed);
+    this.updateMalibuClub(dt, elapsed);
+    if (this.barricadeBeacons && this.barricadeBeacons.length > 0) {
+      const blinkOn = (elapsed % 1.1) < 0.52;
+      for (let bi = 0; bi < this.barricadeBeacons.length; bi++) {
+        this.barricadeBeacons[bi].visible = blinkOn;
+      }
+    }
 
     if (this.impactCooldown > 0) this.impactCooldown -= dt;
     if (this.camShake > 0) this.camShake = Math.max(0, this.camShake - dt * 1.4);
@@ -7569,13 +9778,21 @@ class ViceCity3DApp {
     if (this.mountVice && this.mountVice.beacon) {
       this.mountVice.beacon.visible = (elapsed % 1.2) < 0.55;
     }
+    if (this.sierraWest && this.sierraWest.beacon) {
+      this.sierraWest.beacon.visible = ((elapsed + 0.4) % 1.2) < 0.55;
+    }
     for (let i = 0; i < this.pierRides.length; i++) {
       const pr = this.pierRides[i];
       if (pr.ring) pr.ring.scale.setScalar(1 + Math.sin(elapsed * 3.6 + pr.phase) * 0.08);
     }
     for (let i = 0; i < this.miniGamePads.length; i++) {
       const mp = this.miniGamePads[i];
-      if (mp.ring) mp.ring.scale.setScalar(1 + Math.sin(elapsed * 3.2 + mp.phase) * 0.08);
+      const showPad = !this.activeMiniGame;
+      if (mp.ring) {
+        mp.ring.visible = showPad;
+        if (showPad) mp.ring.scale.setScalar(1 + Math.sin(elapsed * 3.2 + mp.phase) * 0.08);
+      }
+      if (mp.pillar) mp.pillar.visible = showPad;
     }
     if (this.activeMiniGame) this.updateMiniGame(dt, elapsed);
 
@@ -7592,13 +9809,65 @@ class ViceCity3DApp {
       }
     }
 
-    // 1. Dynamic Day/Night Cycle, Weather, Lightning, 3D Rain & Sky Follows Camera
-    const tp = TIME_PRESETS[this.timeIdx];
-    const wp = WEATHER_PRESETS[this.weatherIdx];
-    const envLerp = Math.min(1, dt * 3.2);
+    // 1. Continuous Automatic Day/Night Cycle, Smooth Weather Transitions, Thick Atmospheric Haze & Sky!
+    const hNow = ((this.dayTime % 24) + 24) % 24;
+    let stopA = DAY_CYCLE_STOPS[0], stopB = DAY_CYCLE_STOPS[1];
+    for (let si = 0; si < DAY_CYCLE_STOPS.length - 1; si++) {
+      if (hNow >= DAY_CYCLE_STOPS[si].hour && hNow <= DAY_CYCLE_STOPS[si + 1].hour) {
+        stopA = DAY_CYCLE_STOPS[si];
+        stopB = DAY_CYCLE_STOPS[si + 1];
+        break;
+      }
+    }
+    const spanH = Math.max(0.001, stopB.hour - stopA.hour);
+    const rawT = THREE.MathUtils.clamp((hNow - stopA.hour) / spanH, 0, 1);
+    const blendT = rawT * rawT * (3 - 2 * rawT); // Smoothstep solar transition
+    const tpA = TIME_PRESETS[stopA.preset];
+    const tpB = TIME_PRESETS[stopB.preset];
 
-    // Storm lightning flashes & rolling thunder
-    if (this.weatherIdx === 2) {
+    // Keep phase index & top-bar [T] label synced smoothly with live solar clock
+    const livePhase = (hNow >= 4.5 && hNow < 8.5) ? 3 : (hNow >= 8.5 && hNow < 16.2) ? 1 : (hNow >= 16.2 && hNow < 20.4) ? 0 : 2;
+    if (livePhase !== this.timeIdx) {
+      this.timeIdx = livePhase;
+      const curTp = TIME_PRESETS[this.timeIdx];
+      if (this.el.timeBtn) {
+        this.el.timeBtn.textContent = `${curTp.icon} ${curTp.label} [T]`;
+        this.el.timeBtn.classList.toggle('on', this.timeIdx === 2);
+      }
+    }
+
+    const wp = WEATHER_PRESETS[this.weatherIdx];
+    const wLerp = Math.min(1, dt * 0.55);
+    this.curRainLevel = THREE.MathUtils.lerp(this.curRainLevel, wp.rain, wLerp);
+    this.curFogMult = THREE.MathUtils.lerp(this.curFogMult, wp.fogMult, wLerp);
+    this.curWeatherDark = THREE.MathUtils.lerp(this.curWeatherDark, wp.dark, wLerp);
+    if (this.frameCount % 8 === 0 && this.audio) {
+      this.audio.setRainLevel(this.curRainLevel);
+    }
+    if (this.rainLines) {
+      this.rainLines.mesh.visible = this.curRainLevel > 0.04;
+      if (this.rainLines.mesh.material) {
+        this.rainLines.mesh.material.opacity = THREE.MathUtils.clamp(this.curRainLevel * 0.55, 0.05, 0.58);
+      }
+    }
+
+    const envLerp = Math.min(1, dt * 3.5);
+    const targetNightMix = THREE.MathUtils.lerp(tpA.nightMix, tpB.nightMix, blendT);
+    const targetSunInt = THREE.MathUtils.lerp(tpA.sunInt, tpB.sunInt, blendT);
+    const targetHemiInt = THREE.MathUtils.lerp(tpA.hemiInt, tpB.hemiInt, blendT);
+    const targetFillInt = THREE.MathUtils.lerp(tpA.fillInt, tpB.fillInt, blendT);
+    const targetExposure = THREE.MathUtils.lerp(tpA.exposure, tpB.exposure, blendT);
+
+    // Auto-switch car headlights at dusk/storm and off after sunrise!
+    const wantAutoLights = targetNightMix > 0.45 || this.weatherIdx === 3;
+    if (wantAutoLights !== this.lastAutoNightLights) {
+      this.lastAutoNightLights = wantAutoLights;
+      if (wantAutoLights && !this.lightsOn) this.toggleLights();
+      else if (!wantAutoLights && this.lightsOn) this.toggleLights();
+    }
+
+    // Storm lightning flashes & rolling thunder (weatherIdx === 3: Storm!)
+    if (this.weatherIdx === 3 && this.curRainLevel > 0.55) {
       this.lightningCooldown -= dt;
       if (this.lightningCooldown <= 0) {
         this.lightningFlash = 1.0;
@@ -7608,45 +9877,125 @@ class ViceCity3DApp {
     }
     if (this.lightningFlash > 0) this.lightningFlash = Math.max(0, this.lightningFlash - dt * 4.5);
 
-    this.envSunDir.lerp(tp.sunDir, envLerp).normalize();
+    _cycDirTmp.copy(tpA.sunDir).lerp(tpB.sunDir, blendT).normalize();
+    this.envSunDir.lerp(_cycDirTmp, envLerp).normalize();
     const skyU = this.skyDome.material.uniforms;
     this.skyDome.position.copy(this.camera.position);
     skyU.uTime.value = elapsed;
     skyU.uSunDir.value.copy(this.envSunDir);
-    skyU.uHorizon.value.lerp(_tmpCol.setHex(tp.horizon), envLerp);
-    skyU.uLower.value.lerp(_tmpCol.setHex(tp.lower), envLerp);
-    skyU.uMid.value.lerp(_tmpCol.setHex(tp.mid), envLerp);
-    skyU.uZenith.value.lerp(_tmpCol.setHex(tp.zenith), envLerp);
-    skyU.uSunGlow.value.lerp(_tmpCol.setHex(tp.sunGlow), envLerp);
-    skyU.uNightMix.value = THREE.MathUtils.lerp(skyU.uNightMix.value, tp.nightMix, envLerp);
-    skyU.uRainDark.value = THREE.MathUtils.lerp(skyU.uRainDark.value, wp.dark, envLerp);
+    skyU.uHorizon.value.lerp(_cycColA.setHex(tpA.horizon).lerp(_cycColB.setHex(tpB.horizon), blendT), envLerp);
+    skyU.uLower.value.lerp(_cycColA.setHex(tpA.lower).lerp(_cycColB.setHex(tpB.lower), blendT), envLerp);
+    skyU.uMid.value.lerp(_cycColA.setHex(tpA.mid).lerp(_cycColB.setHex(tpB.mid), blendT), envLerp);
+    skyU.uZenith.value.lerp(_cycColA.setHex(tpA.zenith).lerp(_cycColB.setHex(tpB.zenith), blendT), envLerp);
+    skyU.uSunGlow.value.lerp(_cycColA.setHex(tpA.sunGlow).lerp(_cycColB.setHex(tpB.sunGlow), blendT), envLerp);
+    skyU.uNightMix.value = THREE.MathUtils.lerp(skyU.uNightMix.value, targetNightMix, envLerp);
+    skyU.uRainDark.value = THREE.MathUtils.lerp(skyU.uRainDark.value, this.curWeatherDark, envLerp);
     skyU.uLightning.value = this.lightningFlash;
 
     const ocU = this.ocean.material.uniforms;
     ocU.uTime.value = elapsed;
     ocU.uSunDir.value.copy(this.envSunDir);
-    ocU.uSkyTint.value.lerp(_tmpCol.setHex(tp.skyTint), envLerp);
+    ocU.uSkyTint.value.lerp(_cycColA.setHex(tpA.skyTint).lerp(_cycColB.setHex(tpB.skyTint), blendT), envLerp);
     ocU.uNightMix.value = skyU.uNightMix.value;
 
-    const weatherLightDim = 1.0 - wp.dark * 0.42;
-    this.sunLight.color.lerp(_tmpCol.setHex(tp.sunCol), envLerp);
-    this.sunLight.intensity = THREE.MathUtils.lerp(this.sunLight.intensity, tp.sunInt * weatherLightDim + this.lightningFlash * 2.2, envLerp * 2.5);
+    const weatherLightDim = 1.0 - this.curWeatherDark * 0.42;
+    this.sunLight.color.lerp(_cycColA.setHex(tpA.sunCol).lerp(_cycColB.setHex(tpB.sunCol), blendT), envLerp);
+    this.sunLight.intensity = THREE.MathUtils.lerp(this.sunLight.intensity, targetSunInt * weatherLightDim + this.lightningFlash * 2.2, envLerp * 2.5);
     if (this.hemiLight) {
-      this.hemiLight.color.lerp(_tmpCol.setHex(tp.hemiSky), envLerp);
-      this.hemiLight.groundColor.lerp(_tmpCol.setHex(tp.hemiGnd), envLerp);
-      this.hemiLight.intensity = THREE.MathUtils.lerp(this.hemiLight.intensity, tp.hemiInt * weatherLightDim + this.lightningFlash * 0.9, envLerp * 2.0);
+      this.hemiLight.color.lerp(_cycColA.setHex(tpA.hemiSky).lerp(_cycColB.setHex(tpB.hemiSky), blendT), envLerp);
+      this.hemiLight.groundColor.lerp(_cycColA.setHex(tpA.hemiGnd).lerp(_cycColB.setHex(tpB.hemiGnd), blendT), envLerp);
+      this.hemiLight.intensity = THREE.MathUtils.lerp(this.hemiLight.intensity, targetHemiInt * weatherLightDim + this.lightningFlash * 0.9, envLerp * 2.0);
     }
     if (this.fillLight) {
-      this.fillLight.intensity = THREE.MathUtils.lerp(this.fillLight.intensity, tp.fillInt * weatherLightDim, envLerp);
+      this.fillLight.intensity = THREE.MathUtils.lerp(this.fillLight.intensity, targetFillInt * weatherLightDim, envLerp);
     }
-    _tmpCol.setHex(tp.fog).lerp(_tmpCol2.setHex(0x1f2836), wp.dark * 0.65);
+
+    // THICK CINEMATIC ATMOSPHERIC HAZE THROUGHOUT THE ENTIRE MAP (Vice City, Forests, Highways & Mountains!)
+    let biomeFog = 0.0031;
+    let hazeTintMix = 0.34;
+    const inLegacyMtFog = isInLegacyMountains(act.x, act.z);
+    const inCoreFog = isInCoreViceFootprint(act.x, act.z);
+    if (inLegacyMtFog) {
+      // Thick alpine mist & cloud bank fog ramping up Mount Vice (118m) & Sierra West (96m)!
+      const altT = THREE.MathUtils.clamp((act.y - 10) / 100, 0, 1);
+      const altCurve = altT * altT * (1.45 - 0.45 * altT);
+      biomeFog = 0.0040 + altCurve * 0.0052;
+      hazeTintMix = 0.42 + altCurve * 0.36;
+    } else if (!inCoreFog && act.y > 22 && this.mode !== 'plane') {
+      // Mount Kalaga National Park thick alpine valley & peak haze!
+      const altT = THREE.MathUtils.clamp((act.y - 22) / 128, 0, 1);
+      biomeFog = 0.0036 + altT * 0.0034;
+      hazeTintMix = 0.40 + altT * 0.32;
+    } else if (act.y > 22) {
+      // High-altitude flight / hilltop atmospheric haze across Leonida
+      const airT = THREE.MathUtils.clamp((act.y - 22) / 140, 0, 1);
+      biomeFog = 0.0024 + airT * 0.0030;
+      hazeTintMix = 0.32 + airT * 0.36;
+    } else if (!inCoreFog) {
+      // Thick subtropical coastal, forest & interstate haze across the Great State of Leonida!
+      const inSwamp = Math.hypot(act.x + 1340, act.z - 640) < 280 || Math.hypot(act.x + 1120, act.z + 820) < 260;
+      biomeFog = inSwamp ? 0.0046 : 0.0034;
+      hazeTintMix = inSwamp ? 0.52 : 0.40;
+    } else if (act.x < -285 || act.z < -970) {
+      // Vice Pines Deep Forest & Vice Hollow Valley Mist
+      biomeFog = 0.0042;
+      hazeTintMix = 0.44;
+    }
+    // Outer State of Leonida Ocean Horizon Distance Fog
+    const edgeDist = Math.min(
+      Math.max(0, act.x - LEONIDA_PROJ.minX),
+      Math.max(0, LEONIDA_PROJ.maxX - act.x),
+      Math.max(0, act.z - LEONIDA_PROJ.minZ),
+      Math.max(0, LEONIDA_PROJ.maxZ - act.z)
+    );
+    if (edgeDist < 180) {
+      const edgeT = 1.0 - THREE.MathUtils.clamp(edgeDist / 180, 0, 1);
+      biomeFog = Math.max(biomeFog, 0.0036 + edgeT * edgeT * 0.0048);
+      hazeTintMix = Math.max(hazeTintMix, 0.42 + edgeT * 0.42);
+    }
+    let targetFogDensity = biomeFog * this.curFogMult;
+    if (this.cheats.heavyFog) {
+      targetFogDensity = Math.max(targetFogDensity, 0.0112);
+      hazeTintMix = Math.max(hazeTintMix, 0.72);
+    }
+    _tmpCol.setHex(tpA.fog).lerp(_cycColB.setHex(tpB.fog), blendT);
+    _tmpCol.lerp(_tmpCol2.setHex(0x232d3d), this.curWeatherDark * 0.62);
+    if (hazeTintMix > 0.01) {
+      const mistTintHex = targetNightMix > 0.55 ? 0x1d2742 : (this.timeIdx === 0 ? 0xdcb4a4 : 0xd0dce8);
+      _tmpCol.lerp(_tmpCol2.setHex(mistTintHex), hazeTintMix * 0.62);
+    }
     this.scene.fog.color.lerp(_tmpCol, envLerp);
-    this.scene.fog.density = THREE.MathUtils.lerp(this.scene.fog.density, 0.00145 * wp.fogMult, envLerp);
+    this.scene.fog.density = THREE.MathUtils.lerp(this.scene.fog.density, targetFogDensity, envLerp);
     this.scene.background.copy(this.scene.fog.color);
-    this.renderer.toneMappingExposure = THREE.MathUtils.lerp(this.renderer.toneMappingExposure, tp.exposure, envLerp);
+    this.renderer.toneMappingExposure = THREE.MathUtils.lerp(this.renderer.toneMappingExposure, targetExposure, envLerp);
+
+    // Update Drifting Volumetric-Style Low-Altitude Haze Cards around Player!
+    if (this.worldHazeGroup) {
+      this.worldHazeGroup.position.set(act.x, Math.max(0, act.y * 0.35), act.z);
+      const hazeOp = THREE.MathUtils.clamp(0.15 * this.curFogMult + (this.cheats.heavyFog ? 0.16 : 0), 0.12, 0.34);
+      for (let hi = 0; hi < this.worldHazeMats.length; hi++) {
+        this.worldHazeMats[hi].color.copy(this.scene.fog.color);
+        this.worldHazeMats[hi].opacity = hazeOp;
+      }
+      const kids = this.worldHazeGroup.children;
+      for (let hi = 0; hi < kids.length; hi++) {
+        const sp = kids[hi];
+        const ud = sp.userData;
+        const a = ud.baseAng + elapsed * 0.012;
+        sp.position.x = Math.cos(a) * ud.dist;
+        sp.position.z = Math.sin(a) * ud.dist;
+        sp.position.y = ud.baseY + Math.sin(elapsed * 0.22 + ud.phase) * 3.5;
+      }
+    }
+
+    // Animate Mount Vice Skyway Ropeway (bullwheels, gondolas, sway & night lamps!)
+    if (this.mountViceRopeway) {
+      this.mountViceRopeway.update(dt, elapsed, skyU.uNightMix.value);
+    }
+
     // Modulate iconic GTA Vice City 2D light coronas (subtle golden shimmer at sunset, vibrant neon halo at night!)
     if (this.coronaMats) {
-      const coronaOp = tp.id === 'night' ? 0.72 : (tp.id === 'noon' ? 0.16 : 0.46);
+      const coronaOp = THREE.MathUtils.lerp(0.26, 0.76, skyU.uNightMix.value);
       for (let ci = 0; ci < this.coronaMats.length; ci++) {
         this.coronaMats[ci].opacity = THREE.MathUtils.lerp(this.coronaMats[ci].opacity, coronaOp, envLerp);
       }
@@ -7657,26 +10006,44 @@ class ViceCity3DApp {
       this.rainLines.mesh.position.set(act.x, 0, act.z);
       const pos = this.rainLines.positions;
       const spds = this.rainLines.speeds;
-      const windX = this.weatherIdx === 2 ? -0.32 : -0.14;
-      const fallMult = this.weatherIdx === 2 ? 1.38 : 1.0;
+      const isStorm = this.weatherIdx === 3;
+      const windX = isStorm ? -0.32 : -0.14;
+      const fallMult = isStorm ? 1.38 : 1.0;
       for (let i = 0; i < this.rainLines.count; i++) {
         const idx = i * 6;
         let ry = pos[idx + 1] - spds[i] * fallMult * dt;
         if (ry < 0) ry += 28;
         pos[idx + 1] = ry;
         pos[idx + 3] = pos[idx] + windX;
-        pos[idx + 4] = ry - (this.weatherIdx === 2 ? 1.45 : 1.05);
+        pos[idx + 4] = ry - (isStorm ? 1.45 : 1.05);
       }
       this.rainLines.mesh.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Cycling Traffic Lights (Red -> Green -> Yellow)
+    // Cycling Traffic Lights (N-S & Opposing E-W Red -> Green -> Yellow, or ALL GREEN under GREENLIGHT cheat!)
     for (let i = 0; i < this.trafficSignals.length; i++) {
       const ts = this.trafficSignals[i];
-      const cyc = (elapsed + ts.phase) % 10.0;
-      ts.lG.material = cyc < 4.5 ? this.sigMats.grn : this.sigMats.off;
-      ts.lY.material = (cyc >= 4.5 && cyc < 5.6) ? this.sigMats.yel : this.sigMats.off;
-      ts.lR.material = cyc >= 5.6 ? this.sigMats.red : this.sigMats.off;
+      if (this.cheats.greenLight) {
+        ts.lG.material = this.sigMats.grn;
+        ts.lY.material = this.sigMats.off;
+        ts.lR.material = this.sigMats.off;
+        if (ts.lG2) {
+          ts.lG2.material = this.sigMats.grn;
+          ts.lY2.material = this.sigMats.off;
+          ts.lR2.material = this.sigMats.off;
+        }
+      } else {
+        const cyc = (elapsed + ts.phase) % 10.0;
+        ts.lG.material = cyc < 4.5 ? this.sigMats.grn : this.sigMats.off;
+        ts.lY.material = (cyc >= 4.5 && cyc < 5.6) ? this.sigMats.yel : this.sigMats.off;
+        ts.lR.material = cyc >= 5.6 ? this.sigMats.red : this.sigMats.off;
+        if (ts.lG2) {
+          const cyc2 = (elapsed + ts.phase + 5.0) % 10.0;
+          ts.lG2.material = cyc2 < 4.5 ? this.sigMats.grn : this.sigMats.off;
+          ts.lY2.material = (cyc2 >= 4.5 && cyc2 < 5.6) ? this.sigMats.yel : this.sigMats.off;
+          ts.lR2.material = cyc2 >= 5.6 ? this.sigMats.red : this.sigMats.off;
+        }
+      }
     }
 
     for (let i = 0; i < this.palms.length; i++) {
@@ -7796,6 +10163,14 @@ class ViceCity3DApp {
             this.cash += 300;
             this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
             this.el.combo.innerHTML = `MALIBU CLUB VIP · PARTY BONUS! <span>+$300</span>`;
+          } else if (ip.kind === 'mall') {
+            this.playerHp = 100;
+            this.playerArmor = 100;
+            this.setWeapon('rifle');
+            this.updateHealthHUD();
+            this.cash += 250;
+            this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            this.el.combo.innerHTML = `NORTH POINT MALL · FOOD COURT + AMMU-NATION 100% HP & ARMOR! <span>+$250</span>`;
           } else if (ip.kind === 'airport') {
             this.cash += 200;
             this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
@@ -7863,7 +10238,7 @@ class ViceCity3DApp {
           const planeGroundY = Math.max(0.02, getTerrainHeight(pl.x, pl.z) + 0.04);
           pl.x += fwdX * pl.speed * dt;
           pl.z += fwdZ * pl.speed * dt;
-          pl.y = THREE.MathUtils.clamp(pl.y + vy * dt, planeGroundY, 240);
+          pl.y = THREE.MathUtils.clamp(pl.y + vy * dt, planeGroundY, 340);
 
           // Smooth Touchdown Leveling
           if (pl.y <= planeGroundY + 0.03) {
@@ -7872,9 +10247,9 @@ class ViceCity3DApp {
             pl.roll = THREE.MathUtils.damp(pl.roll, 0, 8, dt);
           }
 
-          // Wide Scenic Airspace Soft Boundary Turnback (Covers all of Vice City + Mount Vice Summit!)
-          if (pl.x < -580 || pl.x > 330 || pl.z < -1580 || pl.z > 440) {
-            const toCenterYaw = Math.atan2(-(pl.x - (-100)), -(pl.z - (-350)));
+          // Full State of Leonida Scenic Airspace Soft Boundary Turnback (Covers all 5 Counties & Keys!)
+          if (pl.x < LEONIDA_PROJ.minX - 120 || pl.x > LEONIDA_PROJ.maxX + 120 || pl.z < LEONIDA_PROJ.minZ - 120 || pl.z > LEONIDA_PROJ.maxZ + 120) {
+            const toCenterYaw = Math.atan2(-(pl.x - (-1150)), -(pl.z - (-200)));
             let dy = toCenterYaw - pl.yaw;
             while (dy > Math.PI) dy -= Math.PI * 2;
             while (dy < -Math.PI) dy += Math.PI * 2;
@@ -8144,7 +10519,7 @@ class ViceCity3DApp {
           }
         }
       }
-    } else if (!isFoot && !isPlane && !isRide && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.miniGameHubOpen && !this.activeDialogue && this.wastedTimer <= 0) {
+    } else if (!isFoot && !isPlane && !isRide && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && this.wastedTimer <= 0) {
       if (this.keys.up) accelInput += 1;
       if (this.keys.down) accelInput -= 1;
       if (this.keys.left) steerInput += 1;
@@ -8152,40 +10527,79 @@ class ViceCity3DApp {
       if (this.keys.nitro && cs.speed > 4) nitroActive = true;
       braking = (this.keys.down && cs.speed > 1.5) || this.keys.drift;
       drifting = this.keys.drift && Math.abs(cs.speed) > 12 && Math.abs(steerInput) > 0.1;
+      // GRIPISEVERYTHING Car Hop on Space!
+      if (this.cheats.grip && this.keys.drift && !cs.airborne && cs.y <= getTerrainHeight(cs.x, cs.z) + 0.35) {
+        cs.airborne = true;
+        cs.airTime = 0;
+        cs.vy = 10.2;
+        this.audio.jump();
+      }
     }
 
+    // Realistic 6-Speed Gearbox Torque Curve, Mountain Slope Gravity, Aerodynamic Drag & Weight Transfer Physics
     const veh = this.activeVehicle || this.heroVehicle;
-    const maxSpeed = nitroActive ? (veh.nitroSpeed || 72) : (veh.topSpeed || 52);
-    const accelRate = nitroActive ? (veh.accel || 22) * 1.6 : (veh.accel || 22);
+    const maxSpeed = nitroActive ? (veh.nitroSpeed || 74) : (veh.topSpeed || 54);
+    const baseAccel = nitroActive ? (veh.accel || 24) * 1.55 : (veh.accel || 24);
+    const spdFrac = THREE.MathUtils.clamp(Math.abs(cs.speed) / Math.max(1, maxSpeed), 0, 1);
+    const torqueMult = 1.24 - spdFrac * 0.56; // Punchy 1st-2nd gear launch tapering realistically in 5th-6th!
     let targetPitch = 0;
 
+    // Real-time mountain grade gravity along vehicle heading (strong low-end hill-climb torque for steep mountains!)
+    const physFwdX = -Math.sin(cs.yaw), physFwdZ = -Math.cos(cs.yaw);
+    const gradeH1 = this.getSurfaceY(cs.x + physFwdX * 1.9, cs.z + physFwdZ * 1.9, false);
+    const gradeH0 = this.getSurfaceY(cs.x - physFwdX * 1.9, cs.z - physFwdZ * 1.9, false);
+    const gradeSin = THREE.MathUtils.clamp((gradeH1 - gradeH0) / 3.8, -0.58, 0.58);
+
     if (accelInput > 0) {
-      cs.speed = Math.min(maxSpeed, cs.speed + accelInput * accelRate * dt);
-      targetPitch = nitroActive ? 0.045 : 0.022;
+      const aeroDrag = cs.speed * cs.speed * 0.0021;
+      const netAccel = Math.max(11.5, accelInput * baseAccel * torqueMult * 1.22 - aeroDrag - Math.max(0, gradeSin) * 4.2);
+      cs.speed = Math.min(maxSpeed, cs.speed + netAccel * dt);
+      targetPitch = nitroActive ? 0.052 : (0.028 * torqueMult);
     } else if (accelInput < 0) {
-      if (cs.speed > 0.8) { cs.speed = Math.max(0, cs.speed - 36 * dt); targetPitch = -0.042; }
-      else { cs.speed = Math.max(-16, cs.speed + accelInput * 14 * dt); targetPitch = -0.02; }
+      if (cs.speed > 0.8) { cs.speed = Math.max(0, cs.speed - 42 * dt); targetPitch = -0.052; }
+      else { cs.speed = Math.max(-17, cs.speed + accelInput * 15 * dt); targetPitch = -0.024; }
     } else {
-      cs.speed = THREE.MathUtils.damp(cs.speed, 0, (isFoot || isPlane || isRide) ? 4.5 : 1.35, dt);
+      const coastGravity = -gradeSin * 13.5 * dt;
+      const rollDrag = Math.sign(cs.speed) * (1.8 + cs.speed * cs.speed * 0.0026) * dt;
+      if (isFoot || isPlane || isRide) {
+        cs.speed = THREE.MathUtils.damp(cs.speed, 0, 4.8, dt);
+      } else {
+        const nextSpd = cs.speed + coastGravity - rollDrag;
+        cs.speed = (Math.abs(cs.speed) < 0.25 && Math.abs(gradeSin) < 0.04) ? 0 : nextSpd;
+      }
     }
-    if (!isFoot && !isPlane && !isRide && this.keys.drift && Math.abs(cs.speed) > 4) cs.speed = THREE.MathUtils.damp(cs.speed, 0, 1.8, dt);
+    if (!isFoot && !isPlane && !isRide && this.keys.drift && !this.cheats.grip && Math.abs(cs.speed) > 4) {
+      cs.speed = THREE.MathUtils.damp(cs.speed, 0, 2.0, dt);
+    }
 
     // Car Drive-By Uzi auto-fire cooldown
     if (!isFoot && !isPlane && !isRide) {
       if (this.fireCooldown > 0) this.fireCooldown = Math.max(0, this.fireCooldown - dt);
-      if (this.fireHeld && this.fireCooldown <= 0 && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && this.wastedTimer <= 0) {
+      if (this.fireHeld && this.fireCooldown <= 0 && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && this.wastedTimer <= 0) {
         this.fireWeapon();
       }
     }
 
-    cs.steer = THREE.MathUtils.damp(cs.steer, steerInput * 0.45, 10, dt);
-    const speedFactor = THREE.MathUtils.clamp(Math.abs(cs.speed) / 13, 0, 1);
-    cs.yaw += cs.steer * speedFactor * (drifting ? 2.55 : 1.85) * (veh.grip || 1.0) * (cs.speed >= -0.05 ? 1 : -1) * dt;
-    cs.driftSlip = THREE.MathUtils.damp(cs.driftSlip, drifting ? steerInput * 0.24 : 0, 6, dt);
+    // Progressive speed-sensitive steering (tight city turning, planted high-speed stability!)
+    const steerLimit = THREE.MathUtils.lerp(0.50, 0.29, spdFrac);
+    cs.steer = THREE.MathUtils.damp(cs.steer, steerInput * steerLimit, 11, dt);
+    const speedFactor = THREE.MathUtils.clamp(Math.abs(cs.speed) / 11.5, 0, 1);
+    const cheatGripBoost = this.cheats.grip ? 1.48 : 1.0;
+    cs.yaw += cs.steer * speedFactor * (drifting ? 2.65 : 1.92) * (veh.grip || 1.0) * cheatGripBoost * (cs.speed >= -0.05 ? 1 : -1) * dt;
+    cs.driftSlip = THREE.MathUtils.damp(cs.driftSlip, (drifting && !this.cheats.grip) ? steerInput * 0.28 : 0, 5.8, dt);
 
+    // Continuous Substepped Vehicle Movement (max 0.55m per substep -> ZERO high-speed tunneling through buildings, trees, cars, or cliffs!)
     const moveYaw = cs.yaw - cs.driftSlip;
-    cs.x += -Math.sin(moveYaw) * cs.speed * dt;
-    cs.z += -Math.cos(moveYaw) * cs.speed * dt;
+    const moveDx = -Math.sin(moveYaw) * cs.speed * dt;
+    const moveDz = -Math.cos(moveYaw) * cs.speed * dt;
+    const stepDist = Math.hypot(moveDx, moveDz);
+    const subSteps = Math.max(1, Math.min(8, Math.ceil(stepDist / 0.55)));
+    const invSub = 1 / subSteps;
+    for (let ss = 0; ss < subSteps; ss++) {
+      cs.x += moveDx * invSub;
+      cs.z += moveDz * invSub;
+      this.resolveWorldCollisions(ss < subSteps - 1);
+    }
 
     // 2b. Cinematic 4-Phase Carjacking / Vehicle Door Animation OR Normal On-Foot Locomotion
     if (this.carjackAnim) {
@@ -8205,6 +10619,12 @@ class ViceCity3DApp {
       } else if (r.id === 'carousel' && this.carnivalPier && this.carnivalPier.carouselHorses[0]) {
         seatObj = this.carnivalPier.carouselHorses[0].mesh;
         seatOffY = 0.42;
+      } else if (r.ropewayKey) {
+        const rw = r.ropewayKey === 'mountVice' ? this.mountViceRopeway : (this.leonidaWorld && this.leonidaWorld.kalagaRopeway);
+        if (rw && rw.gondolas && rw.gondolas[0]) {
+          seatObj = rw.gondolas[0].bodyGrp;
+          seatOffY = -1.95;
+        }
       }
       if (seatObj) {
         seatObj.getWorldPosition(_vecA);
@@ -8214,18 +10634,20 @@ class ViceCity3DApp {
         pMesh.root.position.set(ps.x, ps.y, ps.z);
         if (r.id === 'coaster') {
           pMesh.root.rotation.y = seatObj.rotation.y + Math.PI;
+        } else if (r.ropewayKey) {
+          pMesh.root.rotation.y = seatObj.parent ? seatObj.parent.rotation.y : 0;
         } else {
           pMesh.root.rotation.y = elapsed * 0.35;
         }
         // Seated thrill-ride posture (legs tucked, hands up on roller coaster!)
-        const handsUp = r.id === 'coaster' ? 2.55 : 0.65;
+        const handsUp = r.id === 'coaster' ? 2.55 : (r.ropewayKey ? 0.35 : 0.65);
         pMesh.armL.rotation.set(handsUp, 0, 0.25);
         pMesh.armR.rotation.set(handsUp, 0, -0.25);
         pMesh.legL.rotation.x = 1.15;
         pMesh.legR.rotation.x = 1.15;
       }
     } else if (isFoot) {
-      const canAct = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && this.wastedTimer <= 0;
+      const canAct = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && this.wastedTimer <= 0;
       let moveFwd = 0, moveStrafe = 0;
       if (canAct) {
         if (this.keys.up) moveFwd += 1;
@@ -8241,7 +10663,15 @@ class ViceCity3DApp {
       let mz = cfZ * moveFwd + crZ * moveStrafe;
       const mLen = Math.hypot(mx, mz);
       const sprinting = Boolean(canAct && this.keys.nitro && mLen > 0.05);
-      const targetMaxSpd = ps.attackTimer > 0 ? 1.8 : (sprinting ? 8.6 : 4.5);
+      let hillFactor = 1.0;
+      if (mLen > 0.05) {
+        const dirX = mx / mLen, dirZ = mz / mLen;
+        const hNow = this.getSurfaceY(ps.x, ps.z, true);
+        const hNext = this.getSurfaceY(ps.x + dirX * 1.0, ps.z + dirZ * 1.0, true);
+        const uphillSlope = Math.max(0, hNext - hNow);
+        hillFactor = THREE.MathUtils.clamp(1.0 - uphillSlope * 0.24, 0.62, 1.0);
+      }
+      const targetMaxSpd = (ps.attackTimer > 0 ? 1.8 : (sprinting ? 8.6 : 4.5)) * hillFactor;
 
       // Smooth biomechanical acceleration & deceleration (zero robotic instant start/stop!)
       const targetVx = mLen > 0.05 ? (mx / mLen) * targetMaxSpd : 0;
@@ -8250,8 +10680,13 @@ class ViceCity3DApp {
       ps.vx = THREE.MathUtils.damp(ps.vx || 0, targetVx, velDamp, dt);
       ps.vz = THREE.MathUtils.damp(ps.vz || 0, targetVz, velDamp, dt);
 
-      ps.x += ps.vx * dt;
-      ps.z += ps.vz * dt;
+      const footStepDist = Math.hypot(ps.vx * dt, ps.vz * dt);
+      const footSub = footStepDist > 0.28 ? 2 : 1;
+      for (let fs = 0; fs < footSub; fs++) {
+        ps.x += (ps.vx * dt) / footSub;
+        ps.z += (ps.vz * dt) / footSub;
+        this.resolvePlayerCollisions();
+      }
       const moveSpeed = Math.hypot(ps.vx, ps.vz);
       ps.speed = moveSpeed;
 
@@ -8281,10 +10716,10 @@ class ViceCity3DApp {
         this.audio.jump();
       }
       const onPierDeck = ps.x >= 17.5 && ps.x <= 141.5 && ps.z >= -448 && ps.z <= -412;
-      const footMvHit = ps.z < -1104 ? closestMountainRoad(ps.x, ps.z) : null;
-      const footFloorY = onPierDeck ? 0.16 : (getTerrainHeight(ps.x, ps.z) + (footMvHit && footMvHit.dist < 7.2 ? 0.08 : 0));
+      const footFloorY = onPierDeck ? 0.16 : this.getSurfaceY(ps.x, ps.z, true);
       if (ps.grounded) {
-        ps.y = footFloorY;
+        if (ps.y > footFloorY && ps.y - footFloorY < 0.85) ps.y = footFloorY;
+        else ps.y = footFloorY;
       }
       if (!ps.grounded || ps.y > footFloorY + 0.02) {
         if (ps.parachuting) {
@@ -8309,10 +10744,14 @@ class ViceCity3DApp {
 
       if (canAct && !this.pointerLocked && Math.abs(this.hoverNormX) > 0.88 && (performance.now() - this.lastLookTime < 1600)) {
         const edgeStrength = (Math.abs(this.hoverNormX) - 0.88) / 0.12;
-        this.orbitYawOffset -= Math.sign(this.hoverNormX) * edgeStrength * 2.15 * dt;
+        this.targetOrbitYaw -= Math.sign(this.hoverNormX) * edgeStrength * 2.15 * dt;
       }
 
       this.resolvePlayerCollisions();
+      if (ps.grounded) {
+        const postPier = ps.x >= 17.5 && ps.x <= 141.5 && ps.z >= -448 && ps.z <= -412;
+        ps.y = postPier ? 0.16 : this.getSurfaceY(ps.x, ps.z, true);
+      }
 
       // Weapons cooldowns, SMG / Rifle auto-fire, Muzzle Flash & Crosshair recoil pulse
       if (this.fireCooldown > 0) this.fireCooldown = Math.max(0, this.fireCooldown - dt);
@@ -8875,9 +11314,9 @@ class ViceCity3DApp {
       const nearRide = this.findNearestPierRide(8.5);
       const nearNpc = this.findNearestTalkableNpc(4.6);
       const nearPad = this.findNearestMiniGamePad(6.5);
-      const nearTarget = this.findNearestVehicleTarget(6.5);
+      const nearTarget = this.findNearestVehicleTarget(5.4);
       this.nearbyVehicleTarget = nearTarget;
-      const uiFree = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue;
+      const uiFree = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue;
       if (uiFree && nearRide) {
         this.el.carPrompt.textContent = `Press E · Ride ${nearRide.label}`;
         this.el.carPrompt.classList.add('on');
@@ -8888,11 +11327,17 @@ class ViceCity3DApp {
         this.el.carPrompt.textContent = `Press E · Talk to ${nearNpc.name} (${nearNpc.role})`;
         this.el.carPrompt.classList.add('on');
       } else if (uiFree && nearTarget) {
-        this.el.carPrompt.textContent = nearTarget.kind === 'plane'
-          ? `Press F · Fly ${nearTarget.label}`
-          : (nearTarget.kind === 'traffic'
-            ? `Press F · Steal ${nearTarget.label}`
-            : `Press F · Enter ${nearTarget.label}`);
+        if (nearTarget.kind === 'plane') {
+          this.el.carPrompt.textContent = `Press F · Fly ${nearTarget.label}`;
+        } else if (nearTarget.isTaxi || (nearTarget.kind === 'traffic' && nearTarget.tc && nearTarget.tc.userData && nearTarget.tc.userData.kind === 'taxi')) {
+          this.el.carPrompt.textContent = `Press E · Hail Kaufman Cab | Press F · Steal Taxi`;
+        } else if (nearTarget.isBike) {
+          this.el.carPrompt.textContent = `Press F · Ride ${nearTarget.label}`;
+        } else if (nearTarget.kind === 'traffic') {
+          this.el.carPrompt.textContent = `Press F · Steal ${nearTarget.label}`;
+        } else {
+          this.el.carPrompt.textContent = `Press F · Enter ${nearTarget.label}`;
+        }
         this.el.carPrompt.classList.add('on');
       } else {
         let nearDoor = null;
@@ -9127,11 +11572,12 @@ class ViceCity3DApp {
           u.carRig.bodyGroup.rotation.z = THREE.MathUtils.damp(u.carRig.bodyGroup.rotation.z, 0, 8, dt);
         }
       } else {
-        tc.position.z += u.baseSpeed * dt;
+        const trafficMult = this.cheats.fastTraffic ? 1.68 : 1.0;
+        tc.position.z += u.baseSpeed * trafficMult * dt;
         if (tc.position.z > 358) tc.position.z = -1112;
         if (tc.position.z < -1116) tc.position.z = 352;
         if (u.carRig && u.carRig.wheelSpinGroups) {
-          u.wheelSpin = (u.wheelSpin || 0) - Math.abs(u.baseSpeed) * dt * 2.5;
+          u.wheelSpin = (u.wheelSpin || 0) - Math.abs(u.baseSpeed * trafficMult) * dt * 2.5;
           for (let w = 0; w < u.carRig.wheelSpinGroups.length; w++) u.carRig.wheelSpinGroups[w].rotation.x = u.wheelSpin;
         }
         // Subtle damaged hood smoke if injured below 65% HP
@@ -9401,7 +11847,14 @@ class ViceCity3DApp {
       let targetSpd = 0;
       let isPanic = false;
 
-      if (ped.state === 'panic') {
+      if (this.cheats.fannyMagnet && isFoot && distActSq > 6.5 && distActSq < 580 && ped.state === 'walk') {
+        const dP = Math.sqrt(distActSq) || 0.1;
+        targetSpd = 3.2;
+        ped.curSpeed = THREE.MathUtils.damp(ped.curSpeed, targetSpd, 7.0, dt);
+        ped.x = THREE.MathUtils.clamp(ped.x - (dxAct / dP) * ped.curSpeed * dt, -492, 198);
+        ped.z = THREE.MathUtils.clamp(ped.z - (dzAct / dP) * ped.curSpeed * dt, -1470, 355);
+        targetYaw = Math.atan2(-dxAct, -dzAct);
+      } else if (ped.state === 'panic') {
         isPanic = true;
         ped.stateTimer -= dt;
         const fd = Math.max(0.1, Math.sqrt(distActSq));
@@ -9676,9 +12129,68 @@ class ViceCity3DApp {
         }
       }
     }
-    const carMvHit = cs.z < -1104 ? closestMountainRoad(cs.x, cs.z) : null;
-    const carGroundY = getTerrainHeight(cs.x, cs.z) + (carMvHit && carMvHit.dist < 7.2 ? 0.08 : 0);
-    if (cs.airborne || cs.y > carGroundY + 0.02) {
+    const hCenter = this.getSurfaceY(cs.x, cs.z, false);
+    const carOnSlope = !isInCoreViceFootprint(cs.x, cs.z) || hCenter > 0.25;
+    // Compute exact terrain pitch & roll FIRST (with CORRECT right-hand roll sign!) so 9-point rigid-body clearance matches the actual mesh pose!
+    let targetSlopePitch = 0, targetSlopeRoll = 0;
+    if (carOnSlope && !cs.airborne) {
+      const hFront = this.getSurfaceY(cs.x + fwdX * 1.9, cs.z + fwdZ * 1.9, false);
+      const hBack  = this.getSurfaceY(cs.x - fwdX * 1.9, cs.z - fwdZ * 1.9, false);
+      const hRight = this.getSurfaceY(cs.x + rightX * 1.1, cs.z + rightZ * 1.1, false);
+      const hLeft  = this.getSurfaceY(cs.x - rightX * 1.1, cs.z - rightZ * 1.1, false);
+      // Local frame (rotation.order='YXZ', forward=-Z, right=+X):
+      // +pitch lifts -Z (front) -> atan2(hFront - hBack, 3.8)
+      // +roll  lifts +X (right) -> atan2(hRight - hLeft, 2.2) (fixes uphill side-slope clipping!)
+      targetSlopePitch = THREE.MathUtils.clamp(Math.atan2(hFront - hBack, 3.8), -0.74, 0.74);
+      targetSlopeRoll  = THREE.MathUtils.clamp(Math.atan2(hRight - hLeft, 2.2), -0.64, 0.64);
+    }
+    cs.slopePitch = THREE.MathUtils.damp(cs.slopePitch || 0, targetSlopePitch, 20, dt);
+    cs.slopeRoll  = THREE.MathUtils.damp(cs.slopeRoll || 0, targetSlopeRoll, 20, dt);
+
+    let carGroundY = hCenter + 0.05;
+    if (carOnSlope) {
+      // Exact 9-point rigid-body footprint clearance across center, 4 wheel hubs & 4 bumper corners:
+      // For Euler(pitch, yaw, roll, 'YXZ'), local (sx, 0, -sz) has vertical offset dy = sz*sin(pitch) + sx*sin(roll)*cos(pitch).
+      // Solving centerY >= terrainY - dy + pad guarantees ZERO wheel or bumper penetration into mountain slopes, crests, or dips!
+      const sinP = Math.sin(cs.slopePitch);
+      const cosP = Math.cos(cs.slopePitch);
+      const sinRcosP = Math.sin(cs.slopeRoll) * cosP;
+      let reqY = hCenter + 0.06;
+      const samplePts = [
+        [ 0.98,  1.48,  0.06], [-0.98,  1.48,  0.06],
+        [ 0.98, -1.48,  0.06], [-0.98, -1.48,  0.06],
+        [ 1.08,  2.35, -0.06], [-1.08,  2.35, -0.06],
+        [ 1.08, -2.35, -0.06], [-1.08, -2.35, -0.06]
+      ];
+      for (let i = 0; i < samplePts.length; i++) {
+        const sx = samplePts[i][0];
+        const sz = samplePts[i][1];
+        const pad = samplePts[i][2];
+        const wx = cs.x + rightX * sx + fwdX * sz;
+        const wz = cs.z + rightZ * sx + fwdZ * sz;
+        const hPt = this.getSurfaceY(wx, wz, false);
+        const dy = sz * sinP + sx * sinRcosP;
+        const neededCenter = hPt - dy + pad;
+        if (neededCenter > reqY) reqY = neededCenter;
+      }
+      carGroundY = reqY;
+    }
+    // SEAWAYS Cheat: Drive smoothly right across the Atlantic Ocean surface!
+    if (this.cheats.seaways && cs.x > 28 && cs.z > -1110 && carGroundY < -0.25) {
+      carGroundY = -0.28;
+      if (carAbsSpd > 5 && Math.random() < 0.55) {
+        this.spawnParticle(cs.x - fwdX * 2.0 + (Math.random() - 0.5) * 1.4, -0.1, cs.z - fwdZ * 2.0, (Math.random() - 0.5) * 2.5, 2.2, (Math.random() - 0.5) * 2.5, 0x9cf4ff, 0.55, 0.72, 1.2, 7.5);
+      }
+    }
+    // COMEFLYWITHME Cheat: Flying Cars takeoff & glide above Vice City!
+    if (this.cheats.flyingCars && !isFoot && !isPlane && !isRide && cs.speed > 22) {
+      const climbInput = (this.keys.up || this.keys.nitro) ? 1.0 : (this.keys.down ? -1.0 : 0.12);
+      const lift = (cs.speed - 20) * 0.28 * climbInput;
+      cs.y = THREE.MathUtils.clamp(cs.y + lift * dt, carGroundY, 92);
+      cs.vy = 0;
+      cs.airborne = cs.y > carGroundY + 0.4;
+      rampPitch = THREE.MathUtils.clamp(climbInput * 0.22, -0.18, 0.24);
+    } else if (cs.airborne || cs.y > carGroundY + 0.02) {
       if (cs.airborne) {
         cs.airTime += dt;
         cs.vy -= 21.5 * dt;
@@ -9703,9 +12215,12 @@ class ViceCity3DApp {
           }
         }
       } else if (rampPitch === 0) {
-        cs.y = Math.max(carGroundY, cs.y - 14 * dt);
+        cs.y = Math.max(carGroundY, cs.y - 18 * dt);
       }
     } else if (rampPitch === 0) {
+      cs.y = carGroundY;
+    }
+    if (!this.cheats.flyingCars && !cs.airborne && rampPitch === 0 && cs.y < carGroundY) {
       cs.y = carGroundY;
     }
 
@@ -9752,26 +12267,48 @@ class ViceCity3DApp {
       }
     }
 
-    // 6. Apply Active Vehicle Transform + Roadable Mount Vice Slope Pitch & Roll Alignment!
-    let slopePitch = 0, slopeRoll = 0;
-    if (cs.z < -1112 && !cs.airborne) {
-      const hFront = getTerrainHeight(cs.x + fwdX * 1.9, cs.z + fwdZ * 1.9);
-      const hBack  = getTerrainHeight(cs.x - fwdX * 1.9, cs.z - fwdZ * 1.9);
-      const hRight = getTerrainHeight(cs.x + rightX * 1.1, cs.z + rightZ * 1.1);
-      const hLeft  = getTerrainHeight(cs.x - rightX * 1.1, cs.z - rightZ * 1.1);
-      slopePitch = THREE.MathUtils.clamp(Math.atan2(hFront - hBack, 3.8), -0.34, 0.34);
-      slopeRoll  = THREE.MathUtils.clamp(Math.atan2(hLeft - hRight, 2.2), -0.26, 0.26);
-    }
+    // 6. Apply Active Vehicle Transform (chassis + ALL 4 wheels rotated together cleanly with terrain slope!)
     const activeRig = (this.activeVehicle && this.activeVehicle.rig) || this.car;
     const activeMesh = (this.activeVehicle && this.activeVehicle.mesh) || this.car.root;
     activeMesh.position.set(cs.x, cs.y, cs.z);
-    activeMesh.rotation.y = cs.yaw;
-    cs.pitch = THREE.MathUtils.damp(cs.pitch, targetPitch + rampPitch + slopePitch, 8, dt);
-    cs.roll = THREE.MathUtils.damp(cs.roll, -cs.steer * speedFactor * (drifting ? 0.12 : 0.065) + slopeRoll, 8, dt);
+    activeMesh.rotation.order = 'YXZ';
+    activeMesh.rotation.set(cs.slopePitch, cs.yaw, cs.slopeRoll);
+    const bikeWheeliePitch = activeRig.isBike && nitroActive && cs.speed > 10 ? 0.24 : 0;
+    const bikeLeanRoll = activeRig.isBike
+      ? cs.steer * speedFactor * 0.42
+      : -cs.steer * speedFactor * (drifting ? 0.12 : 0.065);
+    cs.pitch = THREE.MathUtils.damp(cs.pitch, targetPitch + rampPitch + bikeWheeliePitch, 8, dt);
+    cs.roll = THREE.MathUtils.damp(cs.roll, bikeLeanRoll, 8, dt);
     if (activeRig.bodyGroup) {
       activeRig.bodyGroup.rotation.x = cs.pitch;
       activeRig.bodyGroup.rotation.z = cs.roll;
       activeRig.bodyGroup.position.y = cs.airborne ? 0 : Math.sin(elapsed * 22) * Math.min(carAbsSpd * 0.0004, 0.012);
+    }
+
+    // Two-Wheeler Seated Rider Posture (Facing FORWARD -Z, leaning into handlebars, feet tucked on pegs!)
+    if (!isFoot && !isPlane && !isRide && activeRig.isBike && this.player && this.player.root.visible) {
+      const pM = this.player;
+      const isScooter = activeRig.bikeKind === 'faggio';
+      const leanFwd = isScooter ? -0.10 : (-0.30 - speedFactor * 0.14);
+      if (pM.chest) pM.chest.rotation.set(leanFwd, 0, 0);
+      if (pM.head) pM.head.rotation.set(-leanFwd * 0.78, cs.steer * 0.36, 0);
+      pM.armL.rotation.set(isScooter ? 0.96 : 1.18, 0, -0.18);
+      pM.armR.rotation.set(isScooter ? 0.96 : 1.18, 0, 0.18);
+      if (pM.armL.userData && pM.armL.userData.elbow) pM.armL.userData.elbow.rotation.x = 0.28;
+      if (pM.armR.userData && pM.armR.userData.elbow) pM.armR.userData.elbow.rotation.x = 0.28;
+      pM.legL.rotation.set(isScooter ? 1.18 : 0.88, 0, -0.22);
+      pM.legR.rotation.set(isScooter ? 1.18 : 0.88, 0, 0.22);
+      if (pM.legL.userData && pM.legL.userData.knee) pM.legL.userData.knee.rotation.x = isScooter ? -1.18 : -1.24;
+      if (pM.legR.userData && pM.legR.userData.knee) pM.legR.userData.knee.rotation.x = isScooter ? -1.18 : -1.24;
+      pM.body.position.set(0, -0.24, 0.04);
+      pM.body.rotation.set(0, 0, 0);
+    }
+
+    // Flashing emergency roof lightbar if player is driving a stolen VCPD Cruiser!
+    if (activeRig.isPolice && activeRig.redLightMat && activeRig.blueLightMat) {
+      const pFlash = Math.floor(elapsed * 8.0) % 2;
+      activeRig.redLightMat.emissiveIntensity = pFlash === 0 ? 3.0 : 0.25;
+      activeRig.blueLightMat.emissiveIntensity = pFlash === 1 ? 3.0 : 0.25;
     }
 
     cs.wheelSpin -= cs.speed * dt * 2.85;
@@ -9860,11 +12397,17 @@ class ViceCity3DApp {
       this.navArrow.visible = false;
     }
 
-    // 7. Smooth Camera Choreography (Airplane Flight Chase + Car Chase/Low/Drone + On-Foot Over-The-Shoulder GTA Camera)
-    if (!isFoot && !this.dragging && (isPlane ? act.speed > 6 : carAbsSpd > 5) && (performance.now() - this.lastLookTime > 1800)) {
-      this.orbitYawOffset = THREE.MathUtils.damp(this.orbitYawOffset, 0, 2.2, dt);
-      this.orbitPitchOffset = THREE.MathUtils.damp(this.orbitPitchOffset, 0, 2.2, dt);
+    // 7. Velocity-Damped Smooth Mouse Look & Camera Choreography (with gentle auto-recenter while driving!)
+    if (this.orbitYawOffset !== this._lastAppliedOrbitYaw) this.targetOrbitYaw = this.orbitYawOffset;
+    if (this.orbitPitchOffset !== this._lastAppliedOrbitPitch) this.targetOrbitPitch = this.orbitPitchOffset;
+    if (!isFoot && !this.dragging && (isPlane ? act.speed > 6 : carAbsSpd > 5) && (performance.now() - this.lastLookTime > 2400)) {
+      this.targetOrbitYaw = THREE.MathUtils.damp(this.targetOrbitYaw, 0, 2.2, dt);
+      this.targetOrbitPitch = THREE.MathUtils.damp(this.targetOrbitPitch, 0, 2.2, dt);
     }
+    this.orbitYawOffset = THREE.MathUtils.damp(this.orbitYawOffset, this.targetOrbitYaw, 18, dt);
+    this.orbitPitchOffset = THREE.MathUtils.damp(this.orbitPitchOffset, this.targetOrbitPitch, 18, dt);
+    this._lastAppliedOrbitYaw = this.orbitYawOffset;
+    this._lastAppliedOrbitPitch = this.orbitPitchOffset;
     const speedRatio = isPlane
       ? THREE.MathUtils.clamp(act.speed / Math.max(1, act.topSpeed || 90), 0, 1)
       : THREE.MathUtils.clamp(carAbsSpd / 64, 0, 1);
@@ -9900,48 +12443,77 @@ class ViceCity3DApp {
     } else if (isRide) {
       // Sweeping Scenic / Thrill Ride Camera for Carnival Pier Attractions!
       const r = this.activeRide;
-      const yaw = (r.id === 'ferris' ? elapsed * 0.18 : (r.id === 'carousel' ? elapsed * 0.55 : this.player.root.rotation.y)) + this.orbitYawOffset;
-      const dist = r.id === 'ferris' ? 9.5 : (r.id === 'coaster' ? 6.8 : 5.6);
-      const hOff = r.id === 'ferris' ? 3.2 : (r.id === 'coaster' ? 2.8 : 2.2);
+      const yaw = (r.ropewayKey ? (this.player.root.rotation.y + 0.55) : (r.id === 'ferris' ? elapsed * 0.18 : (r.id === 'carousel' ? elapsed * 0.55 : this.player.root.rotation.y))) + this.orbitYawOffset;
+      const dist = r.ropewayKey ? 11.5 : (r.id === 'ferris' ? 9.5 : (r.id === 'coaster' ? 6.8 : 5.6));
+      const hOff = r.ropewayKey ? 3.8 : (r.id === 'ferris' ? 3.2 : (r.id === 'coaster' ? 2.8 : 2.2));
       _vecA.set(ps.x + Math.sin(yaw) * dist, ps.y + hOff + this.orbitPitchOffset * 2.4, ps.z + Math.cos(yaw) * dist);
       _vecB.set(ps.x, ps.y + 1.1, ps.z);
-      targetFov = r.id === 'coaster' ? 64 : 56;
+      targetFov = r.id === 'coaster' ? 64 : (r.ropewayKey ? 60 : 56);
     } else if (isFoot) {
       const armed = this.weapon !== 'fists';
-      const footDist = ps.parachuting ? 7.2 : (armed ? 3.85 : 4.6);
-      const footH = (ps.parachuting ? 3.2 : (armed ? 1.88 : 2.05)) + this.orbitPitchOffset * 2.1;
+      let indoorBounds = null;
+      if (this.enterableBuildings) {
+        for (let i = 0; i < this.enterableBuildings.length; i++) {
+          const b = this.enterableBuildings[i].bounds;
+          if (b && ps.x >= b.minX - 0.8 && ps.x <= b.maxX + 0.8 && ps.z >= b.minZ - 0.8 && ps.z <= b.maxZ + 0.8) {
+            indoorBounds = b;
+            break;
+          }
+        }
+      }
+      const footDist = ps.parachuting ? 7.2 : (indoorBounds ? 3.25 : (armed ? 3.85 : 4.6));
+      const footH = (ps.parachuting ? 3.2 : (indoorBounds ? 1.82 : (armed ? 1.88 : 2.05))) + this.orbitPitchOffset * 2.1;
       const yaw = this.orbitYawOffset;
       const shoulderR = ps.parachuting ? 0 : (armed ? 0.58 : 0.16);
       const rx = Math.cos(yaw) * shoulderR, rz = -Math.sin(yaw) * shoulderR;
-      _vecA.set(ps.x + Math.sin(yaw) * footDist + rx, ps.y + footH, ps.z + Math.cos(yaw) * footDist + rz);
+      let cx = ps.x + Math.sin(yaw) * footDist + rx;
+      let cz = ps.z + Math.cos(yaw) * footDist + rz;
+      if (indoorBounds) {
+        cx = THREE.MathUtils.clamp(cx, indoorBounds.minX + 0.65, indoorBounds.maxX - 0.65);
+        cz = THREE.MathUtils.clamp(cz, indoorBounds.minZ + 0.65, indoorBounds.maxZ - 0.65);
+      }
+      _vecA.set(cx, ps.y + footH, cz);
       _vecB.set(ps.x - Math.sin(yaw) * 6.0 + rx * 0.4, ps.y + 1.42 - this.orbitPitchOffset * 2.2, ps.z - Math.cos(yaw) * 6.0 + rz * 0.4);
     } else if (camMode === 'Low') {
-      camDist = 5.6; camHeight = 1.28; lookAhead = 12.0; targetFov = 62 + speedRatio * 15;
+      camDist = activeRig.isBike ? 4.4 : 5.6; camHeight = activeRig.isBike ? 1.38 : 1.28; lookAhead = 12.0; targetFov = 62 + speedRatio * 15;
       const yaw = cs.yaw + this.orbitYawOffset;
+      const orbBlend = Math.max(0, Math.cos(this.orbitYawOffset));
       _vecA.set(cs.x + Math.sin(yaw) * camDist, cs.y + camHeight + this.orbitPitchOffset * 2, cs.z + Math.cos(yaw) * camDist);
-      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead, cs.y + 0.85, cs.z - Math.cos(cs.yaw) * lookAhead);
+      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead * orbBlend, cs.y + 0.92, cs.z - Math.cos(cs.yaw) * lookAhead * orbBlend);
     } else if (camMode === 'Drone') {
       camDist = 14.5; camHeight = 9.4; lookAhead = 8.0; targetFov = 50 + speedRatio * 8;
       const yaw = cs.yaw + 0.34 + this.orbitYawOffset;
+      const orbBlend = Math.max(0, Math.cos(this.orbitYawOffset));
       _vecA.set(cs.x + Math.sin(yaw) * camDist, cs.y + camHeight + this.orbitPitchOffset * 4, cs.z + Math.cos(yaw) * camDist);
-      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead - 2.2, cs.y + 1.0, cs.z - Math.cos(cs.yaw) * lookAhead);
+      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead * orbBlend - 2.2 * orbBlend, cs.y + 1.0, cs.z - Math.cos(cs.yaw) * lookAhead * orbBlend);
     } else {
+      if (activeRig.isBike) { camDist = 5.4; camHeight = 1.92; lookAhead = 6.5; }
       const yaw = cs.yaw + this.orbitYawOffset;
-      _vecA.set(cs.x + Math.sin(yaw) * (camDist + speedRatio * 1.4), cs.y + camHeight + this.orbitPitchOffset * 3.2, cs.z + Math.cos(yaw) * (camDist + speedRatio * 1.4));
-      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead, cs.y + 0.78, cs.z - Math.cos(cs.yaw) * lookAhead);
+      const orbBlend = Math.max(0, Math.cos(this.orbitYawOffset));
+      const slopeCamLift = Math.max(0, (cs.slopePitch || 0) * 3.8);
+      const slopeLookLift = (cs.slopePitch || 0) * 4.2;
+      _vecA.set(cs.x + Math.sin(yaw) * (camDist + speedRatio * 1.4), cs.y + camHeight + slopeCamLift + this.orbitPitchOffset * 3.2, cs.z + Math.cos(yaw) * (camDist + speedRatio * 1.4));
+      _vecB.set(cs.x - Math.sin(cs.yaw) * lookAhead * orbBlend, cs.y + (activeRig.isBike ? 1.02 : 0.85) + slopeLookLift, cs.z - Math.cos(cs.yaw) * lookAhead * orbBlend);
     }
 
+    // Never let the chase/foot camera clip underneath mountain slopes behind the actor!
+    let camFloorY = 0.8;
+    if (!isPlane) {
+      const surfCam = this.getSurfaceY(_vecA.x, _vecA.z, false);
+      const surfMid = this.getSurfaceY((_vecA.x + act.x) * 0.5, (_vecA.z + act.z) * 0.5, false);
+      camFloorY = Math.max(0.8, surfCam + 1.45, surfMid + 1.15);
+    }
     const sx = (Math.random() - 0.5) * this.camShake;
     const sy = (Math.random() - 0.5) * this.camShake;
     const camDamp = isPlane ? 6.2 : (isFoot ? 11.0 : 7.5);
     if (this.snapCameraNext) {
-      this.camera.position.set(_vecA.x, Math.max(0.8, _vecA.y), _vecA.z);
+      this.camera.position.set(_vecA.x, Math.max(camFloorY, _vecA.y), _vecA.z);
       this.camera.fov = targetFov;
       this.camera.updateProjectionMatrix();
       this.snapCameraNext = false;
     } else {
       this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, _vecA.x + sx, camDamp, dt);
-      this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, Math.max(0.8, _vecA.y + sy), camDamp, dt);
+      this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, Math.max(camFloorY, _vecA.y + sy), camDamp, dt);
       this.camera.position.z = THREE.MathUtils.damp(this.camera.position.z, _vecA.z, camDamp, dt);
       const nextFov = THREE.MathUtils.damp(this.camera.fov, targetFov, 6, dt);
       if (Math.abs(nextFov - this.camera.fov) > 0.02) {
@@ -9952,63 +12524,107 @@ class ViceCity3DApp {
     this.camera.lookAt(_vecB);
     this.updateProjectPins(act);
 
-    this.audio.update(isFoot ? 0 : speedRatio, isPlane ? (act.throttle > 0.75) : nitroActive, drifting);
+    // 8. Exact Main Portfolio Dual-Dial Sports-Car Speedometer & Tachometer + GTA V Special Bar & Clock
+    const kmh = isPlane ? Math.round(act.speed * 1.94) : Math.round(carAbsSpd * 3.9);
+    const mph = isPlane ? Math.round(act.speed * 1.94) : Math.round(carAbsSpd * 2.55);
+    const gearNum = cs.speed < -0.5 ? 0 : mph < 3 ? 0 : Math.min(6, Math.floor(mph / 28) + 1);
+    this.audio.update(
+      isFoot ? 0 : speedRatio,
+      isPlane ? (act.throttle > 0.75) : nitroActive,
+      drifting,
+      Boolean(activeRig.isBike),
+      act.y,
+      gearNum
+    );
+    if (this.leonidaWorld && typeof this.leonidaWorld.update === 'function') {
+      const liveNightMix = this.skyDome && this.skyDome.material && this.skyDome.material.uniforms ? this.skyDome.material.uniforms.uNightMix.value : 0;
+      this.leonidaWorld.update(dt, act, kmh, this.mode === 'car', (ev) => this.handleLeonidaToll(ev), elapsed, liveNightMix);
+    }
     if (this.frameCount % 4 === 0) this.drawRadar();
 
-    // 8. Realistic 1986 Dual-Gauge Vintage Binnacle (Car Speed/Gear OR Aircraft Airspeed KTS & Altitude!)
-    const kmh = isPlane ? Math.round(act.speed * 1.94) : Math.round(carAbsSpd * 3.9);
-    const needleDeg = -130 + THREE.MathUtils.clamp((isPlane ? kmh / 240 : carAbsSpd * 3.9 / 280), 0, 1) * 260;
-    if (Math.abs(needleDeg - this.lastNeedleDeg) > 0.25) {
-      this.lastNeedleDeg = needleDeg;
-      this.el.needle.style.transform = `rotate(${needleDeg.toFixed(1)}deg)`;
+    // Main Portfolio Speedometer SVG sweep (135 deg -> 405 deg = 270 deg sweep, 0..200 MPH)
+    const spdNeedleDeg = 135 + (Math.min(mph, 200) / 200) * 270;
+    if (this.el.needle && Math.abs(spdNeedleDeg - this.lastNeedleDeg) > 0.25) {
+      this.lastNeedleDeg = spdNeedleDeg;
+      this.el.needle.setAttribute('transform', `rotate(${spdNeedleDeg.toFixed(1)} 100 100)`);
     }
-    if (kmh !== this.lastHudKmh) {
-      this.lastHudKmh = kmh;
-      this.el.speed.textContent = String(kmh);
+    if (mph !== this.lastHudKmh) {
+      this.lastHudKmh = mph;
+      if (this.el.speed) this.el.speed.textContent = String(Math.min(999, mph)).padStart(3, '0');
+      if (this.el.cluster) this.el.cluster.classList.toggle('over', !isPlane && mph > 55);
     }
-    const gearNum = cs.speed < -0.5 ? 0 : kmh < 4 ? 0 : Math.min(5, Math.floor(kmh / 46) + 1);
     const gearStr = isPlane
       ? `${Math.round(act.y)}M`
-      : (cs.speed < -0.5 ? 'R' : kmh < 4 ? 'N' : String(gearNum));
+      : (cs.speed < -0.5 ? 'R' : mph < 3 ? 'N' : String(gearNum));
     if (gearStr !== this.lastHudGear) {
       this.lastHudGear = gearStr;
-      this.el.gear.textContent = gearStr;
+      if (this.el.gear) this.el.gear.textContent = gearStr;
+    }
+    if (this.el.spdLim) {
+      const limTxt = isPlane ? 'AIRSPEED' : 'LIMIT 55';
+      if (this.el.spdLim.textContent !== limTxt) this.el.spdLim.textContent = limTxt;
+    }
+    if (this.el.spdUnit) {
+      const unitTxt = isPlane ? 'KTS' : 'MPH';
+      if (this.el.spdUnit.textContent !== unitTxt) this.el.spdUnit.textContent = unitTxt;
+    }
+    if (this.el.tchUnit) {
+      const tUnitTxt = isPlane ? 'ALT' : 'GEAR';
+      if (this.el.tchUnit.textContent !== tUnitTxt) this.el.tchUnit.textContent = tUnitTxt;
     }
     if (isPlane && this.el.carName && this.frameCount % 6 === 0) {
       const gTxt = act.gearBlend > 0.5 ? 'GEAR DN' : 'GEAR UP';
       this.el.carName.textContent = `${act.label} · ${Math.round(act.y)}M · ${gTxt}`;
     }
 
-    // Dynamic RPM Tachometer Needle + Warm Backlit Arc
-    const rpmNorm = kmh < 4
-      ? 0.11 + Math.sin(elapsed * 8) * 0.018
-      : THREE.MathUtils.clamp(0.24 + ((kmh % 46) / 46) * 0.65 + (nitroActive ? 0.16 : 0), 0.12, 0.99);
-    const tachDeg = -130 + rpmNorm * 260;
+    // Main Portfolio Tachometer Needle (0..8 RPM x1000, 135 deg -> 405 deg, flashes .rev > 6.5)
+    const rpmVal = isPlane
+      ? THREE.MathUtils.clamp(1.2 + (act.throttle || 0.35) * 6.5, 1.0, 8.0)
+      : (mph < 3
+        ? 0.85 + Math.sin(elapsed * 8) * 0.14
+        : THREE.MathUtils.clamp(1.9 + ((mph % 28) / 28) * 5.2 + (nitroActive ? 1.1 : 0), 1.0, 7.95));
+    const tachDeg = 135 + (Math.min(rpmVal, 8) / 8) * 270;
     if (this.el.tachNeedle && Math.abs(tachDeg - this.lastTachDeg) > 0.35) {
       this.lastTachDeg = tachDeg;
-      this.el.tachNeedle.style.transform = `rotate(${tachDeg.toFixed(1)}deg)`;
+      this.el.tachNeedle.setAttribute('transform', `rotate(${tachDeg.toFixed(1)} 100 100)`);
     }
-    const rpmOffset = Math.round(208 * (1 - rpmNorm));
-    if (this.el.rpmArc && Math.abs(rpmOffset - this.lastRpmOffset) >= 2) {
-      this.lastRpmOffset = rpmOffset;
-      this.el.rpmArc.style.strokeDashoffset = String(rpmOffset);
-      this.el.rpmArc.style.stroke = rpmNorm > 0.84 ? '#FF465A' : '#FFB84D';
-    }
-    this.el.lampNos.classList.toggle('on-nos', nitroActive);
+    if (this.el.cluster) this.el.cluster.classList.toggle('rev', rpmVal > 6.5);
 
-    // Rolling mechanical odometer
-    this.odometerKm += (carAbsSpd * dt) / 1000;
-    const odoStr = this.odometerKm.toFixed(1);
-    if (odoStr !== this.lastOdoStr) {
-      this.lastOdoStr = odoStr;
-      const [intPart, decPart] = odoStr.split('.');
-      this.el.odoMain.textContent = intPart.padStart(5, '0');
-      this.el.odoDec.textContent = `.${decPart}`;
+    // GTA V Special / Nitro Bar beneath Minimap + Live In-Game Clock
+    if (typeof this.specialCharge !== 'number') this.specialCharge = 100;
+    if (nitroActive || (isFoot && this.keys.nitro)) {
+      this.specialCharge = Math.max(8, this.specialCharge - dt * 24);
+    } else {
+      this.specialCharge = Math.min(100, this.specialCharge + dt * 14);
     }
+    if (this.el.nosFill) {
+      this.el.nosFill.style.width = `${Math.round(this.specialCharge)}%`;
+      this.el.nosFill.classList.toggle('burning', nitroActive);
+    }
+    if (this.el.gtaClock && this.frameCount % 12 === 0) {
+      const totalMins = Math.floor((((this.dayTime % 24) + 24) % 24) * 60);
+      const hrs = Math.floor(totalMins / 60) % 24;
+      const mins = totalMins % 60;
+      const clk = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      if (clk !== this.lastClockStr) {
+        this.lastClockStr = clk;
+        this.el.gtaClock.textContent = clk;
+      }
+    }
+    this.odometerKm += (carAbsSpd * dt) / 1000;
 
     let zoneText = 'Ocean Beach · Ocean Drive';
     let shortStreet = 'Ocean Drive';
-    if (act.z < -1115) { zoneText = act.y > 54 ? 'Mount Vice Summit · 66M' : 'Mount Vice Switchback Highway'; shortStreet = 'Mount Vice'; }
+    if (!isInCoreViceFootprint(act.x, act.z) && !isInLegacyMountains(act.x, act.z)) {
+      const lz = getLeonidaZone(act.x, act.z);
+      zoneText = lz.zone;
+      shortStreet = lz.street;
+    } else if (act.x < -492 && act.z > -760 && act.z < 240) { zoneText = act.y > 74 ? 'Sierra West · Redrock Overlook (96M)' : 'Sierra West · Redrock Scenic Loop'; shortStreet = 'Sierra West'; }
+    else if (act.x > -455 && act.x < -302 && act.z > -1248 && act.z < -1138) { zoneText = 'Vice Hollow · Countryside Community'; shortStreet = 'Vice Hollow'; }
+    else if (act.x < -360 && act.z > -1138 && act.z < -955) { zoneText = 'Vice Pines · Deep Forest'; shortStreet = 'Vice Pines'; }
+    else if (act.z < -1115) { zoneText = act.y > 92 ? 'Mount Vice Summit · 118M' : 'Mount Vice Switchback Loop'; shortStreet = 'Mount Vice'; }
+    else if (act.x > -86 && act.x < -14 && act.z > -1048 && act.z < -988) { zoneText = 'North Point Mall · 2-Story Concourse'; shortStreet = 'North Point Mall'; }
+    else if (act.x > -44 && act.x < -15 && act.z > -358 && act.z < -330) { zoneText = 'The Malibu Club · Disco VIP Lounge'; shortStreet = 'Malibu Club'; }
     else if (act.x > 17 && Math.abs(act.z + 430) < 20) { zoneText = 'Vice Pier · Carnival Fair'; shortStreet = 'Carnival Pier'; }
     else if (act.x > 115 && act.z < -780) { zoneText = 'Prawn Island Film Studios'; shortStreet = 'Prawn Island'; }
     else if (act.x > 115 && act.z < -460) { zoneText = 'Vice Key Resort Island'; shortStreet = 'Vice Key'; }

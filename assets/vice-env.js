@@ -115,29 +115,36 @@ export function createGoldenHourEnvironment(renderer) {
   });
   envScene.add(new THREE.Mesh(skyGeo, skyMat));
 
-  // Architectural skyline reflection cards + Miami neon light bars inside PMREM for crisp car paint reflections
-  const cardMat = new THREE.MeshBasicMaterial({ color: 0x161224 });
-  const glowWarmMat = new THREE.MeshBasicMaterial({ color: 0xffc47e });
-  const glowCyanMat = new THREE.MeshBasicMaterial({ color: 0x38f2e4 });
+  // Architectural skyline reflection cards + Miami studio neon light strips inside PMREM for ray-traced car paint & glass reflections
+  const cardMat = new THREE.MeshBasicMaterial({ color: 0x120e1e });
+  const glowWarmMat = new THREE.MeshBasicMaterial({ color: 0xffd28c });
+  const glowCyanMat = new THREE.MeshBasicMaterial({ color: 0x3ef7ea });
   const glowPinkMat = new THREE.MeshBasicMaterial({ color: 0xff3b94 });
-  for (let i = 0; i < 20; i++) {
-    const ang = (i / 20) * Math.PI * 2;
-    const h = 4.5 + (i % 5) * 3.4;
-    const mat = i % 5 === 0 ? glowWarmMat : i % 5 === 2 ? glowPinkMat : i % 5 === 4 ? glowCyanMat : cardMat;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(i % 2 === 0 ? 4.6 : 1.4, h, 1), mat);
-    m.position.set(Math.cos(ang) * 36, h * 0.28 - 2.6, Math.sin(ang) * 36);
+  const glowWhiteMat = new THREE.MeshBasicMaterial({ color: 0xfff6e8 });
+  for (let i = 0; i < 28; i++) {
+    const ang = (i / 28) * Math.PI * 2;
+    const h = 4.2 + (i % 5) * 3.8;
+    const mat = i % 7 === 0 ? glowWhiteMat : i % 5 === 0 ? glowWarmMat : i % 5 === 2 ? glowPinkMat : i % 5 === 4 ? glowCyanMat : cardMat;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(i % 2 === 0 ? 4.8 : 1.5, h, 1), mat);
+    m.position.set(Math.cos(ang) * 36, h * 0.28 - 2.4, Math.sin(ang) * 36);
     m.lookAt(0, 0, 0);
     envScene.add(m);
   }
+  // Overhead golden-hour cloud specular strip for crisp automotive hood & roofline reflection bands
+  const overheadStrip = new THREE.Mesh(new THREE.PlaneGeometry(52, 10), glowWarmMat);
+  overheadStrip.position.set(16, 26, -18);
+  overheadStrip.lookAt(0, 0, 0);
+  envScene.add(overheadStrip);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const rt = pmrem.fromScene(envScene, 0.015);
+  const rt = pmrem.fromScene(envScene, 0.008);
   skyGeo.dispose();
   skyMat.dispose();
   cardMat.dispose();
   glowWarmMat.dispose();
   glowCyanMat.dispose();
   glowPinkMat.dispose();
+  glowWhiteMat.dispose();
   pmrem.dispose();
   return rt.texture;
 }
@@ -490,23 +497,23 @@ export function makeAsphaltTextures(maxAniso, repeatY = 8) {
     ctx.fillRect(size * 0.726, y, size * 0.009, 82);
   }
 
-  // Realistic coastal satin-asphalt roughness map (tire-worn specular tracks + humid sheen + micro grain)
+  // Realistic coastal satin-asphalt roughness map (glossy humid reflection tracks + wet-boulevard sunset specular!)
   const roughC = document.createElement('canvas');
   roughC.width = roughC.height = 512;
   const rctx = roughC.getContext('2d');
-  rctx.fillStyle = '#c8c8c8';
+  rctx.fillStyle = '#9e9e9e';
   rctx.fillRect(0, 0, 512, 512);
-  // Smoother polished tire tracks that catch golden-hour sun & neon reflections
+  // Smoother polished tire tracks & coastal dew sheen that reflect neon hotels & golden sunset
   for (const cx of [0.19, 0.34, 0.66, 0.81]) {
-    const g = rctx.createLinearGradient(512 * (cx - 0.07), 0, 512 * (cx + 0.07), 0);
-    g.addColorStop(0, 'rgba(200,200,200,0)');
-    g.addColorStop(0.5, 'rgba(92,92,92,0.78)');
-    g.addColorStop(1, 'rgba(200,200,200,0)');
+    const g = rctx.createLinearGradient(512 * (cx - 0.08), 0, 512 * (cx + 0.08), 0);
+    g.addColorStop(0, 'rgba(158,158,158,0)');
+    g.addColorStop(0.5, 'rgba(54,54,54,0.86)');
+    g.addColorStop(1, 'rgba(158,158,158,0)');
     rctx.fillStyle = g;
-    rctx.fillRect(512 * (cx - 0.07), 0, 512 * 0.14, 512);
+    rctx.fillRect(512 * (cx - 0.08), 0, 512 * 0.16, 512);
   }
   for (let i = 0; i < 8500; i++) {
-    const v = 135 + Math.floor(Math.random() * 90);
+    const v = 98 + Math.floor(Math.random() * 96);
     rctx.fillStyle = `rgb(${v},${v},${v})`;
     rctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
   }
@@ -652,33 +659,44 @@ export function makeGrassTexture(maxAniso, rx = 6, ry = 10) {
   const c = document.createElement('canvas');
   c.width = c.height = 512;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#315d34';
+  ctx.fillStyle = '#2d572e';
   ctx.fillRect(0, 0, 512, 512);
-  // Subtle manicured coastal park mower bands + organic sun-dappled turf patches
-  for (let x = 0; x < 512; x += 64) {
-    ctx.fillStyle = (x / 64) % 2 === 0 ? 'rgba(130, 185, 88, 0.08)' : 'rgba(18, 42, 22, 0.08)';
-    ctx.fillRect(x, 0, 64, 512);
+  let s = 3107;
+  const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  // Organic sun-dappled turf patches (wrapped cleanly across 512 edges for seamless tiling)
+  for (let i = 0; i < 220; i++) {
+    const px = rnd() * 512, py = rnd() * 512, r = 16 + rnd() * 34;
+    const warm = i % 3 === 0;
+    for (const ox of [-512, 0, 512]) {
+      for (const oy of [-512, 0, 512]) {
+        if (px + ox < -48 || px + ox > 560 || py + oy < -48 || py + oy > 560) continue;
+        const g = ctx.createRadialGradient(px + ox, py + oy, 1, px + ox, py + oy, r);
+        g.addColorStop(0, warm ? 'rgba(112, 152, 58, 0.24)' : 'rgba(22, 56, 26, 0.24)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(px + ox, py + oy, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
-  for (let i = 0; i < 240; i++) {
-    const px = Math.random() * 512, py = Math.random() * 512, r = 10 + Math.random() * 28;
-    const g = ctx.createRadialGradient(px, py, 1, px, py, r);
-    g.addColorStop(0, i % 3 === 0 ? 'rgba(96, 138, 60, 0.22)' : 'rgba(26, 62, 30, 0.22)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
-  }
-  // Fine grass blades & sunlit clover highlights
-  for (let i = 0; i < 18000; i++) {
-    const bx = Math.random() * 512, by = Math.random() * 512;
-    const g = 68 + Math.floor(Math.random() * 76);
-    ctx.fillStyle = `rgb(${Math.floor(g * 0.56)},${g},${Math.floor(g * 0.44)})`;
-    ctx.fillRect(bx, by, 1.5, 4);
+  // Curved multi-tone grass blade tufts & fine sunlit clover tips
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 9500; i++) {
+    const bx = rnd() * 512, by = rnd() * 512;
+    const h = 4 + rnd() * 7.5;
+    const bend = (rnd() - 0.5) * 4.5;
+    const g = 74 + Math.floor(rnd() * 82);
+    ctx.strokeStyle = `rgba(${Math.floor(g * 0.55)},${g},${Math.floor(g * 0.40)},0.78)`;
+    ctx.lineWidth = 1.0 + rnd() * 0.9;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.quadraticCurveTo(bx + bend * 0.5, by - h * 0.5, bx + bend, by - h);
+    ctx.stroke();
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(rx, ry);
-  tex.anisotropy = maxAniso;
+  tex.anisotropy = Math.min(maxAniso || 4, 16);
   return tex;
 }
 
@@ -1348,5 +1366,481 @@ export function makeDenimFabricTexture(baseHex = '#e9e4dc') {
   if (baseHex === '#e9e4dc') _denimTexCache = tex;
   return tex;
 }
+
+/* ==========================================================================
+   SHARED CACHED REALISTIC PROCEDURAL PBR TEXTURE & NORMAL MAP LIBRARY
+   - Single memoized allocation shared across mountains, forests, village,
+     rocks, roads, roofs, siding, hay, shipping containers & concrete walls!
+   - Guarantees crisp albedo (SRGBColorSpace) + matching Sobel normal maps
+     (NoColorSpace) with optimal VRAM & zero per-object canvas duplication.
+   ========================================================================== */
+let _worldPbrCache = null;
+
+function _makeSeededRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function _finishPair(albedoCanvas, heightCanvas, normStrength, maxAniso, rx = 1, ry = 1) {
+  const map = new THREE.CanvasTexture(albedoCanvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  map.repeat.set(rx, ry);
+  map.anisotropy = Math.min(maxAniso, 16);
+  const normalMap = heightCanvasToNormalTexture(heightCanvas || albedoCanvas, normStrength, Math.min(maxAniso, 16), rx, ry);
+  return { map, normalMap };
+}
+
+export function getWorldPBRTextures(maxAniso = 4) {
+  if (_worldPbrCache) return _worldPbrCache;
+  const aniso = Math.min(maxAniso || 4, 16);
+
+  // 1. DEEP FURROWED TREE BARK (Pine & Oak Trunks / Logs)
+  const barkC = document.createElement('canvas');
+  barkC.width = barkC.height = 256;
+  const bCtx = barkC.getContext('2d');
+  const bRnd = _makeSeededRng(1041);
+  bCtx.fillStyle = '#4c3525';
+  bCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 42; i++) {
+    const x = (i / 42) * 256 + (bRnd() - 0.5) * 4;
+    const w = 3 + bRnd() * 5;
+    bCtx.fillStyle = i % 3 === 0 ? '#2b1b12' : (i % 2 === 0 ? '#5f4532' : '#3d291c');
+    bCtx.fillRect(x, 0, w, 256);
+  }
+  for (let i = 0; i < 240; i++) {
+    const x = bRnd() * 256, y = bRnd() * 256;
+    const h = 14 + bRnd() * 44, w = 1.5 + bRnd() * 3.2;
+    bCtx.fillStyle = bRnd() > 0.45 ? 'rgba(20, 12, 7, 0.52)' : 'rgba(138, 108, 82, 0.34)';
+    bCtx.fillRect(x, y, w, h);
+    if (y + h > 256) bCtx.fillRect(x, y - 256, w, h);
+  }
+  // Subtle mossy bark lichen flecks
+  for (let i = 0; i < 120; i++) {
+    bCtx.fillStyle = 'rgba(72, 92, 54, 0.26)';
+    bCtx.fillRect(bRnd() * 256, bRnd() * 256, 2 + bRnd() * 4, 2 + bRnd() * 5);
+  }
+  const bark = _finishPair(barkC, barkC, 3.2, aniso, 2, 3);
+
+  // 2. EVERGREEN PINE NEEDLE BOUGHS (Layered feathery needles — zero plastic cones!)
+  const pineC = document.createElement('canvas');
+  pineC.width = pineC.height = 256;
+  const pCtx = pineC.getContext('2d');
+  const pRnd = _makeSeededRng(2083);
+  pCtx.fillStyle = '#4f6e4a';
+  pCtx.fillRect(0, 0, 256, 256);
+  // Dark shadowed under-boughs + bright sunlit needle sprays (neutral-high lightness so instanceColor tints richly)
+  for (let i = 0; i < 480; i++) {
+    const cx = pRnd() * 256, cy = pRnd() * 256;
+    const dark = i < 160;
+    const lum = dark ? (55 + Math.floor(pRnd() * 35)) : (128 + Math.floor(pRnd() * 88));
+    pCtx.strokeStyle = `rgba(${Math.floor(lum * 0.78)},${Math.min(255, Math.floor(lum * 1.05))},${Math.floor(lum * 0.72)},0.85)`;
+    pCtx.lineWidth = 1.4;
+    for (let n = 0; n < 7; n++) {
+      const ang = (n / 7) * Math.PI * 2 + pRnd() * 0.5;
+      const len = 6 + pRnd() * 11;
+      const x2 = cx + Math.cos(ang) * len;
+      const y2 = cy + Math.sin(ang) * len;
+      pCtx.beginPath(); pCtx.moveTo(cx, cy); pCtx.lineTo(x2, y2); pCtx.stroke();
+    }
+  }
+  const pineNeedle = _finishPair(pineC, pineC, 2.8, aniso, 3, 2);
+
+  // 3. BROADLEAF OAK CANOPY FOLIAGE (Clustered overlapping leaves + sunlit veins)
+  const oakC = document.createElement('canvas');
+  oakC.width = oakC.height = 256;
+  const oCtx = oakC.getContext('2d');
+  const oRnd = _makeSeededRng(3121);
+  oCtx.fillStyle = '#4c6d42';
+  oCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 520; i++) {
+    const lx = oRnd() * 256, ly = oRnd() * 256;
+    const rx = 5 + oRnd() * 8, ry = 3 + oRnd() * 5, rot = oRnd() * Math.PI;
+    const v = 90 + Math.floor(oRnd() * 135);
+    oCtx.fillStyle = `rgba(${Math.floor(v * 0.80)},${Math.min(255, Math.floor(v * 1.06))},${Math.floor(v * 0.64)},0.82)`;
+    for (const ox of [-256, 0, 256]) {
+      for (const oy of [-256, 0, 256]) {
+        if (lx + ox < -14 || lx + ox > 270 || ly + oy < -14 || ly + oy > 270) continue;
+        oCtx.beginPath(); oCtx.ellipse(lx + ox, ly + oy, rx, ry, rot, 0, Math.PI * 2); oCtx.fill();
+      }
+    }
+  }
+  const oakFoliage = _finishPair(oakC, oakC, 2.5, aniso, 2, 2);
+
+  // 4. CRACKED ALPINE GRANITE ROCK (Boulders, Cliffs & Retaining Walls)
+  const granC = document.createElement('canvas');
+  granC.width = granC.height = 256;
+  const gCtx = granC.getContext('2d');
+  const gRnd = _makeSeededRng(4177);
+  gCtx.fillStyle = '#9c968e';
+  gCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 260; i++) {
+    const x = gRnd() * 256, y = gRnd() * 256;
+    const rx = 8 + gRnd() * 22, ry = 5 + gRnd() * 14, rot = gRnd() * Math.PI;
+    const sh = 112 + Math.floor(gRnd() * 94);
+    gCtx.fillStyle = `rgba(${sh},${sh - 3},${sh - 8},0.35)`;
+    for (const ox of [-256, 0, 256]) {
+      for (const oy of [-256, 0, 256]) {
+        if (x + ox < -26 || x + ox > 282 || y + oy < -26 || y + oy > 282) continue;
+        gCtx.beginPath(); gCtx.ellipse(x + ox, y + oy, rx, ry, rot, 0, Math.PI * 2); gCtx.fill();
+      }
+    }
+  }
+  // Sharp fractured rock crevices
+  gCtx.strokeStyle = 'rgba(34, 30, 28, 0.62)';
+  for (let i = 0; i < 36; i++) {
+    let cx = gRnd() * 256, cy = gRnd() * 256;
+    gCtx.lineWidth = 1.0 + gRnd() * 1.4;
+    gCtx.beginPath(); gCtx.moveTo(cx, cy);
+    for (let k = 0; k < 4; k++) {
+      cx += (gRnd() - 0.5) * 34;
+      cy += (gRnd() - 0.5) * 28;
+      gCtx.lineTo(cx, cy);
+    }
+    gCtx.stroke();
+  }
+  for (let i = 0; i < 4200; i++) {
+    const sh = 95 + Math.floor(gRnd() * 135);
+    gCtx.fillStyle = `rgba(${sh},${sh - 2},${sh - 5},0.38)`;
+    gCtx.fillRect(gRnd() * 256, gRnd() * 256, 2, 2);
+  }
+  const granite = _finishPair(granC, granC, 3.0, aniso, 2, 2);
+
+  // 5. REDROCK CANYON / SANDSTONE STRATA (For Separate Sierra West Mountain Range!)
+  const redC = document.createElement('canvas');
+  redC.width = redC.height = 512;
+  const rrCtx = redC.getContext('2d');
+  const rrRnd = _makeSeededRng(5209);
+  rrCtx.fillStyle = '#cfbeb0';
+  rrCtx.fillRect(0, 0, 512, 512);
+  for (let y = 0; y < 512; y += 8) {
+    const wave = Math.sin(y * 0.08) * 18;
+    const tone = 178 + Math.floor(wave + (rrRnd() - 0.5) * 24);
+    rrCtx.fillStyle = `rgba(${Math.min(255, tone + 22)},${tone - 6},${tone - 22},0.34)`;
+    rrCtx.fillRect(0, y, 512, 8);
+  }
+  for (let i = 0; i < 360; i++) {
+    const x = rrRnd() * 512, y = rrRnd() * 512;
+    const rx = 14 + rrRnd() * 34, ry = 6 + rrRnd() * 16;
+    const sh = 148 + Math.floor(rrRnd() * 72);
+    rrCtx.fillStyle = `rgba(${Math.min(255, sh + 18)},${sh - 4},${sh - 18},0.22)`;
+    for (const ox of [-512, 0, 512]) {
+      for (const oy of [-512, 0, 512]) {
+        if (x + ox < -40 || x + ox > 552 || y + oy < -40 || y + oy > 552) continue;
+        rrCtx.beginPath(); rrCtx.ellipse(x + ox, y + oy, rx, ry, (rrRnd() - 0.5) * 0.4, 0, Math.PI * 2); rrCtx.fill();
+      }
+    }
+  }
+  for (let i = 0; i < 12000; i++) {
+    const sh = 145 + Math.floor(rrRnd() * 90);
+    rrCtx.fillStyle = `rgba(${Math.min(255, sh + 12)},${sh - 2},${sh - 12},0.42)`;
+    rrCtx.fillRect(rrRnd() * 512, rrRnd() * 512, 2.5, 2.5);
+  }
+  const redrock = _finishPair(redC, redC, 2.4, aniso, 24, 24);
+
+  // 6. LUSH MEADOW & WOODLAND GRASS + NORMAL MAP
+  const grassMap = makeGrassTexture(aniso, 10, 10);
+  const grassNorm = heightCanvasToNormalTexture(grassMap.image, 1.85, aniso, 10, 10);
+  const grass = { map: grassMap, normalMap: grassNorm };
+
+  // 7. PACKED COUNTRYSIDE DIRT & GRAVEL ROAD (Twin worn tire tracks + pebbles)
+  const dirtC = document.createElement('canvas');
+  dirtC.width = dirtC.height = 256;
+  const dCtx = dirtC.getContext('2d');
+  const dRnd = _makeSeededRng(6311);
+  dCtx.fillStyle = '#8b7355';
+  dCtx.fillRect(0, 0, 256, 256);
+  // Subtle gravel shoulders & worn compacted wheel ruts
+  const rutG = dCtx.createLinearGradient(0, 0, 256, 0);
+  rutG.addColorStop(0.0, 'rgba(62, 54, 38, 0.35)');
+  rutG.addColorStop(0.24, 'rgba(156, 134, 104, 0.28)');
+  rutG.addColorStop(0.50, 'rgba(78, 86, 54, 0.22)');
+  rutG.addColorStop(0.76, 'rgba(156, 134, 104, 0.28)');
+  rutG.addColorStop(1.0, 'rgba(62, 54, 38, 0.35)');
+  dCtx.fillStyle = rutG;
+  dCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 4800; i++) {
+    const sh = 82 + Math.floor(dRnd() * 98);
+    dCtx.fillStyle = `rgba(${sh},${Math.floor(sh * 0.84)},${Math.floor(sh * 0.64)},0.58)`;
+    const sz = 1.5 + dRnd() * 2.8;
+    dCtx.fillRect(dRnd() * 256, dRnd() * 256, sz, sz);
+  }
+  const dirtRoad = _finishPair(dirtC, dirtC, 2.2, aniso, 2, 12);
+
+  // 8. VILLAGE COBBLESTONE COMMUNITY PLAZA PAVERS
+  const cobC = document.createElement('canvas');
+  cobC.width = cobC.height = 256;
+  const cCtx = cobC.getContext('2d');
+  const cRnd = _makeSeededRng(7417);
+  cCtx.fillStyle = '#5a554c';
+  cCtx.fillRect(0, 0, 256, 256);
+  const rows = 8, cols = 6, rh = 256 / rows, cw = 256 / cols;
+  for (let r = 0; r < rows; r++) {
+    const stagger = (r % 2) * (cw * 0.5);
+    for (let c = -1; c <= cols; c++) {
+      const bx = c * cw + stagger + 2;
+      const by = r * rh + 2;
+      const sh = 132 + Math.floor(cRnd() * 54);
+      const warm = cRnd() * 14;
+      cCtx.fillStyle = `rgb(${Math.min(255, Math.floor(sh + warm))},${Math.floor(sh + warm * 0.4)},${Math.floor(sh - 6)})`;
+      cCtx.fillRect(bx, by, cw - 4, rh - 4);
+      cCtx.fillStyle = 'rgba(255,250,240,0.16)';
+      cCtx.fillRect(bx, by, cw - 4, 3);
+    }
+  }
+  for (let i = 0; i < 1600; i++) {
+    cCtx.fillStyle = cRnd() > 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(20,18,16,0.12)';
+    cCtx.fillRect(cRnd() * 256, cRnd() * 256, 2, 2);
+  }
+  const cobble = _finishPair(cobC, cobC, 2.8, aniso, 6, 6);
+
+  // 9. OVERLAPPING ROOF SHINGLES (Terracotta / Slate / Cedar tintable)
+  const shgC = document.createElement('canvas');
+  shgC.width = shgC.height = 256;
+  const sCtx = shgC.getContext('2d');
+  const sRnd = _makeSeededRng(8521);
+  sCtx.fillStyle = '#808080';
+  sCtx.fillRect(0, 0, 256, 256);
+  const sRows = 10, sCols = 8, sH = 256 / sRows, sW = 256 / sCols;
+  for (let r = 0; r < sRows; r++) {
+    const st = (r % 2) * (sW * 0.5);
+    for (let c = -1; c <= sCols; c++) {
+      const sx = c * sW + st;
+      const sy = r * sH;
+      const g = sCtx.createLinearGradient(0, sy, 0, sy + sH);
+      const base = 175 + Math.floor(sRnd() * 48);
+      g.addColorStop(0, `rgb(${base - 32},${base - 32},${base - 32})`);
+      g.addColorStop(0.75, `rgb(${base},${base},${base})`);
+      g.addColorStop(1, `rgb(${base - 70},${base - 70},${base - 70})`);
+      sCtx.fillStyle = g;
+      sCtx.fillRect(sx + 1, sy + 1, sW - 2, sH - 2);
+    }
+  }
+  const shingles = _finishPair(shgC, shgC, 2.9, aniso, 3, 3);
+
+  // 10. HORIZONTAL CLAPBOARD HOUSE SIDING (Tintable cottage/chapel/store walls!)
+  const clapC = document.createElement('canvas');
+  clapC.width = clapC.height = 256;
+  const clCtx = clapC.getContext('2d');
+  const clRnd = _makeSeededRng(9631);
+  const boards = 12, bh = 256 / boards;
+  for (let i = 0; i < boards; i++) {
+    const y = i * bh;
+    const g = clCtx.createLinearGradient(0, y, 0, y + bh);
+    const v = 218 + Math.floor(clRnd() * 24);
+    g.addColorStop(0.0, `rgb(${v - 42},${v - 42},${v - 42})`);
+    g.addColorStop(0.16, `rgb(${v},${v},${v})`);
+    g.addColorStop(0.88, `rgb(${v - 10},${v - 10},${v - 10})`);
+    g.addColorStop(1.0, `rgb(${v - 74},${v - 74},${v - 74})`);
+    clCtx.fillStyle = g;
+    clCtx.fillRect(0, y, 256, bh);
+    // Subtle woodgrain lines
+    clCtx.strokeStyle = 'rgba(60, 50, 42, 0.10)';
+    for (let k = 0; k < 3; k++) {
+      clCtx.beginPath(); clCtx.moveTo(0, y + 4 + k * 6); clCtx.lineTo(256, y + 4 + k * 6); clCtx.stroke();
+    }
+  }
+  const clapboard = _finishPair(clapC, clapC, 2.4, aniso, 2, 2);
+
+  // 11. FIELDSTONE FOUNDATION & CHIMNEY MASONRY
+  const stbC = document.createElement('canvas');
+  stbC.width = stbC.height = 256;
+  const stCtx = stbC.getContext('2d');
+  const stRnd = _makeSeededRng(10729);
+  stCtx.fillStyle = '#4c4944';
+  stCtx.fillRect(0, 0, 256, 256);
+  for (let r = 0; r < 8; r++) {
+    let x = (r % 2) * -18;
+    const y = r * 32;
+    while (x < 256) {
+      const bw = 28 + Math.floor(stRnd() * 30);
+      const sh = 126 + Math.floor(stRnd() * 68);
+      stCtx.fillStyle = `rgb(${sh + 6},${sh + 2},${sh - 6})`;
+      stCtx.fillRect(x + 2, y + 2, bw - 4, 28);
+      stCtx.fillStyle = 'rgba(255,248,235,0.14)';
+      stCtx.fillRect(x + 2, y + 2, bw - 4, 3);
+      x += bw;
+    }
+  }
+  const stoneBrick = _finishPair(stbC, stbC, 3.0, aniso, 2, 2);
+
+  // 12. GOLDEN WOVEN STRAW HAY BALES
+  const hayC = document.createElement('canvas');
+  hayC.width = hayC.height = 256;
+  const hCtx = hayC.getContext('2d');
+  const hRnd = _makeSeededRng(11833);
+  hCtx.fillStyle = '#c49d3e';
+  hCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 1600; i++) {
+    const x = hRnd() * 256, y = hRnd() * 256;
+    const len = 12 + hRnd() * 28, ang = (hRnd() - 0.5) * 0.55;
+    const v = 165 + Math.floor(hRnd() * 75);
+    hCtx.strokeStyle = `rgba(${v},${Math.floor(v * 0.80)},${Math.floor(v * 0.34)},0.75)`;
+    hCtx.lineWidth = 1.5;
+    hCtx.beginPath(); hCtx.moveTo(x, y); hCtx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len); hCtx.stroke();
+  }
+  const hay = _finishPair(hayC, hayC, 2.4, aniso, 2, 2);
+
+  // 13. CORRUGATED STEEL (Shipping Containers & Farm Grain Silo!)
+  const corC = document.createElement('canvas');
+  corC.width = corC.height = 256;
+  const coCtx = corC.getContext('2d');
+  for (let x = 0; x < 256; x += 16) {
+    const g = coCtx.createLinearGradient(x, 0, x + 16, 0);
+    g.addColorStop(0.0, '#9c9ea4');
+    g.addColorStop(0.28, '#eaeef4');
+    g.addColorStop(0.56, '#c8ccd4');
+    g.addColorStop(0.84, '#7c808a');
+    g.addColorStop(1.0, '#9c9ea4');
+    coCtx.fillStyle = g;
+    coCtx.fillRect(x, 0, 16, 256);
+  }
+  coCtx.fillStyle = 'rgba(30, 34, 42, 0.24)';
+  coCtx.fillRect(0, 0, 256, 12);
+  coCtx.fillRect(0, 244, 256, 12);
+  const corrugated = _finishPair(corC, corC, 2.8, aniso, 4, 1);
+
+  // 14. WEATHERED ARCHITECTURAL CONCRETE (Seawall, Retaining Skirts, Barricades)
+  const conC = document.createElement('canvas');
+  conC.width = conC.height = 256;
+  const cnCtx = conC.getContext('2d');
+  const cnRnd = _makeSeededRng(12941);
+  cnCtx.fillStyle = '#c4bfb6';
+  cnCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 220; i++) {
+    const sh = 162 + Math.floor(cnRnd() * 58);
+    cnCtx.fillStyle = `rgba(${sh},${sh - 2},${sh - 6},0.22)`;
+    cnCtx.fillRect(cnRnd() * 256, cnRnd() * 256, 12 + cnRnd() * 34, 10 + cnRnd() * 26);
+  }
+  cnCtx.strokeStyle = 'rgba(55, 52, 48, 0.32)';
+  cnCtx.lineWidth = 2;
+  cnCtx.strokeRect(1, 1, 254, 126);
+  cnCtx.strokeRect(1, 129, 254, 126);
+  for (let i = 0; i < 3600; i++) {
+    const sh = 140 + Math.floor(cnRnd() * 88);
+    cnCtx.fillStyle = `rgba(${sh},${sh - 2},${sh - 4},0.34)`;
+    cnCtx.fillRect(cnRnd() * 256, cnRnd() * 256, 2, 2);
+  }
+  const concrete = _finishPair(conC, conC, 2.1, aniso, 4, 1);
+
+  // 15. PERFORMANCE RUBBER TIRE TREAD (Chevron Sports Sipes + Shoulder Grooves)
+  const tireC = document.createElement('canvas');
+  tireC.width = tireC.height = 256;
+  const tCtx = tireC.getContext('2d');
+  tCtx.fillStyle = '#26282e';
+  tCtx.fillRect(0, 0, 256, 256);
+  // Circumferential drainage channels
+  tCtx.fillStyle = '#0e1014';
+  for (const gx of [46, 118, 134, 206]) tCtx.fillRect(gx, 0, 8, 256);
+  // Angled chevron V-tread blocks
+  tCtx.strokeStyle = '#0d0e12';
+  tCtx.lineWidth = 5;
+  for (let y = -16; y < 280; y += 22) {
+    tCtx.beginPath(); tCtx.moveTo(0, y + 10); tCtx.lineTo(126, y); tCtx.lineTo(256, y + 10); tCtx.stroke();
+    tCtx.strokeStyle = '#383c44';
+    tCtx.lineWidth = 2;
+    tCtx.beginPath(); tCtx.moveTo(6, y + 15); tCtx.lineTo(126, y + 5); tCtx.lineTo(250, y + 15); tCtx.stroke();
+    tCtx.strokeStyle = '#0d0e12';
+    tCtx.lineWidth = 5;
+  }
+  const tireTread = _finishPair(tireC, tireC, 3.2, aniso, 1, 6);
+
+  // 16. METALLIC AUTOMOTIVE PAINT MICRO-FLAKE NORMAL MAP (Clearcoat Studio Sparkle!)
+  const flkC = document.createElement('canvas');
+  flkC.width = flkC.height = 128;
+  const fCtx = flkC.getContext('2d');
+  const fRnd = _makeSeededRng(14081);
+  fCtx.fillStyle = '#808080';
+  fCtx.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 4200; i++) {
+    const v = 112 + Math.floor(fRnd() * 34);
+    fCtx.fillStyle = `rgb(${v},${v},${v})`;
+    fCtx.fillRect(fRnd() * 128, fRnd() * 128, 1.5, 1.5);
+  }
+  const paintFlake = {
+    normalMap: heightCanvasToNormalTexture(flkC, 0.36, aniso, 8, 8)
+  };
+
+  // 17. NORTH POINT MALL GLOSSY 1980s TERRAZZO MARBLE FLOOR (Cream / Peach / Teal Diamond Inlay)
+  const terC = document.createElement('canvas');
+  terC.width = terC.height = 512;
+  const mCtx = terC.getContext('2d');
+  const mRnd = _makeSeededRng(15193);
+  mCtx.fillStyle = '#efe5d6';
+  mCtx.fillRect(0, 0, 512, 512);
+  const tSz = 128;
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const alt = (r + c) % 2 === 0;
+      mCtx.fillStyle = alt ? '#f3e9dc' : '#e4d3be';
+      mCtx.fillRect(c * tSz + 2, r * tSz + 2, tSz - 4, tSz - 4);
+      // Iconic Vice City pastel coral & aqua corner diamond accents
+      mCtx.fillStyle = alt ? '#23b8b0' : '#e67698';
+      mCtx.beginPath();
+      mCtx.moveTo(c * tSz + tSz * 0.5, r * tSz + 8);
+      mCtx.lineTo(c * tSz + tSz * 0.5 + 14, r * tSz + 22);
+      mCtx.lineTo(c * tSz + tSz * 0.5, r * tSz + 36);
+      mCtx.lineTo(c * tSz + tSz * 0.5 - 14, r * tSz + 22);
+      mCtx.closePath();
+      mCtx.fill();
+    }
+  }
+  // Fine marble terrazzo mineral flecks
+  for (let i = 0; i < 6000; i++) {
+    const tone = 165 + Math.floor(mRnd() * 78);
+    mCtx.fillStyle = `rgba(${tone},${tone - 6},${tone - 14},0.22)`;
+    mCtx.fillRect(mRnd() * 512, mRnd() * 512, 2.2, 2.2);
+  }
+  mCtx.strokeStyle = 'rgba(130, 112, 92, 0.44)';
+  mCtx.lineWidth = 3;
+  for (let i = 0; i <= 512; i += tSz) {
+    mCtx.beginPath(); mCtx.moveTo(i, 0); mCtx.lineTo(i, 512); mCtx.stroke();
+    mCtx.beginPath(); mCtx.moveTo(0, i); mCtx.lineTo(512, i); mCtx.stroke();
+  }
+  const terrazzoMarble = _finishPair(terC, terC, 1.35, aniso, 10, 8);
+
+  // 18. MALIBU CLUB GLOSSY CHECKERBOARD DISCO TILE FLOOR
+  const malC = document.createElement('canvas');
+  malC.width = malC.height = 512;
+  const mlCtx = malC.getContext('2d');
+  const sq = 64;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const dark = (r + c) % 2 === 0;
+      mlCtx.fillStyle = dark ? '#1a112c' : '#2e1c4a';
+      mlCtx.fillRect(c * sq, r * sq, sq, sq);
+      mlCtx.strokeStyle = dark ? 'rgba(33,230,209,0.45)' : 'rgba(255,46,136,0.52)';
+      mlCtx.lineWidth = 3;
+      mlCtx.strokeRect(c * sq + 4, r * sq + 4, sq - 8, sq - 8);
+    }
+  }
+  const malibuFloor = _finishPair(malC, malC, 1.6, aniso, 2, 2);
+
+  _worldPbrCache = {
+    bark,
+    pineNeedle,
+    oakFoliage,
+    granite,
+    redrock,
+    grass,
+    dirtRoad,
+    cobble,
+    shingles,
+    clapboard,
+    stoneBrick,
+    hay,
+    corrugated,
+    concrete,
+    tireTread,
+    paintFlake,
+    terrazzoMarble,
+    malibuFloor
+  };
+  return _worldPbrCache;
+}
+
 
 

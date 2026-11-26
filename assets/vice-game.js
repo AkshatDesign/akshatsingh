@@ -9,8 +9,8 @@
 
   const scriptEl = document.currentScript;
   const moduleUrl = scriptEl && scriptEl.src
-    ? new URL('./vice-game-3d.js?v=20', scriptEl.src).href
-    : '/assets/vice-game-3d.js?v=20';
+    ? new URL('./vice-game-3d.js?v=33', scriptEl.src).href
+    : '/assets/vice-game-3d.js?v=33';
 
   let modulePromise = null;
   let loadingEl = null;

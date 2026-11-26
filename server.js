@@ -61,20 +61,29 @@ app.get(/^\/vendor\/three\/(.+)$/, (req, res) => {
   return res.sendFile(absPath);
 });
 
+const staticCacheHeaders = (res, filePath) => {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.html') {
+    res.setHeader('Cache-Control', 'no-cache');
+  } else if (
+    ['.webp', '.png', '.jpg', '.jpeg', '.svg', '.mp4', '.webm', '.mp3', '.woff2'].includes(ext)
+  ) {
+    res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+  }
+};
+
+// Serve /public assets first (e.g. /assets/aistudio/*.mp3 radio RJ broadcasts)
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders: staticCacheHeaders,
+  })
+);
+
 app.use(
   express.static(__dirname, {
     extensions: ['html'],
     index: 'index.html',
-    setHeaders(res, filePath) {
-      const ext = path.extname(filePath).toLowerCase();
-      if (ext === '.html') {
-        res.setHeader('Cache-Control', 'no-cache');
-      } else if (
-        ['.webp', '.png', '.jpg', '.jpeg', '.svg', '.mp4', '.webm', '.woff2'].includes(ext)
-      ) {
-        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
-      }
-    },
+    setHeaders: staticCacheHeaders,
   })
 );
 

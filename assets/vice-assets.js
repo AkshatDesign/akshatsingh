@@ -20,7 +20,9 @@ import {
   makeWoodPlankNormalMap,
   makeCarnivalStripesTexture,
   makeClothNormalTexture,
-  makeDenimFabricTexture
+  makeDenimFabricTexture,
+  makeSoftParticleTexture,
+  getWorldPBRTextures
 } from './vice-env.js?v=18';
 
 export const PAINTS = [
@@ -70,38 +72,48 @@ export function createSupercar(isSoftwareGl) {
   const bodyGroup = new THREE.Group();
   root.add(bodyGroup);
 
+  const pbr = getWorldPBRTextures(4);
   const p0 = PAINTS[0];
   const paintMat = new THREE.MeshPhysicalMaterial({
     color: p0.color,
-    metalness: p0.metalness,
-    roughness: p0.roughness,
+    metalness: Math.max(0.72, p0.metalness),
+    roughness: Math.min(0.14, p0.roughness),
+    normalMap: pbr.paintFlake.normalMap,
+    normalScale: new THREE.Vector2(0.18, 0.18),
     clearcoat: 1.0,
-    clearcoatRoughness: 0.08,
-    envMapIntensity: 1.25
+    clearcoatRoughness: 0.032,
+    envMapIntensity: 2.25
   });
-  const carbonMat = new THREE.MeshStandardMaterial({ color: 0x181720, metalness: 0.35, roughness: 0.46 });
-  const darkVentMat = new THREE.MeshStandardMaterial({ color: 0x0b0b10, metalness: 0.15, roughness: 0.85 });
+  const carbonMat = new THREE.MeshPhysicalMaterial({ color: 0x16171f, metalness: 0.45, roughness: 0.34, clearcoat: 0.5, envMapIntensity: 1.4 });
+  const darkVentMat = new THREE.MeshStandardMaterial({ color: 0x090a0e, metalness: 0.22, roughness: 0.78 });
   const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x0b1628,
-    metalness: 0.22,
-    roughness: 0.04,
+    color: 0x0a1628,
+    metalness: 0.28,
+    roughness: 0.025,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.03,
+    clearcoatRoughness: 0.02,
     transparent: true,
-    opacity: 0.44,
-    envMapIntensity: 1.85
+    opacity: 0.48,
+    envMapIntensity: 2.45
   });
-  const leatherMat = new THREE.MeshStandardMaterial({ color: 0xa86c3e, roughness: 0.56, metalness: 0.06 });
-  const dashMat = new THREE.MeshStandardMaterial({ color: 0x181820, roughness: 0.74, metalness: 0.12 });
-  const rotorMat = new THREE.MeshStandardMaterial({ color: 0x9aa4b4, metalness: 0.88, roughness: 0.28, envMapIntensity: 1.25 });
-  const amberMat = new THREE.MeshStandardMaterial({ color: 0xffa624, emissive: 0xff8c14, emissiveIntensity: 1.15, roughness: 0.2 });
-  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe6ecf6, metalness: 0.96, roughness: 0.10, envMapIntensity: 1.55 });
-  const rimMat = new THREE.MeshStandardMaterial({ color: p0.rim, metalness: 0.88, roughness: 0.18, envMapIntensity: 1.35 });
-  const caliperMat = new THREE.MeshStandardMaterial({ color: p0.caliper, metalness: 0.36, roughness: 0.32 });
-  const tireMat = new THREE.MeshStandardMaterial({ color: 0x131318, metalness: 0.05, roughness: 0.86 });
-  const tailMat = new THREE.MeshStandardMaterial({ color: 0xc81428, emissive: 0xe61830, emissiveIntensity: 1.25, roughness: 0.18 });
-  const headLensMat = new THREE.MeshStandardMaterial({ color: 0xfff4da, emissive: 0xffefc6, emissiveIntensity: 1.45, roughness: 0.12 });
-  const engineRedMat = new THREE.MeshStandardMaterial({ color: 0xc2142b, metalness: 0.58, roughness: 0.28 });
+  const leatherMat = new THREE.MeshStandardMaterial({ color: 0xb2703c, roughness: 0.50, metalness: 0.05 });
+  const dashMat = new THREE.MeshStandardMaterial({ color: 0x15161e, roughness: 0.68, metalness: 0.14 });
+  const rotorMat = new THREE.MeshStandardMaterial({ color: 0xb8c2d2, metalness: 0.92, roughness: 0.20, envMapIntensity: 1.65 });
+  const amberMat = new THREE.MeshStandardMaterial({ color: 0xffa624, emissive: 0xff8c14, emissiveIntensity: 1.35, roughness: 0.16 });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf0f5fc, metalness: 0.98, roughness: 0.06, envMapIntensity: 2.15 });
+  const rimMat = new THREE.MeshStandardMaterial({ color: p0.rim, metalness: 0.92, roughness: 0.12, envMapIntensity: 1.85 });
+  const caliperMat = new THREE.MeshStandardMaterial({ color: p0.caliper, metalness: 0.44, roughness: 0.24 });
+  const tireMat = new THREE.MeshStandardMaterial({
+    map: pbr.tireTread.map,
+    normalMap: pbr.tireTread.normalMap,
+    normalScale: new THREE.Vector2(1.35, 1.35),
+    color: 0x22242a,
+    metalness: 0.06,
+    roughness: 0.78
+  });
+  const tailMat = new THREE.MeshStandardMaterial({ color: 0xd4142a, emissive: 0xf41832, emissiveIntensity: 1.45, roughness: 0.14 });
+  const headLensMat = new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xfff0c8, emissiveIntensity: 1.65, roughness: 0.08 });
+  const engineRedMat = new THREE.MeshStandardMaterial({ color: 0xc8142b, metalness: 0.64, roughness: 0.22, envMapIntensity: 1.4 });
 
   // Sculpted wedge lower monocoque (higher curveSegments & smooth organic bevels)
   const bodyShape = new THREE.Shape();
@@ -273,16 +285,28 @@ export function createSupercar(isSoftwareGl) {
   playerDriverMesh.add(pdTorso, pdHead, pdHair, pdShades, pdArmL, pdArmR);
   bodyGroup.add(playerDriverMesh);
 
-  const splitter = new THREE.Mesh(new THREE.BoxGeometry(1.98, 0.08, 0.56), carbonMat);
-  splitter.position.set(0, 0.19, -2.14);
+  const splitter = new THREE.Mesh(new THREE.BoxGeometry(2.00, 0.08, 0.58), carbonMat);
+  splitter.position.set(0, 0.185, -2.14);
   bodyGroup.add(splitter);
-  const frontIntake = new THREE.Mesh(new THREE.BoxGeometry(1.66, 0.16, 0.12), darkVentMat);
+  const frontIntake = new THREE.Mesh(new THREE.BoxGeometry(1.70, 0.17, 0.13), darkVentMat);
   frontIntake.position.set(0, 0.27, -2.31);
   bodyGroup.add(frontIntake);
-  // Chrome front grille bar & iconic emblem
-  const frontBar = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.024, 0.14), chromeMat);
-  frontBar.position.set(0, 0.27, -2.32);
-  bodyGroup.add(frontBar);
+  // Twin Testarossa chrome front intake blades + golden Italian nose crest + sculpted hood NACA ducts
+  for (const by of [0.24, 0.30]) {
+    const frontBar = new THREE.Mesh(new THREE.BoxGeometry(1.66, 0.020, 0.14), chromeMat);
+    frontBar.position.set(0, by, -2.32);
+    bodyGroup.add(frontBar);
+  }
+  const noseBadge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.09, 0.02), new THREE.MeshStandardMaterial({ color: 0xffcc22, metalness: 0.72, roughness: 0.20 }));
+  noseBadge.position.set(0, 0.45, -2.26);
+  noseBadge.rotation.x = -0.35;
+  bodyGroup.add(noseBadge);
+  for (const sx of [-0.42, 0.42]) {
+    const hoodDuct = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.024, 0.38), darkVentMat);
+    hoodDuct.position.set(sx, 0.675, -1.42);
+    hoodDuct.rotation.x = 0.20;
+    bodyGroup.add(hoodDuct);
+  }
 
   const diffuser = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.22, 0.36), carbonMat);
   diffuser.position.set(0, 0.24, 2.16);
@@ -1297,11 +1321,21 @@ export function createCaseStudyShowroom(sr, textureLoader, maxAniso) {
   const bulbMatA = new THREE.MeshStandardMaterial({ color: 0xfff2c2, emissive: 0xffd268, emissiveIntensity: 1.65 });
   const bulbMatB = new THREE.MeshStandardMaterial({ color: 0xfff2c2, emissive: 0xffd268, emissiveIntensity: 0.45 });
 
-  // 1. Grounded Art Deco Showcase Cinema / Studio Building Facade
+  // 1. Grounded Art Deco Showcase Cinema / Studio Building Facade (Deep foundation skirt so it sits rock-solid on any terrain!)
+  const deepSkirt = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.6, 15.2), darkBronzeMat);
+  deepSkirt.position.set(-0.2, -1.78, 0);
+  g.add(deepSkirt);
   const plinth = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.36, 14.8), trimMat);
   plinth.position.set(-0.2, 0.18, 0);
   plinth.receiveShadow = true;
   g.add(plinth);
+  // Subtle Vertical Skyline Spotlight Beacon rising above the Art Deco Crown (helps locate spread-out showrooms across Leonida!)
+  const skyBeacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 1.35, 54, 12, 1, true),
+    new THREE.MeshBasicMaterial({ color: sr.accent, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide })
+  );
+  skyBeacon.position.set(-1.25, 38.5, 0);
+  g.add(skyBeacon);
 
   // Main stepped cream-stucco Art Deco pavilion volume
   const mainWall = new THREE.Mesh(new THREE.BoxGeometry(4.4, 9.6, 13.8), stuccoMat);
@@ -1723,6 +1757,7 @@ function getTrafficCache() {
   const driverHeadGeo = mergeGeometries([drHead]);
   const driverHairGeo = mergeGeometries([drHair]);
 
+  const pbr = getWorldPBRTextures(4);
   _trafficCache = {
     sedanBody, sedanGlass, coupeBody, coupeGlass, convBody, suvBody, suvGlass, hoodSculptGeo,
     wheelTireGeo: fullTireGeo, wheelRimGeo, wheelHubGeo, wheelRotorGeo, interiorGeo, driverBodyGeo, driverHeadGeo, driverHairGeo,
@@ -1732,23 +1767,25 @@ function getTrafficCache() {
     tlGeo: mergeGeometries(tlParts),
     amberGeo: mergeGeometries(amberParts),
     revGeo: mergeGeometries(revParts),
-    glassMat: new THREE.MeshPhysicalMaterial({ color: 0x0d1b30, metalness: 0.24, roughness: 0.04, clearcoat: 1.0, clearcoatRoughness: 0.03, transparent: true, opacity: 0.44, envMapIntensity: 1.90 }),
-    darkMat: new THREE.MeshStandardMaterial({ color: 0x14151c, roughness: 0.78 }),
-    rotorMat: new THREE.MeshStandardMaterial({ color: 0x9aa4b4, metalness: 0.88, roughness: 0.28, envMapIntensity: 1.3 }),
-    caliperMat: new THREE.MeshStandardMaterial({ color: 0xd92434, metalness: 0.35, roughness: 0.32 }),
-    chromeMat: new THREE.MeshStandardMaterial({ color: 0xeaf0fa, metalness: 0.96, roughness: 0.10, envMapIntensity: 1.65 }),
-    amberMat: new THREE.MeshStandardMaterial({ color: 0xffa624, emissive: 0xff8c14, emissiveIntensity: 0.95, roughness: 0.22 }),
-    revMat: new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: 0.25 }),
-    leatherMat: new THREE.MeshStandardMaterial({ color: 0x9c6238, roughness: 0.56, metalness: 0.05 }),
-    driverSkinMat: new THREE.MeshStandardMaterial({ color: 0xdfaa82, roughness: 0.58 }),
-    driverShirtMat: new THREE.MeshStandardMaterial({ color: 0xe64a84, roughness: 0.72 }),
-    playerShirtMat: new THREE.MeshStandardMaterial({ color: 0x16b8b2, roughness: 0.70 }),
-    driverHairMat: new THREE.MeshStandardMaterial({ color: 0x1c151f, roughness: 0.74 }),
-    aviatorMat: new THREE.MeshPhysicalMaterial({ color: 0xff7b2e, metalness: 0.85, roughness: 0.10, clearcoat: 1.0 }),
-    plateMat: new THREE.MeshStandardMaterial({ map: makeLicensePlateTexture(), roughness: 0.44, metalness: 0.12 }),
-    taxiStripeMat: new THREE.MeshStandardMaterial({ map: makeTaxiCheckerTexture(), roughness: 0.42 }),
-    taxiSignMat: new THREE.MeshStandardMaterial({ color: 0xffe46b, emissive: 0xffcc22, emissiveIntensity: 1.55 }),
-    surfMat: new THREE.MeshPhysicalMaterial({ color: 0x21e6d1, roughness: 0.20, metalness: 0.15, clearcoat: 0.95 })
+    paintFlakeNorm: pbr.paintFlake.normalMap,
+    glassMat: new THREE.MeshPhysicalMaterial({ color: 0x0b182c, metalness: 0.28, roughness: 0.025, clearcoat: 1.0, clearcoatRoughness: 0.02, transparent: true, opacity: 0.48, envMapIntensity: 2.35 }),
+    tireMat: new THREE.MeshStandardMaterial({ map: pbr.tireTread.map, normalMap: pbr.tireTread.normalMap, normalScale: new THREE.Vector2(1.25, 1.25), color: 0x202228, roughness: 0.78, metalness: 0.06 }),
+    darkMat: new THREE.MeshStandardMaterial({ color: 0x12141b, roughness: 0.72, metalness: 0.18 }),
+    rotorMat: new THREE.MeshStandardMaterial({ color: 0xb6c0d0, metalness: 0.92, roughness: 0.22, envMapIntensity: 1.65 }),
+    caliperMat: new THREE.MeshStandardMaterial({ color: 0xe22434, metalness: 0.42, roughness: 0.26 }),
+    chromeMat: new THREE.MeshStandardMaterial({ color: 0xf2f6fc, metalness: 0.98, roughness: 0.06, envMapIntensity: 2.10 }),
+    amberMat: new THREE.MeshStandardMaterial({ color: 0xffa624, emissive: 0xff8c14, emissiveIntensity: 1.15, roughness: 0.18 }),
+    revMat: new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: 0.20 }),
+    leatherMat: new THREE.MeshStandardMaterial({ color: 0xa66638, roughness: 0.52, metalness: 0.05 }),
+    driverSkinMat: new THREE.MeshStandardMaterial({ color: 0xdfaa82, roughness: 0.56 }),
+    driverShirtMat: new THREE.MeshStandardMaterial({ color: 0xe64a84, roughness: 0.70 }),
+    playerShirtMat: new THREE.MeshStandardMaterial({ color: 0x16b8b2, roughness: 0.68 }),
+    driverHairMat: new THREE.MeshStandardMaterial({ color: 0x1c151f, roughness: 0.72 }),
+    aviatorMat: new THREE.MeshPhysicalMaterial({ color: 0xff7b2e, metalness: 0.88, roughness: 0.08, clearcoat: 1.0 }),
+    plateMat: new THREE.MeshStandardMaterial({ map: makeLicensePlateTexture(), roughness: 0.40, metalness: 0.14 }),
+    taxiStripeMat: new THREE.MeshStandardMaterial({ map: makeTaxiCheckerTexture(), roughness: 0.40 }),
+    taxiSignMat: new THREE.MeshStandardMaterial({ color: 0xffe46b, emissive: 0xffcc22, emissiveIntensity: 1.65 }),
+    surfMat: new THREE.MeshPhysicalMaterial({ color: 0x21e6d1, roughness: 0.16, metalness: 0.18, clearcoat: 1.0 })
   };
   return _trafficCache;
 }
@@ -1771,10 +1808,17 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
 
   const finalColor = archetype === 'taxi' ? 0xf5be22 : colorHex;
   const paint = new THREE.MeshPhysicalMaterial({
-    color: finalColor, metalness: 0.65, roughness: 0.15, clearcoat: 1.0, clearcoatRoughness: 0.05, envMapIntensity: 1.72
+    color: finalColor,
+    metalness: 0.72,
+    roughness: 0.13,
+    normalMap: c.paintFlakeNorm,
+    normalScale: new THREE.Vector2(0.16, 0.16),
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.036,
+    envMapIntensity: 2.05
   });
-  const headLensMat = new THREE.MeshStandardMaterial({ color: 0xfff0c8, emissive: 0xffe4a8, emissiveIntensity: 1.4 });
-  const tailMat = new THREE.MeshStandardMaterial({ color: 0xc8162c, emissive: 0xe61832, emissiveIntensity: 1.3 });
+  const headLensMat = new THREE.MeshStandardMaterial({ color: 0xfff2cc, emissive: 0xffe8ae, emissiveIntensity: 1.55 });
+  const tailMat = new THREE.MeshStandardMaterial({ color: 0xd4162c, emissive: 0xf01832, emissiveIntensity: 1.42 });
 
   // Ground contact shadow
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(2.85, 5.55), getContactShadowMat());
@@ -1787,7 +1831,10 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
     archetype === 'convertible' ? c.convBody :
     archetype === 'suv' ? c.suvBody :
     c.sedanBody;
-  bodyGroup.add(new THREE.Mesh(bodyGeo, paint));
+  const bodyMesh = new THREE.Mesh(bodyGeo, paint);
+  bodyMesh.castShadow = true;
+  bodyMesh.receiveShadow = true;
+  bodyGroup.add(bodyMesh);
   if (archetype === 'coupe' || archetype === 'muscle') bodyGroup.add(new THREE.Mesh(c.hoodSculptGeo, paint));
   bodyGroup.add(new THREE.Mesh(c.trimGeo, c.darkMat));
   bodyGroup.add(new THREE.Mesh(c.exhaustGeo, c.chromeMat));
@@ -1962,7 +2009,7 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
     cal.position.set(outSign * 0.095, 0.03, isFront ? 0.11 : -0.11);
     steerGrp.add(cal);
     const spinGrp = new THREE.Group();
-    const tire = new THREE.Mesh(c.wheelTireGeo, c.darkMat);
+    const tire = new THREE.Mesh(c.wheelTireGeo, c.tireMat);
     const rotor = new THREE.Mesh(c.wheelRotorGeo, c.rotorMat);
     const rim = new THREE.Mesh(c.wheelRimGeo, c.chromeMat);
     const hub = new THREE.Mesh(c.wheelHubGeo, c.darkMat);
@@ -2992,6 +3039,8 @@ export function createPedestrian(spec, sharedGeos, splatMat, starMat, pedMats) {
     : (isFemale ? hg.npcFemaleStreet : (spec.blazer ? hg.npcMaleBlazer : (spec.jog ? hg.npcMaleJog : hg.npcMaleShort)));
   const rig = createHumanSkeleton(isFemale, false);
   const skinnedBody = new THREE.SkinnedMesh(bodyGeo, [skinMat, topMat, botMat, shoeMat, soleMat]);
+  skinnedBody.castShadow = true;
+  skinnedBody.receiveShadow = true;
   skinnedBody.frustumCulled = false;
   skinnedBody.add(rig.hips);
   rig.hips.updateMatrixWorld(true);
@@ -3162,8 +3211,8 @@ export function createPlayerCharacter() {
   const shoeMat = new THREE.MeshStandardMaterial({ color: 0xf8f6fa, roughness: 0.34 });
   const soleMat = new THREE.MeshStandardMaterial({ color: 0x1e1c28, roughness: 0.72 });
   const hairMat = new THREE.MeshStandardMaterial({ map: makeHairTexture(0x18131d), roughness: 0.68, metalness: 0.08, side: THREE.DoubleSide });
-  // Authentic 1986 Miami Vice Ray-Ban Teardrop Aviators: dark smoked emerald-gold mirrored glass + slim gold wire!
-  const aviatorGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x0b1c19, metalness: 0.92, roughness: 0.06, clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 2.4 });
+  // Authentic 1986 Miami Vice Ray-Ban Teardrop Aviators: deep smoked charcoal-emerald lenses + slim gold wire!
+  const aviatorGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x091318, metalness: 0.42, roughness: 0.10, clearcoat: 0.92, clearcoatRoughness: 0.06, envMapIntensity: 0.85 });
   const goldMat = new THREE.MeshStandardMaterial({ color: 0xe8bc52, metalness: 0.94, roughness: 0.16, envMapIntensity: 1.8 });
   const leatherMat = new THREE.MeshStandardMaterial({ color: 0x2b1a14, roughness: 0.44 });
 
@@ -3201,17 +3250,23 @@ export function createPlayerCharacter() {
   const darkDialMat = new THREE.MeshStandardMaterial({ color: 0x0b162a, roughness: 0.14, metalness: 0.65 });
   const shoeStripeMat = new THREE.MeshStandardMaterial({ color: 0x21e6d1, roughness: 0.36, metalness: 0.12 });
 
-  // White crewneck undershirt peeking through open V-neck
-  const underV = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.056, 0.14, 14, 1, false, Math.PI * 0.68, Math.PI * 0.64), undershirtMat);
-  underV.position.set(0, 0.455, -0.058);
-  underV.rotation.x = 0.08;
+  // Solid sun-tanned upper chest & clavicles core + white crewneck undershirt (eliminates any V-neck gap!)
+  const chestFill = new THREE.Mesh(new THREE.SphereGeometry(0.115, 16, 12), skinMat);
+  chestFill.scale.set(1.02, 0.72, 0.82);
+  chestFill.position.set(0, 0.512, -0.014);
+  rig.chest.add(chestFill);
+
+  const underV = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.064, 0.145, 16), undershirtMat);
+  underV.scale.set(1.02, 1.0, 0.78);
+  underV.position.set(0, 0.468, -0.042);
+  underV.rotation.x = 0.06;
   rig.chest.add(underV);
 
   // Tailored Draped Hawaiian Shirt Collar + Sculpted Folded Cuban Lapels (Left & Right)
-  const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.086, 0.018, 10, 22), shirtMat);
-  collarRing.rotation.x = Math.PI / 2 + 0.22;
+  const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.019, 10, 22), shirtMat);
+  collarRing.rotation.x = Math.PI / 2 + 0.18;
   collarRing.scale.set(1.06, 0.96, 1.0);
-  collarRing.position.set(0, 0.542, -0.008);
+  collarRing.position.set(0, 0.538, -0.008);
   rig.chest.add(collarRing);
 
   const lapelGeo = new THREE.BoxGeometry(0.068, 0.155, 0.018);
@@ -3308,28 +3363,29 @@ export function createPlayerCharacter() {
   tearShape.quadraticCurveTo(0.038, -0.008, 0.016, -0.024);
   tearShape.quadraticCurveTo(-0.014, -0.028, -0.032, -0.006);
   tearShape.closePath();
-  const tearLensGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.004, bevelEnabled: false, curveSegments: 14 });
-  const tearFrameGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.005, bevelEnabled: true, bevelThickness: 0.0025, bevelSize: 0.0026, bevelSegments: 2, curveSegments: 14 });
+  const tearLensGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.006, bevelEnabled: false, curveSegments: 14 });
+  const tearFrameGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.0018, bevelSize: 0.0028, bevelSegments: 2, curveSegments: 14 });
 
   const browBar = new THREE.Mesh(new THREE.BoxGeometry(0.140, 0.004, 0.006), goldMat);
-  browBar.position.set(0, heroHeadY + 0.028, -0.114);
+  browBar.position.set(0, heroHeadY + 0.028, -0.115);
   const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.004, 0.006), goldMat);
-  bridge.position.set(0, heroHeadY + 0.016, -0.116);
+  bridge.position.set(0, heroHeadY + 0.016, -0.117);
 
+  // Place dark smoked lenses 1.4mm forward of frame bevel front face (-0.1158) so crisp gold rim outlines dark glass!
   const lensL = new THREE.Mesh(tearLensGeo, aviatorGlassMat);
-  lensL.position.set(-0.040, heroHeadY + 0.008, -0.116);
+  lensL.position.set(-0.040, heroHeadY + 0.008, -0.1185);
   lensL.rotation.y = 0.14;
   const frameL = new THREE.Mesh(tearFrameGeo, goldMat);
-  frameL.position.set(-0.040, heroHeadY + 0.008, -0.115);
+  frameL.position.set(-0.040, heroHeadY + 0.008, -0.1140);
   frameL.rotation.y = 0.14;
 
   const lensR = new THREE.Mesh(tearLensGeo, aviatorGlassMat);
   lensR.scale.x = -1;
-  lensR.position.set(0.040, heroHeadY + 0.008, -0.116);
+  lensR.position.set(0.040, heroHeadY + 0.008, -0.1185);
   lensR.rotation.y = -0.14;
   const frameR = new THREE.Mesh(tearFrameGeo, goldMat);
   frameR.scale.x = -1;
-  frameR.position.set(0.040, heroHeadY + 0.008, -0.115);
+  frameR.position.set(0.040, heroHeadY + 0.008, -0.1140);
   frameR.rotation.y = -0.14;
 
   const templeGeo = new THREE.BoxGeometry(0.004, 0.0045, 0.112);
@@ -5390,26 +5446,27 @@ export function createBoardingAirstairs() {
 export function createMountViceRange(getTerrainHeight, closestMountainRoad, roadPoints, maxAniso = 4) {
   const root = new THREE.Group();
 
-  // 1. High-Res Displaced Mount Chiliad Multi-Biome Terrain Mesh (X = -515..55, Z = -1115..-1495)
-  // Road corridor recessed cleanly -0.18m below asphalt so terrain NEVER clips or pokes through the highway!
+  // 1. Optimized High-Craft Displaced Mount Vice Multi-Biome Terrain Mesh (X = -515..55, Z = -1115..-1495)
+  // Road corridor recessed cleanly -0.24m below asphalt so terrain NEVER clips or pokes through the loop highway!
+  const pbr = getWorldPBRTextures(maxAniso);
   const minX = -515, maxX = 55;
   const minZ = -1495, maxZ = -1115;
-  const segX = 180, segZ = 132;
+  const segX = 136, segZ = 102;
   const w = maxX - minX, d = maxZ - minZ;
 
   const tGeo = new THREE.PlaneGeometry(w, d, segX, segZ);
   tGeo.rotateX(-Math.PI / 2);
   const posAttr = tGeo.attributes.position;
+  const mvHeights = new Float32Array(posAttr.count);
   const colors = new Float32Array(posAttr.count * 3);
 
-  // Authentic GTA 5 Mount Chiliad Sunlit California/Tropical Palette (NO flat gray snow mound!)
-  const cFoot   = new THREE.Color(0x3a6a34); // Lush emerald coastal foothill grass
-  const cChap   = new THREE.Color(0x69763b); // Sun-baked golden chaparral & sagebrush
-  const cForest = new THREE.Color(0x2d4e2c); // Deep pine-needle ridge canopy floor
-  const cCliff  = new THREE.Color(0x7d6552); // Warm stratified terracotta/granite cliff
-  const cSlate  = new THREE.Color(0x5b524b); // Weathered dark granite rock face
-  const cPeak   = new THREE.Color(0x8e7c64); // Sunlit dry alpine meadow & limestone peak
-  const cGravel = new THREE.Color(0x635b52); // Engineered highway shoulder gravel
+  const cFoot   = new THREE.Color(0x366e32);
+  const cChap   = new THREE.Color(0x5a7638);
+  const cForest = new THREE.Color(0x2c572b);
+  const cCliff  = new THREE.Color(0x886850);
+  const cSlate  = new THREE.Color(0x61554c);
+  const cPeak   = new THREE.Color(0x6d7a47);
+  const cGravel = new THREE.Color(0x6c6256);
   const cTmp = new THREE.Color();
 
   for (let i = 0; i < posAttr.count; i++) {
@@ -5419,67 +5476,58 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
     const wz = (minZ + maxZ) * 0.5 + lz;
     let h = getTerrainHeight(wx, wz);
 
-    // Recess terrain slightly under the engineered highway deck so asphalt & stripes NEVER z-fight or get buried!
     const roadHit = closestMountainRoad(wx, wz);
     if (roadHit.dist < 8.4) {
       const recess = roadHit.dist < 7.0 ? 0.24 : 0.24 * (1 - (roadHit.dist - 7.0) / 1.4);
       h = Math.max(-0.2, h - recess);
     }
     posAttr.setY(i, h);
+    mvHeights[i] = h;
 
-    // Elevation + Slope + Road-Shoulder Biome Shading
     const hDx = getTerrainHeight(wx + 2.2, wz) - getTerrainHeight(wx - 2.2, wz);
     const hDz = getTerrainHeight(wx, wz + 2.2) - getTerrainHeight(wx, wz - 2.2);
-    const slope = Math.min(1, Math.hypot(hDx, hDz) / 3.0);
-    const elev = Math.max(0, Math.min(1, h / 66));
+    const slope = Math.min(1, Math.hypot(hDx, hDz) / 3.4);
+    const elev = Math.max(0, Math.min(1, h / 118));
 
     if (elev < 0.22) cTmp.copy(cFoot).lerp(cChap, elev / 0.22);
-    else if (elev < 0.55) cTmp.copy(cChap).lerp(cForest, (elev - 0.22) / 0.33);
-    else if (elev < 0.82) cTmp.copy(cForest).lerp(cCliff, (elev - 0.55) / 0.27);
-    else cTmp.copy(cCliff).lerp(cPeak, (elev - 0.82) / 0.18);
+    else if (elev < 0.56) cTmp.copy(cChap).lerp(cForest, (elev - 0.22) / 0.34);
+    else if (elev < 0.84) cTmp.copy(cForest).lerp(cPeak, (elev - 0.56) / 0.28);
+    else cTmp.copy(cPeak).lerp(new THREE.Color(0x9ca4aa), (elev - 0.84) / 0.16 * 0.52);
 
-    // Steep rock cliff bands expose warm terracotta & weathered granite strata
-    if (slope > 0.24) {
-      const cliffMix = Math.min(0.92, (slope - 0.24) * 1.85);
-      const strata = 0.5 + 0.5 * Math.sin(h * 0.85 + wx * 0.04);
+    if (slope > 0.25) {
+      const cliffMix = Math.min(0.90, (slope - 0.25) * 1.75);
+      const strata = 0.5 + 0.5 * Math.sin(h * 0.44 + wx * 0.05 + wz * 0.03);
       cTmp.lerp(strata > 0.5 ? cCliff : cSlate, cliffMix);
     }
-    // Gravel shoulder framing right beside the paved mountain highway
-    if (roadHit.dist < 11.5) {
-      const shMix = Math.max(0, 1 - Math.max(0, roadHit.dist - 7.0) / 4.5);
-      cTmp.lerp(cGravel, shMix * 0.72);
+    if (roadHit.dist < 11.2) {
+      const shMix = Math.max(0, 1 - Math.max(0, roadHit.dist - 7.0) / 4.2);
+      cTmp.lerp(cGravel, shMix * 0.62);
     }
-    const grain = (Math.sin(wx * 0.17 + wz * 0.11) * Math.cos(wz * 0.23 - wx * 0.09)) * 0.042;
+    const grain = (Math.sin(wx * 0.13 + wz * 0.09) * Math.cos(wz * 0.19 - wx * 0.07)) * 0.052;
     colors[i * 3]     = Math.max(0, Math.min(1, cTmp.r + grain));
     colors[i * 3 + 1] = Math.max(0, Math.min(1, cTmp.g + grain));
     colors[i * 3 + 2] = Math.max(0, Math.min(1, cTmp.b + grain));
   }
   tGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   tGeo.computeVertexNormals();
+  const mvStride = segX + 1;
+  const sampleMeshHeight = (wx, wz) => {
+    const fx = ((wx - minX) / w) * segX;
+    const fz = ((wz - minZ) / d) * segZ;
+    if (fx < 0 || fx >= segX || fz < 0 || fz >= segZ) return -999;
+    const ix = Math.floor(fx), iz = Math.floor(fz);
+    const u = fx - ix, v = fz - iz;
+    const a = iz * mvStride + ix, b = (iz + 1) * mvStride + ix;
+    const ya = mvHeights[a], yb = mvHeights[b], yc = mvHeights[b + 1], yd = mvHeights[a + 1];
+    return (u + v <= 1) ? (ya + u * (yd - ya) + v * (yb - ya)) : (yc + (1 - u) * (yb - yc) + (1 - v) * (yd - yc));
+  };
 
-  // High-Res 512px Stratified Rock/Soil/Grass Detail Map + Matching Sobel Normal Map!
-  const rockC = document.createElement('canvas');
-  rockC.width = 512; rockC.height = 512;
-  const rctx = rockC.getContext('2d');
-  rctx.fillStyle = '#cfcac2';
-  rctx.fillRect(0, 0, 512, 512);
-  // Natural sedimentary rock strata & organic mottled terrain patches
-  for (let y = 0; y < 512; y += 10) {
-    const sh = 185 + Math.floor(Math.sin(y * 0.14) * 24 + (y % 20 === 0 ? -16 : 8));
-    rctx.fillStyle = `rgba(${sh},${sh - 2},${sh - 6},0.45)`;
-    rctx.fillRect(0, y, 512, 6);
-  }
-  for (let i = 0; i < 16000; i++) {
-    const shade = 165 + Math.floor(Math.random() * 82);
-    rctx.fillStyle = `rgba(${shade},${shade - 2},${shade - 6},0.55)`;
-    rctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 4, 2 + Math.random() * 3);
-  }
-  const rockTex = new THREE.CanvasTexture(rockC);
-  rockTex.wrapS = rockTex.wrapT = THREE.RepeatWrapping;
-  rockTex.repeat.set(42, 32);
-  rockTex.colorSpace = THREE.SRGBColorSpace;
-  rockTex.anisotropy = Math.min(maxAniso, 16);
-  const rockNorm = heightCanvasToNormalTexture(rockC, 2.8, Math.min(maxAniso, 16), 42, 32);
+  const rockTex = pbr.granite.map.clone();
+  rockTex.repeat.set(42, 30);
+  rockTex.needsUpdate = true;
+  const rockNorm = pbr.granite.normalMap.clone();
+  rockNorm.repeat.set(42, 30);
+  rockNorm.needsUpdate = true;
 
   const terrainMesh = new THREE.Mesh(
     tGeo,
@@ -5487,7 +5535,7 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
       vertexColors: true,
       map: rockTex,
       normalMap: rockNorm,
-      normalScale: new THREE.Vector2(1.15, 1.15),
+      normalScale: new THREE.Vector2(1.2, 1.2),
       roughness: 0.90,
       metalness: 0.03
     })
@@ -5496,13 +5544,12 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
   terrainMesh.receiveShadow = true;
   root.add(terrainMesh);
 
-  // 2. SOLID ENGINEERED 3D SWITCHBACK MOUNTAIN HIGHWAY (Level Asphalt Deck + Concrete Embankment Skirts + Curved W-Beam Guardrail!)
+  // 2. SOLID ENGINEERED 3D FULL-LOOP SWITCHBACK MOUNTAIN HIGHWAY (ZERO DEAD ENDS!)
   const roadC = document.createElement('canvas');
   roadC.width = 512; roadC.height = 512;
   const rdCtx = roadC.getContext('2d');
   rdCtx.fillStyle = '#252832';
   rdCtx.fillRect(0, 0, 512, 512);
-  // Subtle worn tire lanes & realistic coarse highway aggregate
   const laneG = rdCtx.createLinearGradient(0, 0, 512, 0);
   laneG.addColorStop(0.0, 'rgba(18,20,26,0.3)');
   laneG.addColorStop(0.24, 'rgba(65,70,82,0.22)');
@@ -5511,16 +5558,14 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
   laneG.addColorStop(1.0, 'rgba(18,20,26,0.3)');
   rdCtx.fillStyle = laneG;
   rdCtx.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 12000; i++) {
+  for (let i = 0; i < 10000; i++) {
     const g = 28 + Math.floor(Math.random() * 34);
     rdCtx.fillStyle = `rgb(${g},${g + 2},${g + 6})`;
     rdCtx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
   }
-  // Crisp White Shoulder Fog-Lines
   rdCtx.fillStyle = '#f2f4fa';
   rdCtx.fillRect(22, 0, 12, 512);
   rdCtx.fillRect(478, 0, 12, 512);
-  // Crisp Double-Yellow Mountain Highway Centerlines
   rdCtx.fillStyle = '#f8c828';
   rdCtx.fillRect(243, 0, 9, 512);
   rdCtx.fillRect(260, 0, 9, 512);
@@ -5533,7 +5578,7 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
   roadNorm.wrapS = THREE.ClampToEdgeWrapping;
 
   const rPos = [], rUv = [], rIdx = [];
-  const skirtPos = [], skirtIdx = [];
+  const skirtPos = [], skirtUv = [], skirtIdx = [];
   const railPos = [], railIdx = [];
   const halfW = 6.8;
   const skirtDrop = 3.8;
@@ -5555,45 +5600,43 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
 
     const lx = cur.x - nx * halfW, lz = cur.z - nz * halfW;
     const rx = cur.x + nx * halfW, rz = cur.z + nz * halfW;
-    // 100% LEVEL CROSS-SECTION (ZERO side-twisting, sits cleanly +0.08m above carved roadbed!)
     const deckY = cur.y + 0.08;
 
     rPos.push(lx, deckY, lz, rx, deckY, rz);
     rUv.push(0, distAccum * 0.07, 1, distAccum * 0.07);
 
-    // Solid Sloped Concrete/Stone Retaining Embankment Skirts on BOTH edges (drops 3.8m into mountainside!)
     const lxOut = cur.x - nx * (halfW + 1.8), lzOut = cur.z - nz * (halfW + 1.8);
     const rxOut = cur.x + nx * (halfW + 1.8), rzOut = cur.z + nz * (halfW + 1.8);
     skirtPos.push(
       lx, deckY - 0.02, lz,       lxOut, deckY - skirtDrop, lzOut,
       rx, deckY - 0.02, rz,       rxOut, deckY - skirtDrop, rzOut
     );
+    skirtUv.push(
+      distAccum * 0.16, 0, distAccum * 0.16, 1,
+      distAccum * 0.16, 0, distAccum * 0.16, 1
+    );
 
     if (i < roadPoints.length - 1) {
       const base = i * 2;
       rIdx.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
       const sb = i * 4;
-      // Left skirt wall
       skirtIdx.push(sb, sb + 4, sb + 1, sb + 1, sb + 4, sb + 5);
-      // Right skirt wall
       skirtIdx.push(sb + 2, sb + 3, sb + 6, sb + 3, sb + 7, sb + 6);
     }
 
-    // Continuous Curved Steel W-Beam Guardrail Ribbon along outer downhill cliff side!
     const hl = getTerrainHeight(cur.x - nx * (halfW + 7.5), cur.z - nz * (halfW + 7.5));
     const hr = getTerrainHeight(cur.x + nx * (halfW + 7.5), cur.z + nz * (halfW + 7.5));
     const side = hl <= hr ? -1 : 1;
     const gx = cur.x + nx * side * (halfW + 0.22);
     const gz = cur.z + nz * side * (halfW + 0.22);
     railPos.push(gx, deckY + 0.56, gz, gx, deckY + 0.88, gz);
-    if (i > 4 && i < roadPoints.length - 4 && deckY > 4.2) {
-      // Only link ribbon segments on the same side so switching sides never spans across the road!
+    if (i > 4 && i < roadPoints.length - 5 && deckY > 4.5) {
       if (guardrailPosts.length > 0 && guardrailPosts[guardrailPosts.length - 1].side === side && guardrailPosts[guardrailPosts.length - 1].i === i - 1) {
         const rb = (i - 1) * 2;
         railIdx.push(rb, rb + 1, rb + 2, rb + 1, rb + 3, rb + 2);
       }
       guardrailPosts.push({ i, side, x: gx, y: deckY, z: gz, yaw: Math.atan2(tx, tz) });
-      if (i % 10 === 0) {
+      if (i % 12 === 0) {
         chevronSigns.push({ x: gx + nx * side * 0.45, y: deckY, z: gz + nz * side * 0.45, yaw: Math.atan2(-tx, -tz) });
       }
     }
@@ -5622,16 +5665,24 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
 
   const skirtGeo = new THREE.BufferGeometry();
   skirtGeo.setAttribute('position', new THREE.Float32BufferAttribute(skirtPos, 3));
+  skirtGeo.setAttribute('uv', new THREE.Float32BufferAttribute(skirtUv, 2));
   skirtGeo.setIndex(skirtIdx);
   skirtGeo.computeVertexNormals();
   const skirtMesh = new THREE.Mesh(
     skirtGeo,
-    new THREE.MeshStandardMaterial({ color: 0x5c5854, roughness: 0.88, metalness: 0.05, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({
+      map: pbr.concrete.map,
+      normalMap: pbr.concrete.normalMap,
+      normalScale: new THREE.Vector2(1.1, 1.1),
+      color: 0x8c8780,
+      roughness: 0.88,
+      metalness: 0.05,
+      side: THREE.DoubleSide
+    })
   );
   skirtMesh.receiveShadow = true;
   root.add(skirtMesh);
 
-  // Continuous Curved Galvanized Steel W-Beam Guardrail Ribbon + Posts + Reflectors
   const grMat = new THREE.MeshStandardMaterial({ color: 0xc2cad6, roughness: 0.36, metalness: 0.78, side: THREE.DoubleSide });
   if (railIdx.length > 0) {
     const railGeo = new THREE.BufferGeometry();
@@ -5654,25 +5705,36 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
   grPostInst.computeBoundingSphere();
   root.add(grPostInst);
 
-  // Grand Timber & Steel Trailhead Entrance Arch at North Vice Highway Entry (Z = -1115)
-  const entryPt = roadPoints[1];
-  const archWoodMat = new THREE.MeshStandardMaterial({ color: 0x583a24, roughness: 0.78 });
-  const entryGrp = new THREE.Group();
-  entryGrp.position.set(entryPt.x, entryPt.y, entryPt.z);
-  for (const sx of [-7.6, 7.6]) {
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 7.8, 12), archWoodMat);
-    p.position.set(sx, 3.9, 0);
-    entryGrp.add(p);
-  }
-  const entryBeam = new THREE.Mesh(new THREE.BoxGeometry(16.6, 1.85, 0.72), archWoodMat);
-  entryBeam.position.set(0, 7.5, 0);
-  const entrySignTex = makeNeonSignTexture('MOUNT VICE SCENIC HIGHWAY', '66M SUMMIT OVERLOOK · SWITCHBACK TRAIL', '#FFD36B', maxAniso, false);
-  const entrySignMat = new THREE.MeshStandardMaterial({ map: entrySignTex, emissive: 0xffffff, emissiveMap: entrySignTex, emissiveIntensity: 0.88, side: THREE.DoubleSide });
-  const entrySignS = new THREE.Mesh(new THREE.PlaneGeometry(15.2, 1.45), entrySignMat);
-  entrySignS.position.set(0, 7.5, 0.39);
-  const entrySignN = entrySignS.clone(); entrySignN.rotation.y = Math.PI; entrySignN.position.z = -0.39;
-  entryGrp.add(entryBeam, entrySignS, entrySignN);
-  root.add(entryGrp);
+  // TWO Grand Timber Trailhead Arches (East Entry at Ocean Dr + West Loop Return at Vice Hollow / Little Haiti!)
+  const archWoodMat = new THREE.MeshStandardMaterial({
+    map: pbr.bark.map,
+    normalMap: pbr.bark.normalMap,
+    normalScale: new THREE.Vector2(1.2, 1.2),
+    color: 0x8c6444,
+    roughness: 0.82
+  });
+  const circleColliders = [];
+  const buildTrailArch = (pt, title, subtitle) => {
+    const grp = new THREE.Group();
+    grp.position.set(pt.x, pt.y, pt.z);
+    for (const sx of [-7.8, 7.8]) {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 7.8, 12), archWoodMat);
+      p.position.set(sx, 3.9, 0);
+      grp.add(p);
+      circleColliders.push({ x: pt.x + sx, z: pt.z, r: 0.56 });
+    }
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(16.8, 1.85, 0.72), archWoodMat);
+    beam.position.set(0, 7.5, 0);
+    const signTex = makeNeonSignTexture(title, subtitle, '#FFD36B', maxAniso, false);
+    const signMat = new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 0.86, side: THREE.DoubleSide });
+    const signS = new THREE.Mesh(new THREE.PlaneGeometry(15.2, 1.45), signMat);
+    signS.position.set(0, 7.5, 0.39);
+    const signN = signS.clone(); signN.rotation.y = Math.PI; signN.position.z = -0.39;
+    grp.add(beam, signS, signN);
+    root.add(grp);
+  };
+  buildTrailArch(roadPoints[1], 'MOUNT VICE SCENIC LOOP', 'EAST PASS · 118M CLOUD SUMMIT TO VICE HOLLOW');
+  buildTrailArch(roadPoints[roadPoints.length - 2], 'MOUNT VICE WEST LOOP', 'THROUGH VICE HOLLOW TO 118M PEAK · NO DEAD END');
 
   // Yellow/Black Hairpin Chevron Warning Signs
   const chevC = document.createElement('canvas');
@@ -5696,53 +5758,68 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
     root.add(post, board);
   });
 
-  // 3. Instanced Lush 4-Tier Alpine Pine Forest & Multi-Tone Granite Boulders (100% Clear of Highway Corridor!)
+  // 3. Instanced REALISTIC TEXTURED 4-Tier Alpine Pines & Cracked Granite Boulders!
   const treeCoords = [];
   const rockCoords = [];
   let seed = 4219;
   const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
-  for (let i = 0; i < 520; i++) {
+  for (let i = 0; i < 640; i++) {
     const tx = minX + 18 + rand() * (w - 36);
     const tz = minZ + 22 + rand() * (d - 34);
+    if (tx > -464 && tx < -296 && tz > -1262 && tz < -1126) continue;
     const ty = getTerrainHeight(tx, tz);
-    if (ty < 1.2 || ty > 56) continue;
-    if (closestMountainRoad(tx, tz).dist < 13.5) continue;
-    if (Math.hypot(tx + 228, tz + 1432) < 28) continue;
-    treeCoords.push({ x: tx, y: ty, z: tz, s: 0.78 + rand() * 0.78, ry: rand() * Math.PI * 2, leanX: (rand() - 0.5) * 0.08, leanZ: (rand() - 0.5) * 0.08, shade: rand() });
+    if (ty < 1.0 || ty > 106.0) continue;
+    if (closestMountainRoad(tx, tz).dist < 11.4) continue;
+    if (Math.hypot(tx + 228, tz + 1432) < 25) continue;
+    treeCoords.push({ x: tx, y: ty, z: tz, s: 0.78 + rand() * 0.82, ry: rand() * Math.PI * 2, leanX: (rand() - 0.5) * 0.08, leanZ: (rand() - 0.5) * 0.08, shade: rand() });
   }
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 190; i++) {
     const rx = minX + 18 + rand() * (w - 36);
     const rz = minZ + 20 + rand() * (d - 30);
+    if (rx > -464 && rx < -296 && rz > -1262 && rz < -1126) continue;
     const ry = getTerrainHeight(rx, rz);
-    if (ry < 1.8) continue;
-    if (closestMountainRoad(rx, rz).dist < 11.8) continue;
+    if (ry < 1.6) continue;
+    if (closestMountainRoad(rx, rz).dist < 12.0) continue;
     if (Math.hypot(rx + 228, rz + 1432) < 24) continue;
     rockCoords.push({ x: rx, y: ry, z: rz, sx: 1.2 + rand() * 2.8, sy: 0.75 + rand() * 1.6, sz: 1.2 + rand() * 2.8, r: rand() * 6, shade: rand() });
   }
 
-  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4c3422, roughness: 0.94 });
-  const pineBaseMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.84, metalness: 0.02 });
-  const trunkInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.24, 0.44, 3.4, 8), trunkMat, Math.max(1, treeCoords.length));
-  const tier1Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(2.9, 4.4, 9), pineBaseMat, Math.max(1, treeCoords.length));
-  const tier2Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(2.25, 3.9, 9), pineBaseMat, Math.max(1, treeCoords.length));
-  const tier3Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(1.55, 3.3, 9), pineBaseMat, Math.max(1, treeCoords.length));
-  const tier4Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(0.88, 2.5, 8), pineBaseMat, Math.max(1, treeCoords.length));
-  const pineColors = [new THREE.Color(0x1b4524), new THREE.Color(0x24552d), new THREE.Color(0x2f5f2e), new THREE.Color(0x1f4b32), new THREE.Color(0x3a6430)];
+  const trunkMat = new THREE.MeshStandardMaterial({
+    map: pbr.bark.map,
+    normalMap: pbr.bark.normalMap,
+    normalScale: new THREE.Vector2(1.45, 1.45),
+    color: 0xb6957a,
+    roughness: 0.94
+  });
+  const pineBaseMat = new THREE.MeshStandardMaterial({
+    map: pbr.pineNeedle.map,
+    normalMap: pbr.pineNeedle.normalMap,
+    normalScale: new THREE.Vector2(1.35, 1.35),
+    color: 0xffffff,
+    roughness: 0.86,
+    metalness: 0.02
+  });
+  const trunkInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.24, 0.48, 4.6, 8), trunkMat, Math.max(1, treeCoords.length));
+  const tier1Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(2.95, 4.4, 9), pineBaseMat, Math.max(1, treeCoords.length));
+  const tier2Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(2.28, 3.9, 9), pineBaseMat, Math.max(1, treeCoords.length));
+  const tier3Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(1.58, 3.3, 9), pineBaseMat, Math.max(1, treeCoords.length));
+  const tier4Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(0.90, 2.5, 8), pineBaseMat, Math.max(1, treeCoords.length));
+  const pineColors = [new THREE.Color(0x3a6e42), new THREE.Color(0x467e4a), new THREE.Color(0x54854a), new THREE.Color(0x387456), new THREE.Color(0x5c8b4e)];
   const pColTmp = new THREE.Color();
 
   treeCoords.forEach((t, idx) => {
     dObj.rotation.set(t.leanX, t.ry, t.leanZ);
     dObj.scale.set(t.s, t.s, t.s);
-    dObj.position.set(t.x, t.y + 1.45 * t.s, t.z); dObj.updateMatrix(); trunkInst.setMatrixAt(idx, dObj.matrix);
-    dObj.position.set(t.x, t.y + 3.85 * t.s, t.z); dObj.updateMatrix(); tier1Inst.setMatrixAt(idx, dObj.matrix);
-    dObj.position.set(t.x, t.y + 6.05 * t.s, t.z); dObj.updateMatrix(); tier2Inst.setMatrixAt(idx, dObj.matrix);
-    dObj.position.set(t.x, t.y + 8.00 * t.s, t.z); dObj.updateMatrix(); tier3Inst.setMatrixAt(idx, dObj.matrix);
-    dObj.position.set(t.x, t.y + 9.65 * t.s, t.z); dObj.updateMatrix(); tier4Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 0.95 * t.s, t.z); dObj.updateMatrix(); trunkInst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 3.55 * t.s, t.z); dObj.updateMatrix(); tier1Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 5.75 * t.s, t.z); dObj.updateMatrix(); tier2Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 7.70 * t.s, t.z); dObj.updateMatrix(); tier3Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 9.35 * t.s, t.z); dObj.updateMatrix(); tier4Inst.setMatrixAt(idx, dObj.matrix);
     const baseC = pineColors[idx % pineColors.length];
-    pColTmp.copy(baseC).multiplyScalar(0.86 + t.shade * 0.28);
+    pColTmp.copy(baseC).multiplyScalar(0.84 + t.shade * 0.30);
     tier1Inst.setColorAt(idx, pColTmp);
-    pColTmp.multiplyScalar(1.08);
+    pColTmp.multiplyScalar(1.07);
     tier2Inst.setColorAt(idx, pColTmp);
     pColTmp.multiplyScalar(1.06);
     tier3Inst.setColorAt(idx, pColTmp);
@@ -5757,12 +5834,19 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
 
   const boulderInst = new THREE.InstancedMesh(
     new THREE.DodecahedronGeometry(1.0, 1),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.90, metalness: 0.04 }),
+    new THREE.MeshStandardMaterial({
+      map: pbr.granite.map,
+      normalMap: pbr.granite.normalMap,
+      normalScale: new THREE.Vector2(1.5, 1.5),
+      color: 0xffffff,
+      roughness: 0.92,
+      metalness: 0.04
+    }),
     Math.max(1, rockCoords.length)
   );
-  const rockPalette = [new THREE.Color(0x6e6258), new THREE.Color(0x827466), new THREE.Color(0x5a5550), new THREE.Color(0x766d60)];
+  const rockPalette = [new THREE.Color(0x9a8f84), new THREE.Color(0xb0a190), new THREE.Color(0x827d77), new THREE.Color(0xa29888)];
   rockCoords.forEach((r, idx) => {
-    dObj.position.set(r.x, r.y + r.sy * 0.28, r.z);
+    dObj.position.set(r.x, r.y - r.sy * 0.24, r.z);
     dObj.rotation.set(r.r * 0.4, r.r, r.r * 0.25);
     dObj.scale.set(r.sx, r.sy, r.sz);
     dObj.updateMatrix();
@@ -5774,67 +5858,546 @@ export function createMountViceRange(getTerrainHeight, closestMountainRoad, road
   boulderInst.computeBoundingSphere();
   root.add(boulderInst);
 
-  // 4. Mount Vice Summit Overlook Deck, Park Sign, Red/White Broadcast Radio Tower & Stunt Launch Ramp!
-  const summitPt = roadPoints[roadPoints.length - 1];
-  const sx = summitPt.x, sz = summitPt.z;
-  const sy = summitPt.y;
-
-  const deckMat = new THREE.MeshStandardMaterial({ color: 0x7a5436, roughness: 0.74 });
-  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x5c5752, roughness: 0.86 });
+  // 4. Mount Vice Towering 118m Cloud-Wrapped Summit Overlook Deck (-228, -1432) — Loop highway glides right through it!
+  const sx = -228, sz = -1432, sy = 118.0;
+  const deckWoodTex = makeWoodPlankTexture(maxAniso);
+  const deckWoodNorm = makeWoodPlankNormalMap(maxAniso, 6, 6);
+  const deckMat = new THREE.MeshStandardMaterial({
+    map: deckWoodTex,
+    normalMap: deckWoodNorm,
+    normalScale: new THREE.Vector2(1.1, 1.1),
+    color: 0xa67a52,
+    roughness: 0.76
+  });
+  const stoneMat = new THREE.MeshStandardMaterial({
+    map: pbr.stoneBrick.map,
+    normalMap: pbr.stoneBrick.normalMap,
+    normalScale: new THREE.Vector2(1.3, 1.3),
+    color: 0x9e978e,
+    roughness: 0.88
+  });
   const deck = new THREE.Mesh(new THREE.CylinderGeometry(18.5, 20.5, 2.2, 28), stoneMat);
-  deck.position.set(sx, sy - 0.98, sz);
+  deck.position.set(sx, sy - 1.02, sz);
   const woodTop = new THREE.Mesh(new THREE.CylinderGeometry(17.5, 17.5, 0.22, 28), deckMat);
-  woodTop.position.set(sx, sy + 0.06, sz);
+  woodTop.position.set(sx, sy + 0.02, sz);
   root.add(deck, woodTop);
 
-  // Illuminated "MOUNT VICE · ELEV 66M" Overlook Monument Sign
-  const mSignTex = makeNeonSignTexture('MOUNT VICE SUMMIT', 'ELEV 66M · SCENIC OVERLOOK', '#FFD36B', maxAniso, false);
-  const mSignBoard = new THREE.Mesh(
-    new THREE.BoxGeometry(8.8, 2.2, 0.36),
-    new THREE.MeshStandardMaterial({ color: 0x3b2618, roughness: 0.8 })
-  );
-  mSignBoard.position.set(sx - 10.5, sy + 2.8, sz - 10.0);
+  const mSignTex = makeNeonSignTexture('MOUNT VICE SUMMIT', 'ELEV 118M · CLOUD OVERLOOK · LOOP', '#FFD36B', maxAniso, false);
+  const mSignBoard = new THREE.Mesh(new THREE.BoxGeometry(8.8, 2.2, 0.36), archWoodMat);
+  mSignBoard.position.set(sx - 11.5, sy + 2.8, sz - 11.0);
   mSignBoard.rotation.y = 0.52;
   const mSignFace = new THREE.Mesh(
     new THREE.PlaneGeometry(8.4, 1.85),
     new THREE.MeshStandardMaterial({ map: mSignTex, emissive: 0xffffff, emissiveMap: mSignTex, emissiveIntensity: 0.92 })
   );
-  mSignFace.position.set(sx - 10.36, sy + 2.8, sz - 9.78);
+  mSignFace.position.set(sx - 11.36, sy + 2.8, sz - 10.78);
   mSignFace.rotation.y = 0.52;
   root.add(mSignBoard, mSignFace);
 
-  // Tall Red & White Aviation Broadcast Radio Tower on Summit North-East Edge + Blinking Red Beacon
   const towerGrp = new THREE.Group();
   towerGrp.position.set(sx + 14.5, sy, sz - 12.5);
   const redMat = new THREE.MeshStandardMaterial({ color: 0xe8323e, roughness: 0.38, metalness: 0.52 });
   const whtMat = new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: 0.38, metalness: 0.42 });
-  for (let seg = 0; seg < 6; seg++) {
-    const rBot = 2.4 - seg * 0.32;
-    const rTop = 2.4 - (seg + 1) * 0.32;
-    const tSeg = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, 4.5, 4), seg % 2 === 0 ? redMat : whtMat);
-    tSeg.position.y = 2.25 + seg * 4.5;
+  for (let seg = 0; seg < 7; seg++) {
+    const rBot = 2.6 - seg * 0.31;
+    const rTop = 2.6 - (seg + 1) * 0.31;
+    const tSeg = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, 4.6, 4), seg % 2 === 0 ? redMat : whtMat);
+    tSeg.position.y = 2.3 + seg * 4.6;
     towerGrp.add(tSeg);
   }
-  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.24, 6.5, 8), whtMat);
-  spire.position.y = 30.0;
+  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.24, 7.5, 8), whtMat);
+  spire.position.y = 35.8;
   const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff2842 });
-  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 8), beaconMat);
-  beacon.position.y = 33.4;
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.75, 10, 8), beaconMat);
+  beacon.position.y = 39.8;
   towerGrp.add(spire, beacon);
   root.add(towerGrp);
 
-  // Summit Parachute / Stunt Car Launch Ramp Facing South Overlooking All of Vice City!
-  const rampMat = new THREE.MeshStandardMaterial({ color: 0xff8a2a, roughness: 0.48, metalness: 0.25 });
-  const ramp = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.42, 10.5), deckMat);
-  ramp.position.set(sx + 5.0, sy + 1.45, sz + 15.5);
-  ramp.rotation.x = -0.24;
-  const rampStripe = new THREE.Mesh(new THREE.BoxGeometry(5.7, 0.14, 1.4), rampMat);
-  rampStripe.position.set(sx + 5.0, sy + 2.65, sz + 20.2);
-  rampStripe.rotation.x = -0.24;
-  root.add(ramp, rampStripe);
+  // 5. GTA San Andreas Mount Chiliad Drifting 3D Mountain Mist & Cloud Banks wrapping upper ridges!
+  const mistClouds = new THREE.Group();
+  const mistTex = makeSoftParticleTexture();
+  const mistMat = new THREE.MeshBasicMaterial({
+    map: mistTex,
+    color: 0xe6effa,
+    transparent: true,
+    opacity: 0.24,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const mistPlaneGeo = new THREE.PlaneGeometry(145, 58);
+  for (let m = 0; m < 18; m++) {
+    const ang = (m / 18) * Math.PI * 2;
+    const tier = m % 3;
+    const rad = tier === 0 ? 155 : (tier === 1 ? 102 : 52);
+    const alt = tier === 0 ? 58 : (tier === 1 ? 86 : 112);
+    const puff = new THREE.Mesh(mistPlaneGeo, mistMat);
+    puff.position.set(sx + Math.cos(ang) * rad, alt + (m % 2) * 5, sz + Math.sin(ang) * rad);
+    puff.rotation.x = -Math.PI / 2 + ((m % 3) - 1) * 0.14;
+    puff.rotation.z = ang;
+    puff.userData.baseX = puff.position.x;
+    puff.userData.phase = m * 0.7;
+    mistClouds.add(puff);
+  }
+  root.add(mistClouds);
 
-  return { root, beacon, summit: { x: sx, y: sy, z: sz } };
+  circleColliders.push(
+    { x: sx + 14.5, z: sz - 12.5, r: 2.8 },
+    { x: sx - 11.5, z: sz - 11.0, r: 2.2 }
+  );
+  treeCoords.forEach((t) => {
+    circleColliders.push({ x: t.x, z: t.z, r: 0.62 * t.s });
+  });
+  rockCoords.forEach((r) => {
+    circleColliders.push({ x: r.x, z: r.z, r: Math.max(r.sx, r.sz) * 0.96 });
+  });
+
+  return { root, beacon, mistClouds, summit: { x: sx, y: sy, z: sz }, circleColliders, sampleMeshHeight };
 }
+
+/* ==========================================================================
+   SEPARATE WESTERN MOUNTAIN RANGE — "SIERRA WEST · REDROCK PEAKS"
+   - Completely separate western mountain region (X = -885..-496, Z = -760..+240)
+   - Warm GTA San Andreas Redrock Canyon & Redwood-Pine Biome with PBR Normal Maps
+   - Full Continuous ZERO-DEAD-END Loop Highway (Vice Port North <-> 50m Redrock
+     Overlook <-> Vice Port South) with Guardrails, Arches & Solid Colliders!
+   ========================================================================== */
+export function createSierraWestRange(getTerrainHeight, closestWestRoad, roadPoints, maxAniso = 4) {
+  const root = new THREE.Group();
+  const pbr = getWorldPBRTextures(maxAniso);
+  const circleColliders = [];
+
+  const minX = -885, maxX = -496;
+  const minZ = -760, maxZ = 240;
+  const segX = 104, segZ = 148;
+  const w = maxX - minX, d = maxZ - minZ;
+
+  const tGeo = new THREE.PlaneGeometry(w, d, segX, segZ);
+  tGeo.rotateX(-Math.PI / 2);
+  const posAttr = tGeo.attributes.position;
+  const swHeights = new Float32Array(posAttr.count);
+  const colors = new Float32Array(posAttr.count * 3);
+
+  // Warm Western Canyon / Redrock / Sagebrush / Redwood Biome Palette
+  const cSage   = new THREE.Color(0x5c6e3a);
+  const cOchre  = new THREE.Color(0x9a7048);
+  const cTerra  = new THREE.Color(0x9e5438);
+  const cCanyon = new THREE.Color(0x764230);
+  const cRedwd  = new THREE.Color(0x3a5832);
+  const cMesa   = new THREE.Color(0xb6865e);
+  const cGravel = new THREE.Color(0x786858);
+  const cTmp = new THREE.Color();
+
+  for (let i = 0; i < posAttr.count; i++) {
+    const lx = posAttr.getX(i);
+    const lz = posAttr.getZ(i);
+    const wx = (minX + maxX) * 0.5 + lx;
+    const wz = (minZ + maxZ) * 0.5 + lz;
+    let h = getTerrainHeight(wx, wz);
+
+    const roadHit = closestWestRoad(wx, wz);
+    if (roadHit.dist < 8.4) {
+      const recess = roadHit.dist < 7.0 ? 0.24 : 0.24 * (1 - (roadHit.dist - 7.0) / 1.4);
+      h = Math.max(-0.2, h - recess);
+    }
+    posAttr.setY(i, h);
+    swHeights[i] = h;
+
+    const hDx = getTerrainHeight(wx + 2.4, wz) - getTerrainHeight(wx - 2.4, wz);
+    const hDz = getTerrainHeight(wx, wz + 2.4) - getTerrainHeight(wx, wz - 2.4);
+    const slope = Math.min(1, Math.hypot(hDx, hDz) / 3.6);
+    const elev = Math.max(0, Math.min(1, h / 96));
+
+    if (elev < 0.25) cTmp.copy(cSage).lerp(cRedwd, elev / 0.25);
+    else if (elev < 0.58) cTmp.copy(cRedwd).lerp(cOchre, (elev - 0.25) / 0.33);
+    else cTmp.copy(cOchre).lerp(cMesa, (elev - 0.58) / 0.42);
+
+    if (slope > 0.24) {
+      const cliffMix = Math.min(0.92, (slope - 0.24) * 1.85);
+      const strata = 0.5 + 0.5 * Math.sin(h * 0.72 + wz * 0.04);
+      cTmp.lerp(strata > 0.5 ? cTerra : cCanyon, cliffMix);
+    }
+    if (roadHit.dist < 11.4) {
+      const shMix = Math.max(0, 1 - Math.max(0, roadHit.dist - 7.0) / 4.4);
+      cTmp.lerp(cGravel, shMix * 0.65);
+    }
+    const grain = (Math.sin(wx * 0.11 - wz * 0.08) * Math.cos(wz * 0.16 + wx * 0.06)) * 0.05;
+    colors[i * 3]     = Math.max(0, Math.min(1, cTmp.r + grain));
+    colors[i * 3 + 1] = Math.max(0, Math.min(1, cTmp.g + grain));
+    colors[i * 3 + 2] = Math.max(0, Math.min(1, cTmp.b + grain));
+  }
+  tGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  tGeo.computeVertexNormals();
+  const swStride = segX + 1;
+  const sampleMeshHeight = (wx, wz) => {
+    const fx = ((wx - minX) / w) * segX;
+    const fz = ((wz - minZ) / d) * segZ;
+    if (fx < 0 || fx >= segX || fz < 0 || fz >= segZ) return -999;
+    const ix = Math.floor(fx), iz = Math.floor(fz);
+    const u = fx - ix, v = fz - iz;
+    const a = iz * swStride + ix, b = (iz + 1) * swStride + ix;
+    const ya = swHeights[a], yb = swHeights[b], yc = swHeights[b + 1], yd = swHeights[a + 1];
+    return (u + v <= 1) ? (ya + u * (yd - ya) + v * (yb - ya)) : (yc + (1 - u) * (yb - yc) + (1 - v) * (yd - yc));
+  };
+
+  const swRockTex = pbr.redrock.map.clone();
+  swRockTex.repeat.set(28, 68);
+  swRockTex.needsUpdate = true;
+  const swRockNorm = pbr.redrock.normalMap.clone();
+  swRockNorm.repeat.set(28, 68);
+  swRockNorm.needsUpdate = true;
+  const terrainMesh = new THREE.Mesh(
+    tGeo,
+    new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      map: swRockTex,
+      normalMap: swRockNorm,
+      normalScale: new THREE.Vector2(1.45, 1.45),
+      roughness: 0.90,
+      metalness: 0.03
+    })
+  );
+  terrainMesh.position.set((minX + maxX) * 0.5, 0.0, (minZ + maxZ) * 0.5);
+  terrainMesh.receiveShadow = true;
+  root.add(terrainMesh);
+
+  // Engineered 2-Lane Scenic Redrock Loop Highway + Textured Embankment Skirts + W-Beam Guardrails!
+  const roadC = document.createElement('canvas');
+  roadC.width = 512; roadC.height = 512;
+  const rdCtx = roadC.getContext('2d');
+  rdCtx.fillStyle = '#2b292e';
+  rdCtx.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 9000; i++) {
+    const g = 34 + Math.floor(Math.random() * 32);
+    rdCtx.fillStyle = `rgb(${g + 4},${g + 2},${g})`;
+    rdCtx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+  }
+  rdCtx.fillStyle = '#f4efe6';
+  rdCtx.fillRect(22, 0, 12, 512);
+  rdCtx.fillRect(478, 0, 12, 512);
+  rdCtx.fillStyle = '#f8c224';
+  rdCtx.fillRect(243, 0, 9, 512);
+  rdCtx.fillRect(260, 0, 9, 512);
+  const roadTex = new THREE.CanvasTexture(roadC);
+  roadTex.wrapS = THREE.ClampToEdgeWrapping;
+  roadTex.wrapT = THREE.RepeatWrapping;
+  roadTex.colorSpace = THREE.SRGBColorSpace;
+  roadTex.anisotropy = Math.min(maxAniso, 16);
+  const roadNorm = heightCanvasToNormalTexture(roadC, 1.4, Math.min(maxAniso, 16), 1, 1);
+  roadNorm.wrapS = THREE.ClampToEdgeWrapping;
+
+  const rPos = [], rUv = [], rIdx = [];
+  const skirtPos = [], skirtUv = [], skirtIdx = [];
+  const railPos = [], railIdx = [];
+  const halfW = 6.8, skirtDrop = 4.0;
+  let distAccum = 0;
+  const guardrailPosts = [];
+
+  for (let i = 0; i < roadPoints.length; i++) {
+    const cur = roadPoints[i];
+    const prev = roadPoints[Math.max(0, i - 1)];
+    const next = roadPoints[Math.min(roadPoints.length - 1, i + 1)];
+    if (i > 0) distAccum += Math.hypot(cur.x - prev.x, cur.z - prev.z);
+
+    const tx = next.x - prev.x, tz = next.z - prev.z;
+    const tLen = Math.hypot(tx, tz) || 1;
+    const nx = -tz / tLen, nz = tx / tLen;
+
+    const lx = cur.x - nx * halfW, lz = cur.z - nz * halfW;
+    const rx = cur.x + nx * halfW, rz = cur.z + nz * halfW;
+    const deckY = cur.y + 0.08;
+
+    rPos.push(lx, deckY, lz, rx, deckY, rz);
+    rUv.push(0, distAccum * 0.07, 1, distAccum * 0.07);
+
+    const lxOut = cur.x - nx * (halfW + 1.9), lzOut = cur.z - nz * (halfW + 1.9);
+    const rxOut = cur.x + nx * (halfW + 1.9), rzOut = cur.z + nz * (halfW + 1.9);
+    skirtPos.push(
+      lx, deckY - 0.02, lz, lxOut, deckY - skirtDrop, lzOut,
+      rx, deckY - 0.02, rz, rxOut, deckY - skirtDrop, rzOut
+    );
+    skirtUv.push(distAccum * 0.16, 0, distAccum * 0.16, 1, distAccum * 0.16, 0, distAccum * 0.16, 1);
+
+    if (i < roadPoints.length - 1) {
+      const base = i * 2;
+      rIdx.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+      const sb = i * 4;
+      skirtIdx.push(sb, sb + 4, sb + 1, sb + 1, sb + 4, sb + 5);
+      skirtIdx.push(sb + 2, sb + 3, sb + 6, sb + 3, sb + 7, sb + 6);
+    }
+
+    const hl = getTerrainHeight(cur.x - nx * (halfW + 7.5), cur.z - nz * (halfW + 7.5));
+    const hr = getTerrainHeight(cur.x + nx * (halfW + 7.5), cur.z + nz * (halfW + 7.5));
+    const side = hl <= hr ? -1 : 1;
+    const gx = cur.x + nx * side * (halfW + 0.22);
+    const gz = cur.z + nz * side * (halfW + 0.22);
+    railPos.push(gx, deckY + 0.56, gz, gx, deckY + 0.88, gz);
+    if (i > 4 && i < roadPoints.length - 5 && deckY > 4.2) {
+      if (guardrailPosts.length > 0 && guardrailPosts[guardrailPosts.length - 1].side === side && guardrailPosts[guardrailPosts.length - 1].i === i - 1) {
+        const rb = (i - 1) * 2;
+        railIdx.push(rb, rb + 1, rb + 2, rb + 1, rb + 3, rb + 2);
+      }
+      guardrailPosts.push({ i, side, x: gx, y: deckY, z: gz, yaw: Math.atan2(tx, tz) });
+    }
+  }
+
+  const roadGeo = new THREE.BufferGeometry();
+  roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(rPos, 3));
+  roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(rUv, 2));
+  roadGeo.setIndex(rIdx);
+  roadGeo.computeVertexNormals();
+  const roadMesh = new THREE.Mesh(
+    roadGeo,
+    new THREE.MeshStandardMaterial({
+      map: roadTex,
+      normalMap: roadNorm,
+      normalScale: new THREE.Vector2(0.75, 0.75),
+      roughness: 0.75,
+      metalness: 0.08,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    })
+  );
+  roadMesh.receiveShadow = true;
+  root.add(roadMesh);
+
+  const skirtGeo = new THREE.BufferGeometry();
+  skirtGeo.setAttribute('position', new THREE.Float32BufferAttribute(skirtPos, 3));
+  skirtGeo.setAttribute('uv', new THREE.Float32BufferAttribute(skirtUv, 2));
+  skirtGeo.setIndex(skirtIdx);
+  skirtGeo.computeVertexNormals();
+  root.add(new THREE.Mesh(
+    skirtGeo,
+    new THREE.MeshStandardMaterial({
+      map: pbr.concrete.map,
+      normalMap: pbr.concrete.normalMap,
+      color: 0xa27e66,
+      roughness: 0.88,
+      side: THREE.DoubleSide
+    })
+  ));
+
+  const grMat = new THREE.MeshStandardMaterial({ color: 0xc2cad6, roughness: 0.36, metalness: 0.78, side: THREE.DoubleSide });
+  if (railIdx.length > 0) {
+    const railGeo = new THREE.BufferGeometry();
+    railGeo.setAttribute('position', new THREE.Float32BufferAttribute(railPos, 3));
+    railGeo.setIndex(railIdx);
+    railGeo.computeVertexNormals();
+    root.add(new THREE.Mesh(railGeo, grMat));
+  }
+  const dObj = new THREE.Object3D();
+  const grPostInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 0.92, 0.14), grMat, Math.max(1, guardrailPosts.length));
+  guardrailPosts.forEach((gp, idx) => {
+    dObj.position.set(gp.x, gp.y + 0.45, gp.z);
+    dObj.rotation.set(0, gp.yaw, 0);
+    dObj.scale.set(1, 1, 1);
+    dObj.updateMatrix();
+    grPostInst.setMatrixAt(idx, dObj.matrix);
+  });
+  grPostInst.instanceMatrix.needsUpdate = true;
+  grPostInst.computeBoundingSphere();
+  root.add(grPostInst);
+
+  // TWO Entrance Arches (North & South Entries from Vice Port West — ZERO DEAD ENDS!)
+  const archWoodMat = new THREE.MeshStandardMaterial({
+    map: pbr.bark.map,
+    normalMap: pbr.bark.normalMap,
+    color: 0x926242,
+    roughness: 0.82
+  });
+  const buildWestArch = (ax, az, title, sub) => {
+    const ay = getTerrainHeight(ax, az);
+    const grp = new THREE.Group();
+    grp.position.set(ax, ay, az);
+    grp.rotation.y = Math.PI / 2;
+    for (const sz of [-7.8, 7.8]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 7.8, 10), archWoodMat);
+      post.position.set(sz, 3.9, 0);
+      grp.add(post);
+      circleColliders.push({ x: ax, z: az + sz, r: 0.58 });
+    }
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(16.8, 1.85, 0.72), archWoodMat);
+    beam.position.set(0, 7.5, 0);
+    const tex = makeNeonSignTexture(title, sub, '#FF8A2A', maxAniso, false);
+    const sMat = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.85, side: THREE.DoubleSide });
+    const f1 = new THREE.Mesh(new THREE.PlaneGeometry(15.2, 1.45), sMat); f1.position.set(0, 7.5, 0.39);
+    const f2 = f1.clone(); f2.rotation.y = Math.PI; f2.position.z = -0.39;
+    grp.add(beam, f1, f2);
+    root.add(grp);
+  };
+  buildWestArch(-504, -540, 'SIERRA WEST PASS', 'NORTH ENTRY · REDROCK PEAKS LOOP');
+  buildWestArch(-504, -60,  'SIERRA WEST PASS', 'SOUTH ENTRY · BACK TO VICE PORT');
+
+  // Instanced Redwood Pines & Redrock Canyon Boulders (All PBR Textured + Solid Colliders!)
+  const treeCoords = [];
+  const rockCoords = [];
+  let seed = 7351;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+  for (let i = 0; i < 420; i++) {
+    const tx = minX + 24 + rand() * (w - 44);
+    const tz = minZ + 28 + rand() * (d - 56);
+    const ty = getTerrainHeight(tx, tz);
+    if (ty < 1.2 || ty > 86) continue;
+    if (closestWestRoad(tx, tz).dist < 11.8) continue;
+    if (Math.hypot(tx + 772, tz + 210) < 26) continue;
+    treeCoords.push({ x: tx, y: ty, z: tz, s: 0.92 + rand() * 0.95, ry: rand() * Math.PI * 2, shade: rand() });
+  }
+  for (let i = 0; i < 180; i++) {
+    const rx = minX + 22 + rand() * (w - 42);
+    const rz = minZ + 24 + rand() * (d - 48);
+    const ry = getTerrainHeight(rx, rz);
+    if (ry < 1.5) continue;
+    if (closestWestRoad(rx, rz).dist < 12.2) continue;
+    if (Math.hypot(rx + 772, rz + 210) < 24) continue;
+    rockCoords.push({ x: rx, y: ry, z: rz, sx: 1.5 + rand() * 3.4, sy: 1.0 + rand() * 2.2, sz: 1.5 + rand() * 3.4, r: rand() * 6 });
+  }
+
+  const trunkMat = new THREE.MeshStandardMaterial({
+    map: pbr.bark.map,
+    normalMap: pbr.bark.normalMap,
+    normalScale: new THREE.Vector2(1.4, 1.4),
+    color: 0x9e5c3c, // Warm Sierra Redwood bark
+    roughness: 0.94
+  });
+  const pineMat = new THREE.MeshStandardMaterial({
+    map: pbr.pineNeedle.map,
+    normalMap: pbr.pineNeedle.normalMap,
+    normalScale: new THREE.Vector2(1.3, 1.3),
+    color: 0xffffff,
+    roughness: 0.86
+  });
+  const trunkInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.28, 0.56, 5.2, 8), trunkMat, Math.max(1, treeCoords.length));
+  const t1Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(3.0, 4.8, 9), pineMat, Math.max(1, treeCoords.length));
+  const t2Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(2.3, 4.2, 9), pineMat, Math.max(1, treeCoords.length));
+  const t3Inst = new THREE.InstancedMesh(new THREE.ConeGeometry(1.5, 3.4, 8), pineMat, Math.max(1, treeCoords.length));
+  const rwCols = [new THREE.Color(0x3a6a38), new THREE.Color(0x4d763e), new THREE.Color(0x2f5e36), new THREE.Color(0x5b7a3c)];
+  const tmpC = new THREE.Color();
+  treeCoords.forEach((t, idx) => {
+    dObj.rotation.set(0, t.ry, 0);
+    dObj.scale.set(t.s, t.s, t.s);
+    dObj.position.set(t.x, t.y + 0.65 * t.s, t.z); dObj.updateMatrix(); trunkInst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 3.85 * t.s, t.z); dObj.updateMatrix(); t1Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 6.25 * t.s, t.z); dObj.updateMatrix(); t2Inst.setMatrixAt(idx, dObj.matrix);
+    dObj.position.set(t.x, t.y + 8.35 * t.s, t.z); dObj.updateMatrix(); t3Inst.setMatrixAt(idx, dObj.matrix);
+    tmpC.copy(rwCols[idx % rwCols.length]).multiplyScalar(0.84 + t.shade * 0.28);
+    t1Inst.setColorAt(idx, tmpC);
+    tmpC.multiplyScalar(1.07);
+    t2Inst.setColorAt(idx, tmpC);
+    t3Inst.setColorAt(idx, tmpC);
+    circleColliders.push({ x: t.x, z: t.z, r: 0.68 * t.s });
+  });
+  [trunkInst, t1Inst, t2Inst, t3Inst].forEach((im) => {
+    im.instanceMatrix.needsUpdate = true;
+    if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    im.computeBoundingSphere();
+    root.add(im);
+  });
+
+  const boulderInst = new THREE.InstancedMesh(
+    new THREE.DodecahedronGeometry(1.0, 1),
+    new THREE.MeshStandardMaterial({
+      map: pbr.granite.map,
+      normalMap: pbr.granite.normalMap,
+      normalScale: new THREE.Vector2(1.5, 1.5),
+      color: 0xffffff,
+      roughness: 0.92
+    }),
+    Math.max(1, rockCoords.length)
+  );
+  const redRockPalette = [new THREE.Color(0xb46d4c), new THREE.Color(0xc2855e), new THREE.Color(0x96583e), new THREE.Color(0xaa7b58)];
+  rockCoords.forEach((r, idx) => {
+    dObj.position.set(r.x, r.y - r.sy * 0.26, r.z);
+    dObj.rotation.set(r.r * 0.35, r.r, r.r * 0.2);
+    dObj.scale.set(r.sx, r.sy, r.sz);
+    dObj.updateMatrix();
+    boulderInst.setMatrixAt(idx, dObj.matrix);
+    boulderInst.setColorAt(idx, redRockPalette[idx % redRockPalette.length]);
+    circleColliders.push({ x: r.x, z: r.z, r: Math.max(r.sx, r.sz) * 0.96 });
+  });
+  boulderInst.instanceMatrix.needsUpdate = true;
+  if (boulderInst.instanceColor) boulderInst.instanceColor.needsUpdate = true;
+  boulderInst.computeBoundingSphere();
+  root.add(boulderInst);
+
+  // Towering Redrock Summit Overlook Deck at (-772, -210, y=96m) facing East over Vice City Skyline!
+  const sx = -772, sz = -210, sy = 96.0;
+  const deckWoodTex = makeWoodPlankTexture(maxAniso);
+  const deckWoodNorm = makeWoodPlankNormalMap(maxAniso, 6, 6);
+  const deckMat = new THREE.MeshStandardMaterial({
+    map: deckWoodTex, normalMap: deckWoodNorm, color: 0xb27e50, roughness: 0.76
+  });
+  const stoneMat = new THREE.MeshStandardMaterial({
+    map: pbr.stoneBrick.map, normalMap: pbr.stoneBrick.normalMap, color: 0xb88464, roughness: 0.88
+  });
+  const deck = new THREE.Mesh(new THREE.CylinderGeometry(16.5, 18.5, 2.2, 24), stoneMat);
+  deck.position.set(sx, sy - 1.02, sz);
+  const woodTop = new THREE.Mesh(new THREE.CylinderGeometry(15.5, 15.5, 0.22, 24), deckMat);
+  woodTop.position.set(sx, sy + 0.02, sz);
+  root.add(deck, woodTop);
+
+  const sSignTex = makeNeonSignTexture('SIERRA WEST PEAKS', 'ELEV 96M · HIGH REDROCK LOOP', '#FF8A2A', maxAniso, false);
+  const sSignBoard = new THREE.Mesh(new THREE.BoxGeometry(8.8, 2.2, 0.36), archWoodMat);
+  sSignBoard.position.set(sx - 10.5, sy + 2.8, sz);
+  sSignBoard.rotation.y = Math.PI / 2;
+  const sSignFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(8.4, 1.85),
+    new THREE.MeshStandardMaterial({ map: sSignTex, emissive: 0xffffff, emissiveMap: sSignTex, emissiveIntensity: 0.92 })
+  );
+  sSignFace.position.set(sx - 10.28, sy + 2.8, sz);
+  sSignFace.rotation.y = Math.PI / 2;
+  root.add(sSignBoard, sSignFace);
+
+  // Canyon Relay Tower & Blinking Orange Beacon
+  const towerGrp = new THREE.Group();
+  towerGrp.position.set(sx - 11.5, sy, sz - 11.5);
+  const orMat = new THREE.MeshStandardMaterial({ color: 0xff6b24, roughness: 0.4, metalness: 0.48 });
+  const whtMat = new THREE.MeshStandardMaterial({ color: 0xf4efe6, roughness: 0.4, metalness: 0.42 });
+  for (let seg = 0; seg < 6; seg++) {
+    const tSeg = new THREE.Mesh(new THREE.CylinderGeometry(2.2 - (seg + 1) * 0.28, 2.2 - seg * 0.28, 4.4, 4), seg % 2 === 0 ? orMat : whtMat);
+    tSeg.position.y = 2.2 + seg * 4.4;
+    towerGrp.add(tSeg);
+  }
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.68, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff6b24 }));
+  beacon.position.y = 27.6;
+  towerGrp.add(beacon);
+  root.add(towerGrp);
+
+  // High-Altitude Sierra Canyon Drifting 3D Cloud & Mist Layers!
+  const mistClouds = new THREE.Group();
+  const mistTex = makeSoftParticleTexture();
+  const mistMat = new THREE.MeshBasicMaterial({
+    map: mistTex,
+    color: 0xf2e4d8,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const mistGeo = new THREE.PlaneGeometry(132, 54);
+  for (let m = 0; m < 14; m++) {
+    const ang = (m / 14) * Math.PI * 2;
+    const tier = m % 3;
+    const rad = tier === 0 ? 128 : (tier === 1 ? 82 : 44);
+    const alt = tier === 0 ? 48 : (tier === 1 ? 72 : 91);
+    const puff = new THREE.Mesh(mistGeo, mistMat);
+    puff.position.set(sx + Math.cos(ang) * rad, alt + (m % 2) * 4, sz + Math.sin(ang) * rad);
+    puff.rotation.x = -Math.PI / 2 + ((m % 3) - 1) * 0.12;
+    puff.rotation.z = ang;
+    puff.userData.baseX = puff.position.x;
+    puff.userData.phase = m * 0.9;
+    mistClouds.add(puff);
+  }
+  root.add(mistClouds);
+
+  circleColliders.push(
+    { x: sx - 11.5, z: sz - 11.5, r: 2.6 },
+    { x: sx - 10.5, z: sz, r: 2.2 }
+  );
+
+  return { root, beacon, mistClouds, summit: { x: sx, y: sy, z: sz }, circleColliders, sampleMeshHeight };
+}
+
 
 
 
