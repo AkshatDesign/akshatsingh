@@ -2171,9 +2171,9 @@ function makeHairTexture(hairHex) {
   return tex;
 }
 
-/* 512px GTA Vice City Painterly Human Face Texture — Exact Pixel-Locked Alignment to 3D Sculpted Head Mesh */
+/* 512px Stylized Human Face Texture — Crisp, Natural Focused Eyes & Clean Chiseled Features */
 function getFaceMaterial(skinHex, isFemale = false, facialHair = 0) {
-  const key = `v2_${skinHex}_${isFemale ? 'f' : 'm'}_${facialHair}`;
+  const key = `v3_${skinHex}_${isFemale ? 'f' : 'm'}_${facialHair}`;
   if (_faceMatCache.has(key)) return _faceMatCache.get(key);
   const c = document.createElement('canvas');
   c.width = 512; c.height = 512;
@@ -2183,142 +2183,189 @@ function getFaceMaterial(skinHex, isFemale = false, facialHair = 0) {
   ctx.fillStyle = hex;
   ctx.fillRect(0, 0, 512, 512);
 
-  // Subsurface Miami sun warmth, forehead specular, cheekbone & jawline ambient occlusion
-  const vertGrad = ctx.createLinearGradient(0, 90, 0, 450);
-  vertGrad.addColorStop(0.0, 'rgba(255,242,226,0.14)');
-  vertGrad.addColorStop(0.45, 'rgba(255,230,210,0.04)');
-  vertGrad.addColorStop(0.78, 'rgba(54,22,14,0.15)');
-  vertGrad.addColorStop(1.0, 'rgba(34,12,8,0.32)');
+  // Clean sunlit warm facial plane shading (forehead highlight, crisp square-jaw & temple planes)
+  const vertGrad = ctx.createLinearGradient(0, 80, 0, 450);
+  vertGrad.addColorStop(0.0, 'rgba(255,244,230,0.12)');
+  vertGrad.addColorStop(0.48, 'rgba(255,232,212,0.03)');
+  vertGrad.addColorStop(0.80, 'rgba(54,24,16,0.14)');
+  vertGrad.addColorStop(1.0, 'rgba(34,14,10,0.28)');
   ctx.fillStyle = vertGrad;
   ctx.fillRect(0, 0, 512, 512);
 
-  // Realistic hairline shadow at top & side-temple sculpting
-  const templeGrad = ctx.createRadialGradient(256, 268, 48, 256, 268, 165);
-  templeGrad.addColorStop(0, 'rgba(255,245,232,0.10)');
-  templeGrad.addColorStop(0.62, 'rgba(0,0,0,0)');
-  templeGrad.addColorStop(1, 'rgba(42,18,12,0.24)');
-  ctx.fillStyle = templeGrad;
+  // Subtle side-temple & jaw plane shading
+  const sideGrad = ctx.createLinearGradient(140, 0, 372, 0);
+  sideGrad.addColorStop(0.0, 'rgba(42,18,12,0.22)');
+  sideGrad.addColorStop(0.22, 'rgba(42,18,12,0.04)');
+  sideGrad.addColorStop(0.50, 'rgba(255,244,232,0.08)');
+  sideGrad.addColorStop(0.78, 'rgba(42,18,12,0.04)');
+  sideGrad.addColorStop(1.0, 'rgba(42,18,12,0.22)');
+  ctx.fillStyle = sideGrad;
   ctx.fillRect(0, 0, 512, 512);
 
-  // Subtle orbital eye-socket shadow matching 3D recessed eye sockets (y ≈ 246, x = 227 & 285)
-  for (const ex of [227, 285]) {
-    const sock = ctx.createRadialGradient(ex, 245, 3, ex, 245, 22);
-    sock.addColorStop(0, 'rgba(58,24,18,0.28)');
-    sock.addColorStop(0.65, 'rgba(58,24,18,0.12)');
-    sock.addColorStop(1, 'rgba(58,24,18,0)');
+  // Soft natural brow-to-eye shading (subtle, never dark raccoon circles!)
+  for (const ex of [229, 283]) {
+    const sock = ctx.createRadialGradient(ex, 244, 4, ex, 244, 18);
+    sock.addColorStop(0, 'rgba(68,34,24,0.16)');
+    sock.addColorStop(0.7, 'rgba(68,34,24,0.06)');
+    sock.addColorStop(1, 'rgba(68,34,24,0)');
     ctx.fillStyle = sock;
-    ctx.beginPath(); ctx.arc(ex, 245, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex, 244, 18, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Sculpted Eyebrows right on 3D brow ridge (y ≈ 220)
-  ctx.strokeStyle = isFemale ? '#2a1814' : '#180f0e';
-  ctx.lineWidth = isFemale ? 4.8 : 7.2;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(204, 224); ctx.quadraticCurveTo(223, 214, 243, 222); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(269, 222); ctx.quadraticCurveTo(289, 214, 308, 224); ctx.stroke();
+  // Confident Squared Eyebrows (clean, sharp 80s action-hero brow line)
+  ctx.fillStyle = isFemale ? '#2c1814' : '#1b110f';
+  if (isFemale) {
+    ctx.strokeStyle = '#2c1814';
+    ctx.lineWidth = 4.2;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(211, 229); ctx.quadraticCurveTo(228, 221, 244, 228); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(268, 228); ctx.quadraticCurveTo(284, 221, 301, 229); ctx.stroke();
+  } else {
+    // Crisp chiseled male eyebrows
+    ctx.beginPath();
+    ctx.moveTo(211, 232); ctx.lineTo(222, 226); ctx.lineTo(244, 229);
+    ctx.lineTo(244, 235); ctx.lineTo(223, 232); ctx.lineTo(211, 236);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(301, 232); ctx.lineTo(290, 226); ctx.lineTo(268, 229);
+    ctx.lineTo(268, 235); ctx.lineTo(289, 232); ctx.lineTo(301, 236);
+    ctx.closePath(); ctx.fill();
+  }
 
-  // Detailed Realistic Eyes (Sclera, Shaded Iris Ring, Dark Pupil, Eyelid Crease, Lashes & Catchlight)
-  const irisColors = ['#3f2616', '#264d68', '#395e3a', '#5a361a'];
+  // Natural Focused Eyes (clipped almond aperture, warm off-white sclera, upper-lid shadow, properly sized iris!)
+  const irisColors = ['#3c2618', '#2a4d66', '#385838', '#4c3220'];
   const irisHex = irisColors[(skinHex + facialHair) % irisColors.length];
-  for (const ex of [226, 286]) {
-    ctx.strokeStyle = 'rgba(58,24,16,0.52)';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.ellipse(ex, 241, 15.5, 9.6, 0, Math.PI * 1.10, Math.PI * 1.90); ctx.stroke();
-    ctx.fillStyle = '#f8f4ee';
-    ctx.beginPath(); ctx.ellipse(ex, 245, 13.0, 7.0, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#141016';
-    ctx.beginPath(); ctx.arc(ex, 245, 6.2, 0, Math.PI * 2); ctx.fill();
+  for (const ex of [229, 283]) {
+    const isLeft = ex < 256;
+    const innerX = isLeft ? ex + 10.5 : ex - 10.5;
+    const outerX = isLeft ? ex - 10.8 : ex + 10.8;
+    const ey = 247;
+
+    // Clipped natural eye aperture (slightly narrowed/focused, NEVER bug-eyed oval!)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(outerX, ey + 0.4);
+    ctx.quadraticCurveTo(ex, ey - 6.4, innerX, ey + 0.6);
+    ctx.quadraticCurveTo(ex, ey + 5.2, outerX, ey + 0.4);
+    ctx.closePath();
+    ctx.clip();
+
+    // Warm natural sclera (off-white, never harsh neon white)
+    const scleraGrad = ctx.createLinearGradient(0, ey - 6, 0, ey + 5);
+    scleraGrad.addColorStop(0.0, '#c8beb4');
+    scleraGrad.addColorStop(0.35, '#ece6de');
+    scleraGrad.addColorStop(1.0, '#ded6cc');
+    ctx.fillStyle = scleraGrad;
+    ctx.fillRect(ex - 14, ey - 8, 28, 16);
+
+    // Iris fills vertical opening cleanly (zero white ring above or below iris -> natural calm gaze!)
+    ctx.fillStyle = '#181214';
+    ctx.beginPath(); ctx.arc(ex, ey - 0.2, 5.2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = irisHex;
-    ctx.beginPath(); ctx.arc(ex, 245, 5.2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#0c0910';
-    ctx.beginPath(); ctx.arc(ex, 245, 2.7, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(ex + 2.0, 243.0, 1.7, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#140c12';
-    ctx.lineWidth = isFemale ? 3.6 : 2.6;
-    ctx.beginPath(); ctx.ellipse(ex, 244.5, 13.4, 7.2, 0, Math.PI * 1.04, Math.PI * 1.96); ctx.stroke();
-    if (isFemale) {
-      ctx.strokeStyle = 'rgba(180,68,124,0.24)';
-      ctx.lineWidth = 4.4;
-      ctx.beginPath(); ctx.ellipse(ex, 240, 13.8, 7.4, 0, Math.PI * 1.14, Math.PI * 1.86); ctx.stroke();
-    }
+    ctx.beginPath(); ctx.arc(ex, ey - 0.2, 4.3, 0, Math.PI * 2); ctx.fill();
+    // Subtle lower iris warm light bounce
+    ctx.fillStyle = 'rgba(255,220,185,0.22)';
+    ctx.beginPath(); ctx.arc(ex, ey + 1.6, 2.2, 0, Math.PI * 2); ctx.fill();
+    // Crisp dark pupil
+    ctx.fillStyle = '#0b090d';
+    ctx.beginPath(); ctx.arc(ex, ey - 0.2, 2.3, 0, Math.PI * 2); ctx.fill();
+    // Upper eyelid cast shadow across top of sclera & iris (key to natural non-staring eyes!)
+    ctx.fillStyle = 'rgba(28,14,10,0.34)';
+    ctx.fillRect(ex - 14, ey - 7, 28, 3.6);
+    // Clean tiny specular catchlight
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.beginPath(); ctx.arc(ex + 1.5, ey - 1.5, 1.15, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Crisp upper lash line + subtle lower rim
+    ctx.strokeStyle = '#1d1210';
+    ctx.lineWidth = isFemale ? 2.8 : 2.1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(outerX, ey + 0.4);
+    ctx.quadraticCurveTo(ex, ey - 6.6, innerX, ey + 0.6);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(64,30,22,0.32)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(outerX + (isLeft ? 2 : -2), ey + 1.4);
+    ctx.quadraticCurveTo(ex, ey + 5.0, innerX - (isLeft ? 2 : -2), ey + 1.4);
+    ctx.stroke();
+
+    // Subtle upper eyelid crease above lash line
+    ctx.strokeStyle = 'rgba(66,30,20,0.34)';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(outerX, ey - 3.6);
+    ctx.quadraticCurveTo(ex, ey - 8.2, innerX, ey - 3.2);
+    ctx.stroke();
   }
 
-  // Cheekbone warmth & subtle nasolabial sculpting
-  ctx.fillStyle = isFemale ? 'rgba(226, 82, 112, 0.24)' : 'rgba(170, 72, 56, 0.13)';
-  ctx.beginPath(); ctx.ellipse(204, 282, 19, 12, 0.18, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(308, 282, 19, 12, -0.18, 0, Math.PI * 2); ctx.fill();
+  // Subtle cheekbone warmth
+  ctx.fillStyle = isFemale ? 'rgba(222, 82, 112, 0.22)' : 'rgba(165, 76, 58, 0.10)';
+  ctx.beginPath(); ctx.ellipse(208, 282, 17, 10, 0.14, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(304, 282, 17, 10, -0.14, 0, Math.PI * 2); ctx.fill();
 
-  // Sculpted 3D Nose Bridge Specular + Side Planes + Nostrils (y ≈ 284)
-  ctx.fillStyle = 'rgba(54,22,14,0.14)';
-  ctx.fillRect(244, 238, 6, 44);
-  ctx.fillRect(262, 238, 6, 44);
-  const noseHi = ctx.createLinearGradient(256, 234, 256, 286);
-  noseHi.addColorStop(0, 'rgba(255,248,238,0.08)');
-  noseHi.addColorStop(0.7, 'rgba(255,248,238,0.30)');
-  noseHi.addColorStop(1, 'rgba(255,248,238,0.05)');
+  // Clean Structured Nose Bridge + Nostrils
+  ctx.fillStyle = 'rgba(54,24,16,0.12)';
+  ctx.fillRect(246, 240, 4.5, 42);
+  ctx.fillRect(261.5, 240, 4.5, 42);
+  const noseHi = ctx.createLinearGradient(256, 236, 256, 285);
+  noseHi.addColorStop(0, 'rgba(255,248,238,0.06)');
+  noseHi.addColorStop(0.7, 'rgba(255,248,238,0.22)');
+  noseHi.addColorStop(1, 'rgba(255,248,238,0.04)');
   ctx.fillStyle = noseHi;
-  ctx.fillRect(252.5, 236, 7, 46);
-  ctx.fillStyle = 'rgba(46,18,12,0.42)';
-  ctx.beginPath(); ctx.ellipse(248, 286, 4.8, 2.7, -0.15, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(264, 286, 4.8, 2.7, 0.15, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(46,18,12,0.18)';
-  ctx.beginPath(); ctx.ellipse(256, 292, 14, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(253, 238, 6, 44);
+  ctx.fillStyle = 'rgba(46,20,14,0.36)';
+  ctx.beginPath(); ctx.ellipse(249, 286, 4.2, 2.2, -0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(263, 286, 4.2, 2.2, 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(46,20,14,0.15)';
+  ctx.beginPath(); ctx.ellipse(256, 291, 12, 3.5, 0, 0, Math.PI * 2); ctx.fill();
 
-  // Subtle Sun-Tanned 1986 Miami Vice Stubble (refined jawline texture without dark blotch!) or 80s Mustache
+  // Subtle Sun-Tanned Stubble along square jaw or 80s Mustache
   if (!isFemale && facialHair === 1) {
-    const stubGrad = ctx.createRadialGradient(256, 362, 10, 256, 362, 56);
-    stubGrad.addColorStop(0, 'rgba(42,24,18,0.13)');
-    stubGrad.addColorStop(0.65, 'rgba(42,24,18,0.08)');
-    stubGrad.addColorStop(1, 'rgba(42,24,18,0)');
+    const stubGrad = ctx.createRadialGradient(256, 356, 12, 256, 356, 58);
+    stubGrad.addColorStop(0, 'rgba(40,22,16,0.11)');
+    stubGrad.addColorStop(0.68, 'rgba(40,22,16,0.06)');
+    stubGrad.addColorStop(1, 'rgba(40,22,16,0)');
     ctx.fillStyle = stubGrad;
-    ctx.beginPath(); ctx.ellipse(256, 362, 52, 38, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(34,20,16,0.13)';
-    for (let i = 0; i < 140; i++) {
-      const a = (i * 2.39996);
-      const r = Math.sqrt(i / 140) * 44;
-      const sx = 256 + Math.cos(a) * r * 1.05;
-      const sy = 360 + Math.sin(a) * r * 0.72;
-      if (sy > 328 && sy < 394) ctx.fillRect(sx, sy, 1.3, 1.3);
-    }
+    ctx.beginPath(); ctx.ellipse(256, 356, 56, 36, 0, 0, Math.PI * 2); ctx.fill();
   } else if (!isFemale && facialHair === 2) {
     ctx.fillStyle = '#241614';
     ctx.beginPath();
-    ctx.moveTo(232, 316); ctx.quadraticCurveTo(256, 302, 280, 316);
-    ctx.quadraticCurveTo(256, 320, 232, 316);
+    ctx.moveTo(234, 314); ctx.quadraticCurveTo(256, 302, 278, 314);
+    ctx.quadraticCurveTo(256, 318, 234, 314);
     ctx.fill();
   }
 
-  // Sculpted Shaded Lips right on 3D lip ridge (y ≈ 330) with HD specular & philtrum shadow
-  ctx.fillStyle = 'rgba(48,18,12,0.16)';
-  ctx.fillRect(252, 294, 8, 26);
-  const upperLipCol = isFemale ? '#c83a5c' : '#85433c';
-  const lowerLipCol = isFemale ? '#df5274' : '#9c564e';
+  // Clean Confident Mouth / Lips (natural skin-blended tone on male hero, soft lipstick on female)
+  ctx.fillStyle = 'rgba(48,20,14,0.12)';
+  ctx.fillRect(253, 294, 6, 22);
+  const upperLipCol = isFemale ? '#c43a5c' : '#9c5c50';
+  const lowerLipCol = isFemale ? '#da5274' : '#ae6b5c';
   ctx.fillStyle = upperLipCol;
   ctx.beginPath();
-  ctx.moveTo(235, 330);
-  ctx.quadraticCurveTo(247, 321, 256, 326);
-  ctx.quadraticCurveTo(265, 321, 277, 330);
+  ctx.moveTo(237, 326);
+  ctx.quadraticCurveTo(248, 320, 256, 323);
+  ctx.quadraticCurveTo(264, 320, 275, 326);
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = lowerLipCol;
   ctx.beginPath();
-  ctx.moveTo(236, 330);
-  ctx.quadraticCurveTo(256, 343, 276, 330);
+  ctx.moveTo(238, 326);
+  ctx.quadraticCurveTo(256, 336, 274, 326);
   ctx.closePath();
   ctx.fill();
-  // Subtle lower-lip catchlight + chin cleft shadow
-  ctx.fillStyle = 'rgba(255,232,224,0.22)';
-  ctx.beginPath(); ctx.ellipse(256, 335, 11, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(38,12,14,0.62)';
-  ctx.lineWidth = 2.0;
-  ctx.beginPath(); ctx.moveTo(235, 330); ctx.quadraticCurveTo(256, 333, 277, 330); ctx.stroke();
-  ctx.fillStyle = 'rgba(36,14,10,0.22)';
-  ctx.beginPath(); ctx.ellipse(256, 352, 16, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(48,18,14,0.46)';
+  ctx.lineWidth = 1.7;
+  ctx.beginPath(); ctx.moveTo(237, 326); ctx.quadraticCurveTo(256, 328, 275, 326); ctx.stroke();
+  ctx.fillStyle = 'rgba(38,16,12,0.16)';
+  ctx.beginPath(); ctx.ellipse(256, 346, 14, 3.5, 0, 0, Math.PI * 2); ctx.fill();
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.52, metalness: 0.03 });
+  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.54, metalness: 0.02 });
   _faceMatCache.set(key, mat);
   return mat;
 }
@@ -2337,7 +2384,7 @@ function smoothstep01(e0, e1, x) {
 
 // Helper: append an anatomically lofted, skin-weighted mesh tube into shared vertex/index/group buffers
 // Slices MUST be ordered bottom-to-top (increasing y) for consistent outward-facing normals!
-function appendSkinnedLoft(out, slices, radSegs, matIndex, skinFn, uvScaleU = 1, uvScaleV = 1, closeBottom = false, closeTop = false) {
+function appendSkinnedLoft(out, slices, radSegs, matIndex, skinFn, uvScaleU = 1, uvScaleV = 1, closeBottom = false, closeTop = false, squareness = 1.0) {
   const baseVert = out.pos.length / 3;
   const stride = radSegs + 1;
   const nRings = slices.length;
@@ -2346,11 +2393,15 @@ function appendSkinnedLoft(out, slices, radSegs, matIndex, skinFn, uvScaleU = 1,
     const sl = slices[r];
     const vCoord = (r / Math.max(1, nRings - 1)) * uvScaleV;
     const fSign = sl.facing || -1; // -1 = -Z forward, +1 = +Z forward
+    const sq = sl.squareness !== undefined ? sl.squareness : squareness;
     for (let s = 0; s <= radSegs; s++) {
       const u = s / radSegs;
       const th = u * Math.PI * 2;
       const ca = Math.cos(th);
       const sa = Math.sin(th);
+      // Superellipse squaring: sq=1.0 is smooth ellipse, sq~0.42..0.55 is crisp chiseled squarish block!
+      const cShape = sq < 0.99 ? Math.sign(ca) * Math.pow(Math.abs(ca), sq) : ca;
+      const sShape = sq < 0.99 ? Math.sign(sa) * Math.pow(Math.abs(sa), sq) : sa;
       // Forward factor: +1 on character's front, -1 on character's back
       const fwd = sa * fSign;
       let rx = sl.rx;
@@ -2358,29 +2409,30 @@ function appendSkinnedLoft(out, slices, radSegs, matIndex, skinFn, uvScaleU = 1,
       let dx = 0;
       let dz = 0;
 
-      // Asymmetric human anatomical shaping (chest/pectorals, bust, spine groove, glutes, quadriceps, calves!)
+      // Subtle anatomical shaping (toned down on squarish hero so planar surfaces stay crisp!)
+      const anatScale = sq < 0.99 ? 0.35 : 1.0;
       if (sl.pectorals && fwd > 0) {
         const pec = Math.sin(Math.min(1, Math.abs(ca)) * Math.PI) * Math.pow(fwd, 1.35);
-        dz += fSign * sl.pectorals * pec;
+        dz += fSign * sl.pectorals * pec * anatScale;
       }
       if (sl.spineGroove && fwd < 0) {
         const groove = Math.exp(-ca * ca * 14.0) * (-fwd);
-        dz += fSign * sl.spineGroove * groove; // pulls back center slightly inward
+        dz += fSign * sl.spineGroove * groove * anatScale;
       }
       if (sl.glutes && fwd < 0) {
         const gl = (0.55 + 0.45 * Math.sin(Math.min(1, Math.abs(ca)) * Math.PI)) * Math.pow(-fwd, 1.25);
-        dz -= fSign * sl.glutes * gl;
+        dz -= fSign * sl.glutes * gl * anatScale;
       }
       if (sl.frontBulge && fwd > 0) {
-        dz += fSign * sl.frontBulge * Math.pow(fwd, 1.4);
+        dz += fSign * sl.frontBulge * Math.pow(fwd, 1.4) * anatScale;
       }
       if (sl.backBulge && fwd < 0) {
-        dz -= fSign * sl.backBulge * Math.pow(-fwd, 1.4);
+        dz -= fSign * sl.backBulge * Math.pow(-fwd, 1.4) * anatScale;
       }
 
-      const px = (sl.cx || 0) + ca * rx + dx;
+      const px = (sl.cx || 0) + cShape * rx + dx;
       const py = sl.y;
-      const pz = (sl.cz || 0) + sa * rz + dz;
+      const pz = (sl.cz || 0) + sShape * rz + dz;
       out.pos.push(px, py, pz);
       out.uv.push(u * uvScaleU, vCoord);
       const sk = skinFn(px, py, pz, r / Math.max(1, nRings - 1));
@@ -2461,10 +2513,12 @@ function buildSkinnedHumanBodyGeo(opts) {
   } = opts;
 
   const out = { pos: [], uv: [], si: [], sw: [], groups: [[], [], [], [], []] };
-  // Athletic GTA Vice City proportions — full solid human mass & shoulder-to-arm overlap (ZERO stick figures!)
-  const armX = isFemale ? 0.194 : (hero ? 0.238 : 0.224);
-  const legX = isFemale ? 0.098 : (hero ? 0.118 : 0.110);
+  // Crisp athletic proportions — hero uses chiseled squarish silhouette across torso, arms & legs!
+  const armX = isFemale ? 0.194 : (hero ? 0.252 : 0.224);
+  const legX = isFemale ? 0.098 : (hero ? 0.120 : 0.110);
   const bScale = hero ? 1.12 : (isFemale ? 1.00 : 1.06);
+  const torsoSq = hero ? 0.44 : 1.0;
+  const limbSq = hero ? 0.48 : 1.0;
 
   // 1. CONTINUOUS SCULPTED PELVIS -> WAIST -> RIBCAGE -> PECTORALS -> TRAPEZIUS -> NECK (Bones 0=hips, 1=chest, 2=head)
   const torsoSkin = (px, py) => {
@@ -2518,15 +2572,20 @@ function buildSkinnedHumanBodyGeo(opts) {
       { y: 0.83, rx: 0.196, rz: 0.138, glutes: 0.032, facing },
       { y: 0.89, rx: 0.204, rz: 0.138, glutes: 0.028, facing },
       { y: 0.96, rx: 0.168, rz: 0.118, facing }
-    ]) : [
+    ]) : (hero ? [
+      { y: 0.75, rx: 0.176 * bScale, rz: 0.114 * bScale, facing },
+      { y: 0.83, rx: 0.192 * bScale, rz: 0.128 * bScale, facing },
+      { y: 0.89, rx: 0.194 * bScale, rz: 0.130 * bScale, facing },
+      { y: 0.96, rx: 0.188 * bScale, rz: 0.124 * bScale, facing }
+    ] : [
       { y: 0.75, rx: 0.132 * bScale, rz: 0.108 * bScale, facing },
       { y: 0.83, rx: 0.192 * bScale, rz: 0.138 * bScale, glutes: 0.026, facing },
       { y: 0.89, rx: 0.196 * bScale, rz: 0.140 * bScale, glutes: 0.022, facing },
       { y: 0.96, rx: 0.184 * bScale, rz: 0.132 * bScale, facing }
-    ];
-    appendSkinnedLoft(out, pelvSlices, 22, 2, torsoSkin, 1, 1, !skirt, false);
+    ]);
+    appendSkinnedLoft(out, pelvSlices, 24, 2, torsoSkin, 1, 1, !skirt, false, torsoSq);
 
-    // Sculpted Shirt / Blazer Torso (mat 1) with athletic V-taper & broad shoulders!
+    // Sculpted Shirt / Blazer Torso (mat 1) — squarish broad-shouldered boxy silhouette for hero!
     const upperSlices = isFemale ? [
       { y: 0.94, rx: 0.172, rz: 0.122, facing },
       { y: 1.03, rx: 0.150, rz: 0.114, spineGroove: 0.012, facing },
@@ -2535,31 +2594,39 @@ function buildSkinnedHumanBodyGeo(opts) {
       { y: 1.34, rx: 0.196, rz: 0.128, pectorals: 0.026, spineGroove: 0.012, facing },
       { y: 1.41, rx: 0.202, rz: 0.118, facing },
       { y: 1.46, rx: 0.134, rz: 0.088, facing }
+    ] : (hero ? [
+      { y: 0.90, rx: 0.200 * bScale, rz: 0.132 * bScale, facing },
+      { y: 0.99, rx: 0.196 * bScale, rz: 0.128 * bScale, facing },
+      { y: 1.14, rx: 0.214 * bScale, rz: 0.138 * bScale, pectorals: 0.014, facing },
+      { y: 1.28, rx: 0.232 * bScale, rz: 0.144 * bScale, pectorals: 0.018, facing },
+      { y: 1.39, rx: 0.242 * bScale, rz: 0.142 * bScale, facing },
+      { y: 1.44, rx: 0.234 * bScale, rz: 0.130 * bScale, facing },
+      { y: 1.47, rx: 0.134 * bScale, rz: 0.090 * bScale, facing }
     ] : [
-      { y: 0.90, rx: 0.198 * bScale, rz: 0.144 * bScale, facing }, // Tailored draped shirt/jacket hem overlapping belt!
+      { y: 0.90, rx: 0.198 * bScale, rz: 0.144 * bScale, facing },
       { y: 0.98, rx: 0.188 * bScale, rz: 0.136 * bScale, spineGroove: 0.012, facing },
       { y: 1.12, rx: 0.206 * bScale, rz: 0.148 * bScale, pectorals: 0.022, spineGroove: 0.016, facing },
       { y: 1.25, rx: 0.226 * bScale, rz: 0.156 * bScale, pectorals: 0.036, spineGroove: 0.018, facing },
       { y: 1.36, rx: 0.238 * bScale, rz: 0.150 * bScale, pectorals: 0.028, spineGroove: 0.014, facing },
       { y: 1.42, rx: 0.228 * bScale, rz: 0.132 * bScale, facing },
       { y: 1.47, rx: 0.136 * bScale, rz: 0.092 * bScale, facing }
-    ];
-    appendSkinnedLoft(out, upperSlices, 22, 1, torsoSkin, 1.4, 1.0, false, false);
+    ]);
+    appendSkinnedLoft(out, upperSlices, 24, 1, torsoSkin, 1.4, 1.0, false, hero, torsoSq);
 
-    // Continuous Anatomical Neck seamlessly rising & tucking inside skull base
+    // Continuous Neck seamlessly rising & tucking inside skull base
     const neckSlices = [
-      { y: 1.44, rx: 0.082 * bScale, rz: 0.074 * bScale, cz: -facing * 0.004, facing },
-      { y: 1.49, rx: 0.062 * bScale, rz: 0.058 * bScale, cz: -facing * 0.010, facing },
-      { y: 1.55, rx: 0.052 * bScale, rz: 0.052 * bScale, cz: -facing * 0.015, facing },
-      { y: 1.63, rx: 0.040 * bScale, rz: 0.042 * bScale, cz: -facing * 0.018, facing }
+      { y: 1.44, rx: 0.078 * bScale, rz: 0.070 * bScale, cz: -facing * 0.004, facing },
+      { y: 1.49, rx: 0.062 * bScale, rz: 0.058 * bScale, cz: -facing * 0.008, facing },
+      { y: 1.55, rx: 0.054 * bScale, rz: 0.052 * bScale, cz: -facing * 0.010, facing },
+      { y: 1.63, rx: 0.044 * bScale, rz: 0.044 * bScale, cz: -facing * 0.012, facing }
     ];
-    appendSkinnedLoft(out, neckSlices, 16, 0, torsoSkin, 1, 1, false, false);
+    appendSkinnedLoft(out, neckSlices, 16, 0, torsoSkin, 1, 1, false, false, hero ? 0.65 : 1.0);
   }
 
-  // 2. MUSCULAR / SLEEVED CONTINUOUS SKINNED ARMS (Substantial human volume — ZERO twig/stick arms!)
+  // 2. MUSCULAR / SLEEVED CONTINUOUS SKINNED ARMS (Squarish chiseled arms on hero!)
   const addArm = (sx, bUpper, bFore) => {
     const cx = sx * armX;
-    const sc = isFemale ? 1.02 : (hero ? 1.28 : 1.18);
+    const sc = isFemale ? 1.02 : (hero ? 1.24 : 1.18);
     const armSkin = (px, py) => {
       if (py > 1.35) {
         const wChest = smoothstep01(1.36, 1.45, py) * 0.44;
@@ -2584,18 +2651,18 @@ function buildSkinnedHumanBodyGeo(opts) {
     ];
 
     if (isBikini) {
-      appendSkinnedLoft(out, fullSlices, 16, 0, armSkin, 1, 1, true, true);
+      appendSkinnedLoft(out, fullSlices, 16, 0, armSkin, 1, 1, true, true, limbSq);
     } else if (longSleeve) {
       const jacketArm = fullSlices.map((sl, idx) => ({ ...sl, rx: sl.rx * (idx < 5 ? 1.14 : 1.10), rz: sl.rz * (idx < 5 ? 1.14 : 1.10) }));
-      appendSkinnedLoft(out, jacketArm, 16, 1, armSkin, 1, 1, true, true);
+      appendSkinnedLoft(out, jacketArm, 16, 1, armSkin, 1, 1, true, true, limbSq);
     } else {
       const bareSlices = fullSlices.slice(0, 7);
       const sleeveSlices = [
         { y: 1.22, cx, rx: 0.074 * sc, rz: 0.076 * sc, facing }, // substantial 80s Hawaiian/resort rolled sleeve cuff!
         ...fullSlices.slice(7).map((sl) => ({ ...sl, rx: sl.rx * 1.08, rz: sl.rz * 1.08 }))
       ];
-      appendSkinnedLoft(out, bareSlices, 16, 0, armSkin, 1, 1, true, false);
-      appendSkinnedLoft(out, sleeveSlices, 16, 1, armSkin, 1, 1, true, true);
+      appendSkinnedLoft(out, bareSlices, 16, 0, armSkin, 1, 1, true, false, limbSq);
+      appendSkinnedLoft(out, sleeveSlices, 16, 1, armSkin, 1, 1, true, true, limbSq);
     }
 
     // Solid Sculpted Human Fist / Hand (visible knuckles, palm & angled thumb!)
@@ -2653,22 +2720,22 @@ function buildSkinnedHumanBodyGeo(opts) {
     ];
 
     if (isBikini || skirt) {
-      appendSkinnedLoft(out, fullLeg, 18, 0, legSkin, 1, 1, true, true);
+      appendSkinnedLoft(out, fullLeg, 18, 0, legSkin, 1, 1, true, true, limbSq);
     } else if (shorts) {
-      appendSkinnedLoft(out, fullLeg.slice(0, 8), 18, 0, legSkin, 1, 1, true, false);
+      appendSkinnedLoft(out, fullLeg.slice(0, 8), 18, 0, legSkin, 1, 1, true, false, limbSq);
       const shortSlices = [
         { y: 0.60, cx, rx: 0.102 * sc, rz: 0.105 * sc, facing },
         ...fullLeg.slice(8).map((sl) => ({ ...sl, rx: sl.rx * 1.06, rz: sl.rz * 1.06 }))
       ];
-      appendSkinnedLoft(out, shortSlices, 18, 2, legSkin, 1, 1, true, true);
+      appendSkinnedLoft(out, shortSlices, 18, 2, legSkin, 1, 1, true, true, limbSq);
     } else {
-      // Full tailored 1986 denim jeans / Miami Vice relaxed linen trousers!
+      // Full tailored 1986 denim jeans / Miami Vice relaxed linen trousers (squarish cut on hero!)
       const pantLeg = fullLeg.map((sl, idx) => ({
         ...sl,
-        rx: sl.rx * (idx <= 2 ? 1.32 : 1.10),
-        rz: sl.rz * (idx <= 2 ? 1.32 : 1.10)
+        rx: sl.rx * (idx <= 2 ? 1.28 : 1.08),
+        rz: sl.rz * (idx <= 2 ? 1.28 : 1.08)
       }));
-      appendSkinnedLoft(out, pantLeg, 18, 2, legSkin, 1, 1.5, true, true);
+      appendSkinnedLoft(out, pantLeg, 18, 2, legSkin, 1, 1.5, true, true, limbSq);
     }
 
     // Solid Sculpted 1986 Sneakers / Beach Sandals anchored to Ankle Bone!
@@ -2683,6 +2750,27 @@ function buildSkinnedHumanBodyGeo(opts) {
       sandSole.translate(cx, 0.013, facing * 0.044);
       appendSkinnedSubGeo(out, sandSole, 1, bAnkle);
       sandSole.dispose();
+    } else if (hero) {
+      // Crisp squarish 1986 retro high-top sneakers matching hero's blocky stylized silhouette
+      const sUpper = new THREE.BoxGeometry(0.118 * sc, 0.076, 0.244 * sc);
+      sUpper.translate(cx, 0.062, facing * 0.044);
+      appendSkinnedSubGeo(out, sUpper, 3, bAnkle);
+      sUpper.dispose();
+
+      const sToe = new THREE.BoxGeometry(0.114 * sc, 0.048, 0.088 * sc);
+      sToe.translate(cx, 0.048, facing * 0.132 * sc);
+      appendSkinnedSubGeo(out, sToe, 3, bAnkle);
+      sToe.dispose();
+
+      const sSole = new THREE.BoxGeometry(0.126 * sc, 0.030, 0.280 * sc);
+      sSole.translate(cx, 0.015, facing * 0.050);
+      appendSkinnedSubGeo(out, sSole, 4, bAnkle);
+      sSole.dispose();
+
+      const stripe = new THREE.BoxGeometry(0.128 * sc, 0.020, 0.140);
+      stripe.translate(cx, 0.058, facing * 0.026);
+      appendSkinnedSubGeo(out, stripe, 4, bAnkle);
+      stripe.dispose();
     } else {
       const sUpper = new THREE.CapsuleGeometry(0.056 * sc, 0.145 * sc, 6, 12);
       sUpper.rotateX(Math.PI / 2);
@@ -2695,13 +2783,6 @@ function buildSkinnedHumanBodyGeo(opts) {
       sSole.translate(cx, 0.015, facing * 0.046);
       appendSkinnedSubGeo(out, sSole, 4, bAnkle);
       sSole.dispose();
-
-      if (hero) {
-        const stripe = new THREE.BoxGeometry(0.128 * sc, 0.020, 0.135);
-        stripe.translate(cx, 0.052, facing * 0.026);
-        appendSkinnedSubGeo(out, stripe, 4, bAnkle);
-        stripe.dispose();
-      }
     }
   };
   addLeg(-1, 7, 8, 9);
@@ -2725,13 +2806,13 @@ function buildSkinnedHumanBodyGeo(opts) {
   return geo;
 }
 
-/* 3D-Sculpted Anatomical Human Head (Brow Ridge, Eye Sockets, Continuous 3D Nose, Cheekbones, Lips, Jawline) */
-function buildSculptedHeadGeo(isFemale = false, facing = -1) {
+/* 3D-Sculpted Human Head — Chiseled Squarish Hero Silhouette (flat undistorted eye plane + square jaw!) */
+function buildSculptedHeadGeo(isFemale = false, facing = -1, isHero = false) {
   const segU = 32, segV = 24;
   const pos = [], uv = [], indices = [];
-  const rxBase = isFemale ? 0.104 : 0.114;
-  const ryBase = isFemale ? 0.130 : 0.138;
-  const rzBase = isFemale ? 0.116 : 0.125;
+  const rxBase = isFemale ? 0.104 : (isHero ? 0.118 : 0.114);
+  const ryBase = isFemale ? 0.130 : (isHero ? 0.138 : 0.138);
+  const rzBase = isFemale ? 0.116 : (isHero ? 0.120 : 0.125);
 
   for (let iv = 0; iv <= segV; iv++) {
     const v = iv / segV; // 0 = top crown, 1 = bottom chin
@@ -2742,64 +2823,86 @@ function buildSculptedHeadGeo(isFemale = false, facing = -1) {
     for (let iu = 0; iu <= segU; iu++) {
       const u = iu / segU; // 0.5 = dead-center of face!
       const phi = u * Math.PI * 2;
-      // At u=0.5 (phi=PI): cos(phi) = -1, sin(phi) = 0 -> front direction is (0, 0, facing)
       const ang = (u - 0.5) * Math.PI * 2; // 0 at center of face, +/-PI at back of skull
-      const nxUnit = -Math.sin(phi) * st;
-      const nzUnit = Math.cos(phi) * st; // -1 at front before facing sign
+      const nxRaw = -Math.sin(phi);
+      const nzRaw = Math.cos(phi); // -1 at front before facing sign
 
-      let x = nxUnit * rxBase;
-      let y = ny * ryBase;
-      let z = nzUnit * rzBase;
+      let x, y, z;
+      if (isHero) {
+        // Superellipse / Squircle Boxy Stylized Head: crisp flat face plane, square jaw, beveled temples & flat top!
+        const stSq = Math.pow(Math.max(0, st), 0.56);
+        const nySq = Math.sign(ny) * Math.pow(Math.abs(ny), 0.72);
+        const nxSq = Math.sign(nxRaw) * Math.pow(Math.abs(nxRaw), 0.54);
+        const nzSq = Math.sign(nzRaw) * Math.pow(Math.abs(nzRaw), 0.54);
 
-      // 1. Cranium & Jaw Taper (narrower chin, masculine angular jaw vs soft feminine taper)
-      if (ny < 0.0) {
-        const jFrac = Math.min(1, -ny / 0.88);
-        const taper = isFemale ? (1.0 - jFrac * 0.34) : (1.0 - jFrac * 0.24);
-        x *= taper;
-        // Masculine strong jaw corners (Tommy Vercetti silhouette!)
-        if (!isFemale) {
-          const jawAngle = Math.exp(-Math.pow((Math.abs(ang) - 0.72) / 0.32, 2)) * Math.exp(-Math.pow((ny + 0.44) / 0.24, 2));
-          x += Math.sign(nxUnit) * jawAngle * 0.014;
+        x = nxSq * stSq * rxBase;
+        y = nySq * ryBase;
+        z = nzSq * stSq * rzBase;
+
+        // Strong chiseled square jawline (minimal inward taper, bold square jaw corners)
+        if (ny < 0.0) {
+          const jFrac = Math.min(1, -ny / 0.90);
+          x *= (1.0 - jFrac * 0.09);
+          const chinBlock = Math.exp(-Math.pow(ang / 0.50, 2)) * Math.exp(-Math.pow((ny + 0.72) / 0.22, 2));
+          z -= chinBlock * 0.008;
         }
-        // Subtle chin projection forward
-        const chin = Math.exp(-Math.pow(ang / 0.32, 2)) * Math.exp(-Math.pow((ny + 0.74) / 0.18, 2));
-        z -= chin * (isFemale ? 0.011 : 0.017);
+        // Subtle structured brow ridge above flat eye plane (NO concave eye dimples that warp eyes!)
+        const browBar = Math.exp(-Math.pow(ang / 0.62, 2)) * Math.exp(-Math.pow((ny - 0.22) / 0.09, 2));
+        z -= browBar * 0.007;
+        // Clean sculpted blocky wedge nose
+        const noseBridge = Math.exp(-Math.pow(ang / 0.11, 2)) * smoothstep01(-0.24, -0.08, ny) * (1 - smoothstep01(0.06, 0.20, ny));
+        const noseTip = Math.exp(-Math.pow(ang / 0.11, 2)) * Math.exp(-Math.pow((ny + 0.14) / 0.085, 2));
+        z -= noseBridge * 0.011 + noseTip * 0.014;
+        // Crisp square-cut side ears
+        const ear = Math.exp(-Math.pow((Math.abs(ang) - 1.57) / 0.14, 2)) * Math.exp(-Math.pow((ny + 0.03) / 0.22, 2));
+        x += Math.sign(nxRaw || 1) * ear * 0.014;
       } else {
-        // Occipital skull fullness in back
-        const backSkull = Math.max(0, nzUnit) * Math.exp(-Math.pow((ny - 0.18) / 0.48, 2));
-        z += backSkull * 0.014;
+        const nxUnit = nxRaw * st;
+        const nzUnit = nzRaw * st;
+        x = nxUnit * rxBase;
+        y = ny * ryBase;
+        z = nzUnit * rzBase;
+
+        if (ny < 0.0) {
+          const jFrac = Math.min(1, -ny / 0.88);
+          const taper = isFemale ? (1.0 - jFrac * 0.34) : (1.0 - jFrac * 0.24);
+          x *= taper;
+          if (!isFemale) {
+            const jawAngle = Math.exp(-Math.pow((Math.abs(ang) - 0.72) / 0.32, 2)) * Math.exp(-Math.pow((ny + 0.44) / 0.24, 2));
+            x += Math.sign(nxUnit) * jawAngle * 0.014;
+          }
+          const chin = Math.exp(-Math.pow(ang / 0.32, 2)) * Math.exp(-Math.pow((ny + 0.74) / 0.18, 2));
+          z -= chin * (isFemale ? 0.011 : 0.017);
+        } else {
+          const backSkull = Math.max(0, nzUnit) * Math.exp(-Math.pow((ny - 0.18) / 0.48, 2));
+          z += backSkull * 0.014;
+        }
+
+        // Subtle brow & gentle eye plane (reduced indentation so NPC eyes never warp either!)
+        const eyeMask = Math.exp(-Math.pow((Math.abs(ang) - 0.34) / 0.18, 2)) * Math.exp(-Math.pow((ny - 0.05) / 0.13, 2));
+        z += eyeMask * 0.004;
+        const browMask = Math.exp(-Math.pow((Math.abs(ang) - 0.34) / 0.26, 2)) * Math.exp(-Math.pow((ny - 0.21) / 0.10, 2));
+        z -= browMask * (isFemale ? 0.005 : 0.009);
+
+        const noseBridge = Math.exp(-Math.pow(ang / 0.115, 2)) * smoothstep01(-0.24, -0.10, ny) * (1 - smoothstep01(0.06, 0.22, ny));
+        const noseTip = Math.exp(-Math.pow(ang / 0.11, 2)) * Math.exp(-Math.pow((ny + 0.14) / 0.095, 2));
+        const nostril = Math.exp(-Math.pow((Math.abs(ang) - 0.13) / 0.065, 2)) * Math.exp(-Math.pow((ny + 0.17) / 0.065, 2));
+        z -= noseBridge * 0.014 + noseTip * 0.019 + nostril * 0.008;
+        y -= noseTip * 0.004;
+
+        const cheek = Math.exp(-Math.pow((Math.abs(ang) - 0.56) / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.12) / 0.16, 2));
+        z -= cheek * 0.008;
+        x += Math.sign(nxUnit) * cheek * 0.007;
+
+        const upLip = Math.exp(-Math.pow(ang / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.39) / 0.055, 2));
+        const loLip = Math.exp(-Math.pow(ang / 0.20, 2)) * Math.exp(-Math.pow((ny + 0.49) / 0.055, 2));
+        const cleft = Math.exp(-Math.pow(ang / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.44) / 0.025, 2));
+        z -= upLip * 0.009 + loLip * 0.008 - cleft * 0.004;
+
+        const ear = Math.exp(-Math.pow((Math.abs(ang) - 1.58) / 0.14, 2)) * Math.exp(-Math.pow((ny + 0.04) / 0.20, 2));
+        x += Math.sign(nxUnit) * ear * 0.016;
       }
 
-      // 2. Recessed Orbital Eye Sockets (|ang| ≈ 0.36, ny ≈ +0.06) + Brow Ridge (ny ≈ +0.20)
-      const eyeMask = Math.exp(-Math.pow((Math.abs(ang) - 0.36) / 0.17, 2)) * Math.exp(-Math.pow((ny - 0.06) / 0.13, 2));
-      z += eyeMask * 0.013; // push inward (+Z is back when facing=-1)
-
-      const browMask = Math.exp(-Math.pow((Math.abs(ang) - 0.34) / 0.26, 2)) * Math.exp(-Math.pow((ny - 0.21) / 0.10, 2));
-      z -= browMask * (isFemale ? 0.005 : 0.010);
-
-      // 3. Continuous Sculpted 3D Nose (Bridge + Tip + Flared Nostrils — ZERO cones!)
-      const noseBridge = Math.exp(-Math.pow(ang / 0.115, 2)) * smoothstep01(-0.24, -0.10, ny) * (1 - smoothstep01(0.06, 0.22, ny));
-      const noseTip = Math.exp(-Math.pow(ang / 0.11, 2)) * Math.exp(-Math.pow((ny + 0.14) / 0.095, 2));
-      const nostril = Math.exp(-Math.pow((Math.abs(ang) - 0.13) / 0.065, 2)) * Math.exp(-Math.pow((ny + 0.17) / 0.065, 2));
-      z -= noseBridge * 0.015 + noseTip * 0.022 + nostril * 0.009;
-      y -= noseTip * 0.004;
-
-      // 4. Sculpted Cheekbones (Zygomatic Arches)
-      const cheek = Math.exp(-Math.pow((Math.abs(ang) - 0.56) / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.12) / 0.16, 2));
-      z -= cheek * 0.009;
-      x += Math.sign(nxUnit) * cheek * 0.008;
-
-      // 5. Sculpted Upper & Lower Lip Ridge + Mouth Cleft (ny ≈ -0.44)
-      const upLip = Math.exp(-Math.pow(ang / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.39) / 0.055, 2));
-      const loLip = Math.exp(-Math.pow(ang / 0.20, 2)) * Math.exp(-Math.pow((ny + 0.49) / 0.055, 2));
-      const cleft = Math.exp(-Math.pow(ang / 0.22, 2)) * Math.exp(-Math.pow((ny + 0.44) / 0.025, 2));
-      z -= upLip * 0.010 + loLip * 0.009 - cleft * 0.005;
-
-      // 6. Subtle Sculpted Ears at sides (|ang| ≈ PI/2)
-      const ear = Math.exp(-Math.pow((Math.abs(ang) - 1.58) / 0.14, 2)) * Math.exp(-Math.pow((ny + 0.04) / 0.20, 2));
-      x += Math.sign(nxUnit) * ear * 0.017;
-
-      // Apply facing orientation (-1 = -Z natively, +1 = rotate 180 deg around Y)
       if (facing > 0) { x = -x; z = -z; }
       pos.push(x, y, z);
       uv.push(u, 1.0 - v);
@@ -2813,7 +2916,6 @@ function buildSculptedHeadGeo(isFemale = false, facing = -1) {
       const b = a + 1;
       const c = a + stride;
       const d = c + 1;
-      // Outward winding for top-to-bottom sphere parameterization
       indices.push(a, b, c, b, d, c);
     }
   }
@@ -2825,11 +2927,17 @@ function buildSculptedHeadGeo(isFemale = false, facing = -1) {
   return geo;
 }
 
-/* Sculpted Layered 1980s Hair Mesh (Textured Ridge Waves, Swept Bangs, Sideburns & Tapered Nape — ZERO plastic domes!) */
-function buildSculptedHairGeo(style, facing = -1) {
+/* Sculpted Layered 1980s Hair Mesh (Contours seamlessly to both squarish hero skull and NPCs!) */
+function buildSculptedHairGeo(style, facing = -1, isHero = false) {
   const segU = 28, segV = 18;
   const pos = [], uv = [], indices = [];
-  const maxTheta = style === 'longWave' ? Math.PI * 0.94 : (style === 'bob' ? Math.PI * 0.78 : Math.PI * 0.64);
+  const maxTheta =
+    style === 'longWave' ? Math.PI * 0.94 :
+    style === 'mullet'   ? Math.PI * 0.92 :
+    style === 'bob'      ? Math.PI * 0.78 :
+    style === 'afro'     ? Math.PI * 0.74 :
+    style === 'buzz'     ? Math.PI * 0.58 :
+    Math.PI * 0.64;
 
   for (let iv = 0; iv <= segV; iv++) {
     const v = iv / segV;
@@ -2842,28 +2950,43 @@ function buildSculptedHairGeo(style, facing = -1) {
       const phi = u * Math.PI * 2;
       const ang = (u - 0.5) * Math.PI * 2; // 0 = front forehead, +/-PI = back nape
       const absA = Math.abs(ang);
-      const nxU = -Math.sin(phi) * st;
-      const nzU = Math.cos(phi) * st;
+      const nxRaw = -Math.sin(phi);
+      const nzRaw = Math.cos(phi);
+      const stShape = isHero ? Math.pow(Math.max(0, st), 0.58) : st;
+      const nyShape = isHero ? Math.sign(ny) * Math.pow(Math.abs(ny), 0.74) : ny;
+      const nxU = (isHero ? Math.sign(nxRaw) * Math.pow(Math.abs(nxRaw), 0.58) : nxRaw) * stShape;
+      const nzU = (isHero ? Math.sign(nzRaw) * Math.pow(Math.abs(nzRaw), 0.58) : nzRaw) * stShape;
 
       // Pull hair cleanly back off the face (so hair NEVER clips eyes/forehead!)
       const frontRecede = Math.exp(-Math.pow(absA / 0.85, 2));
-      let rX = 0.124;
-      let rY = 0.150;
-      let rZ = 0.138;
+      let rX = isHero ? 0.130 : 0.124;
+      let rY = isHero ? 0.152 : 0.150;
+      let rZ = isHero ? 0.136 : 0.138;
       let yOff = 0.010;
       let zOff = 0.014;
 
+      if (style === 'buzz') {
+        rX = isHero ? 0.126 : 0.120; rY = isHero ? 0.147 : 0.145; rZ = isHero ? 0.131 : 0.133; yOff = 0.005; zOff = 0.008;
+      } else if (style === 'slick') {
+        rX = isHero ? 0.129 : 0.123; rY = isHero ? 0.150 : 0.149; rZ = isHero ? 0.139 : 0.141; yOff = 0.008; zOff = 0.016;
+      } else if (style === 'afro') {
+        rX = 0.172; rY = 0.188; rZ = 0.172; yOff = 0.036; zOff = 0.016;
+      }
+
       // Organic sculpted hair wave ridges
-      const wave = Math.sin(ang * 7.0 + v * 4.5) * 0.0055 + Math.cos(ang * 13.0 - v * 3.0) * 0.003;
+      const waveAmp = style === 'buzz' ? 0.0012 : (style === 'afro' ? 0.0075 : (style === 'slick' ? 0.0028 : 0.0055));
+      const wave = Math.sin(ang * 7.0 + v * 4.5) * waveAmp + Math.cos(ang * 13.0 - v * 3.0) * (waveAmp * 0.55);
 
       let x = nxU * (rX + wave);
-      let y = ny * rY + yOff;
+      let y = nyShape * rY + yOff;
       let z = nzU * (rZ + wave) + zOff;
 
       // Push hairline upward over forehead & open face window cleanly
       if (frontRecede > 0.05 && ny < 0.56) {
-        y += frontRecede * (0.56 - ny) * (style === 'pompadour' ? 0.148 : 0.128);
-        z += frontRecede * (0.56 - ny) * 0.048;
+        const lift = style === 'afro' ? 0.175 : (style === 'pompadour' ? 0.148 : 0.128);
+        const pushBack = style === 'afro' ? 0.082 : 0.048;
+        y += frontRecede * (0.56 - ny) * lift;
+        z += frontRecede * (0.56 - ny) * pushBack;
       }
 
       if (style === 'tommy' || style === 'pompadour') {
@@ -2876,6 +2999,35 @@ function buildSculptedHairGeo(style, facing = -1) {
         x += Math.sign(nxU) * sideSweep * 0.012;
         const sideburn = Math.exp(-Math.pow((absA - 1.38) / 0.24, 2)) * smoothstep01(0.42, 0.88, v);
         y -= sideburn * 0.038;
+      } else if (style === 'slick') {
+        // Smooth executive swept-back crown & crisp tapered nape
+        const sweep = Math.exp(-Math.pow((ny - 0.58) / 0.42, 2));
+        y += sweep * 0.014;
+        z += sweep * 0.018;
+      } else if (style === 'afro') {
+        // Voluminous rounded 70s/80s disco crown with organic curl texture (eyes & shades 100% clear)
+        const crownBoost = smoothstep01(0.05, 0.72, ny);
+        const sideBoost = smoothstep01(0.65, 1.35, absA);
+        const puff = (0.65 * crownBoost + 0.35 * sideBoost) * (1.0 - frontRecede * 0.55);
+        const curl = Math.sin(ang * 11.0 + ny * 14.0) * 0.005 + Math.cos(ang * 17.0 - ny * 19.0) * 0.004;
+        x += Math.sign(nxU || 1) * Math.abs(nxU) * (puff * 0.018 + curl);
+        y += crownBoost * 0.014 + curl;
+        z += Math.max(0, nzU) * (puff * 0.018 + curl);
+      } else if (style === 'mullet') {
+        // Business-in-front feathered top + flowing 80s layered back drape strictly behind ears
+        const topVol = Math.exp(-Math.pow((ny - 0.68) / 0.34, 2)) * (0.5 + 0.5 * frontRecede);
+        y += topVol * 0.026;
+        z -= topVol * 0.014;
+        const backMask = smoothstep01(1.45, 2.05, absA) * smoothstep01(0.44, 0.85, v);
+        if (backMask > 0.001) {
+          const drop = (v - 0.44) * 1.9;
+          y -= backMask * drop * 0.145;
+          z += backMask * (0.038 + drop * 0.044 + Math.sin(drop * 6.0 + ang * 4.0) * 0.007);
+          x *= 1.0 + backMask * drop * 0.18;
+        } else if (v > 0.62 && absA < 1.45) {
+          // Keep front & sides cleanly above ears like a true mullet
+          y += (v - 0.62) * 0.165;
+        }
       } else if (style === 'longWave') {
         if (absA > 0.78 && v > 0.48) {
           const drop = (v - 0.48) * 2.0;
@@ -2917,8 +3069,8 @@ function buildSculptedHairGeo(style, facing = -1) {
 
 // Create a fresh 13-Bone Skeleton matching the exact rest-pose coordinates of buildSkinnedHumanBodyGeo
 function createHumanSkeleton(isFemale = false, hero = false) {
-  const armX = isFemale ? 0.194 : (hero ? 0.238 : 0.224);
-  const legX = isFemale ? 0.098 : (hero ? 0.118 : 0.110);
+  const armX = isFemale ? 0.194 : (hero ? 0.252 : 0.224);
+  const legX = isFemale ? 0.098 : (hero ? 0.120 : 0.110);
 
   const hips   = new THREE.Bone(); hips.name = 'hips';   hips.position.set(0, 0.88, 0);
   const chest  = new THREE.Bone(); chest.name = 'chest'; chest.position.set(0, 0.04, 0); // world y=0.92
@@ -2978,17 +3130,21 @@ function getHumanGeoCache() {
     npcFemaleBikini:buildSkinnedHumanBodyGeo({ facing:  1, isFemale: true,  isBikini: true,  longSleeve: false, shorts: true,  hero: false }),
     npcFemaleStreet:buildSkinnedHumanBodyGeo({ facing:  1, isFemale: true,  isBikini: false, longSleeve: false, skirt:  true,  hero: false }),
 
-    // Shared 3D-Sculpted Anatomical Heads (Zero bowling-ball spheres, zero glued cone noses!)
-    headHero:       buildSculptedHeadGeo(false, -1),
-    headMaleNpc:    buildSculptedHeadGeo(false,  1),
-    headFemaleNpc:  buildSculptedHeadGeo(true,   1),
+    // Shared 3D-Sculpted Heads (Squarish chiseled hero head + NPC heads)
+    headHero:       buildSculptedHeadGeo(false, -1, true),
+    headMaleNpc:    buildSculptedHeadGeo(false,  1, false),
+    headFemaleNpc:  buildSculptedHeadGeo(true,   1, false),
 
-    // Shared Sculpted Multi-Wave 80s Hairstyles
-    hairTommyHero:  buildSculptedHairGeo('tommy',     -1),
-    hairTommyNpc:   buildSculptedHairGeo('tommy',      1),
-    hairPompNpc:    buildSculptedHairGeo('pompadour',  1),
-    hairWaveNpc:    buildSculptedHairGeo('longWave',   1),
-    hairBobNpc:     buildSculptedHairGeo('bob',        1),
+    // Shared Sculpted Multi-Wave 80s Hairstyles (Hero cuts tailored to squarish skull!)
+    hairTommyHero:  buildSculptedHairGeo('tommy',     -1, true),
+    hairBuzzHero:   buildSculptedHairGeo('buzz',      -1, true),
+    hairSlickHero:  buildSculptedHairGeo('slick',     -1, true),
+    hairAfroHero:   buildSculptedHairGeo('afro',      -1, true),
+    hairMulletHero: buildSculptedHairGeo('mullet',    -1, true),
+    hairTommyNpc:   buildSculptedHairGeo('tommy',      1, false),
+    hairPompNpc:    buildSculptedHairGeo('pompadour',  1, false),
+    hairWaveNpc:    buildSculptedHairGeo('longWave',   1, false),
+    hairBobNpc:     buildSculptedHairGeo('bob',        1, false),
 
     // Accessories
     ponytail:       new THREE.ConeGeometry(0.052, 0.25, 14),
@@ -3231,35 +3387,32 @@ export function createPlayerCharacter() {
   skinnedBody.bind(rig.skeleton);
   body.add(skinnedBody);
 
-  // Leather Belt, Brushed Brass Buckle Frame & Belt Loops mounted to Hips Bone
-  const belt = new THREE.Mesh(hg.belt, leatherMat);
-  belt.scale.set(1.03, 1.04, 0.72);
+  // Squarish Leather Belt, Brushed Brass Buckle Frame mounted to Hips Bone
+  const belt = new THREE.Mesh(new THREE.BoxGeometry(0.428, 0.046, 0.284), leatherMat);
   belt.position.set(0, 0.055, 0);
   rig.hips.add(belt);
-  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.058, 0.026), goldMat);
-  buckle.position.set(0, 0.055, -0.138);
-  const buckleInner = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.032, 0.030), leatherMat);
-  buckleInner.position.set(0, 0.055, -0.139);
-  const buckleProng = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.008, 0.032), goldMat);
-  buckleProng.position.set(0.008, 0.055, -0.141);
+  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.058, 0.024), goldMat);
+  buckle.position.set(0, 0.055, -0.144);
+  const buckleInner = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.032, 0.028), leatherMat);
+  buckleInner.position.set(0, 0.055, -0.145);
+  const buckleProng = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.008, 0.030), goldMat);
+  buckleProng.position.set(0.008, 0.055, -0.147);
   rig.hips.add(buckle, buckleInner, buckleProng);
 
-  // GTA 5 HD Protagonist Layered Outfit: Crisp White Crewneck Undershirt + Folded Cuban Resort Shirt Lapels + Buttons + Pocket
+  // Layered Outfit: Crisp White Crewneck Undershirt + Folded Cuban Resort Shirt Lapels + Buttons + Pocket
   const undershirtMat = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.78, metalness: 0.02 });
   const pearlBtnMat = new THREE.MeshStandardMaterial({ color: 0xfff8ec, roughness: 0.28, metalness: 0.12 });
   const darkDialMat = new THREE.MeshStandardMaterial({ color: 0x0b162a, roughness: 0.14, metalness: 0.65 });
   const shoeStripeMat = new THREE.MeshStandardMaterial({ color: 0x21e6d1, roughness: 0.36, metalness: 0.12 });
 
-  // Solid sun-tanned upper chest & clavicles core + white crewneck undershirt (eliminates any V-neck gap!)
-  const chestFill = new THREE.Mesh(new THREE.SphereGeometry(0.115, 16, 12), skinMat);
-  chestFill.scale.set(1.02, 0.72, 0.82);
-  chestFill.position.set(0, 0.512, -0.014);
+  // Clean squarish upper chest / collar core + white crewneck undershirt
+  const chestFill = new THREE.Mesh(new THREE.BoxGeometry(0.205, 0.115, 0.168), skinMat);
+  chestFill.position.set(0, 0.512, -0.012);
   rig.chest.add(chestFill);
 
-  const underV = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.064, 0.145, 16), undershirtMat);
-  underV.scale.set(1.02, 1.0, 0.78);
-  underV.position.set(0, 0.468, -0.042);
-  underV.rotation.x = 0.06;
+  const underV = new THREE.Mesh(new THREE.BoxGeometry(0.142, 0.140, 0.115), undershirtMat);
+  underV.position.set(0, 0.466, -0.054);
+  underV.rotation.x = 0.04;
   rig.chest.add(underV);
 
   // Tailored Draped Hawaiian Shirt Collar + Sculpted Folded Cuban Lapels (Left & Right)
@@ -3326,28 +3479,135 @@ export function createPlayerCharacter() {
     ank.add(stripe);
   }
 
-  // 2. Sculpted 3D Head + Voluminous Swept 1980s Tommy Hair + Detailed Gold-Framed Vice Aviators with Temple Arms
+  // 2. Sculpted 3D Head + 7 Switchable 3D Hairstyles (Barber Shop) + Detailed Gold-Framed Vice Aviators
   const heroHeadY = 0.104;
   const hMesh = new THREE.Mesh(hg.headHero, faceMat);
   hMesh.scale.setScalar(1.02);
   hMesh.position.set(0, heroHeadY, 0);
   rig.head.add(hMesh);
 
-  const hairMesh = new THREE.Mesh(hg.hairTommyHero, hairMat);
-  hairMesh.scale.setScalar(1.02);
-  hairMesh.position.set(0, heroHeadY, 0);
-  rig.head.add(hairMesh);
+  const hairGroups = {};
+  const makeHairGroup = (id) => {
+    const grp = new THREE.Group();
+    grp.visible = id === 'tommy';
+    rig.head.add(grp);
+    hairGroups[id] = grp;
+    return grp;
+  };
 
-  // Sculpted 3D Sideburns + Front Swept Pompadour Hair Volume
-  const quiff = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 10), hairMat);
-  quiff.scale.set(1.28, 0.44, 0.92);
-  quiff.position.set(-0.012, heroHeadY + 0.116, -0.064);
-  quiff.rotation.set(0.24, 0.14, -0.12);
-  rig.head.add(quiff);
-  for (const sx of [-1, 1]) {
-    const sb = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.052, 0.028), hairMat);
-    sb.position.set(sx * 0.108, heroHeadY - 0.006, -0.022);
-    rig.head.add(sb);
+  // (1) Classic 80s Swept Pompadour (Default Tommy Vercetti)
+  {
+    const gH = makeHairGroup('tommy');
+    const hairMesh = new THREE.Mesh(hg.hairTommyHero, hairMat);
+    hairMesh.scale.setScalar(1.02);
+    hairMesh.position.set(0, heroHeadY, 0);
+    const quiff = new THREE.Mesh(new THREE.SphereGeometry(0.064, 14, 10), hairMat);
+    quiff.scale.set(1.22, 0.42, 0.88);
+    quiff.position.set(-0.008, heroHeadY + 0.122, -0.056);
+    quiff.rotation.set(0.24, 0.12, -0.10);
+    gH.add(hairMesh, quiff);
+    for (const sx of [-1, 1]) {
+      const sb = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.048, 0.026), hairMat);
+      sb.position.set(sx * 0.112, heroHeadY - 0.004, -0.018);
+      gH.add(sb);
+    }
+  }
+
+  // (2) Tactical Buzz Fade (Precision Skull-Contoured Close Cut — zero scalp poke-through!)
+  {
+    const gH = makeHairGroup('buzz');
+    const buzzMesh = new THREE.Mesh(hg.hairBuzzHero, hairMat);
+    buzzMesh.scale.setScalar(1.02);
+    buzzMesh.position.set(0, heroHeadY, 0);
+    gH.add(buzzMesh);
+  }
+
+  // (3) Disco Crown Afro (Clean Sculpted 80s Halo — face, eyes & aviators 100% clear!)
+  {
+    const gH = makeHairGroup('afro');
+    const afroMesh = new THREE.Mesh(hg.hairAfroHero, hairMat);
+    afroMesh.scale.setScalar(1.02);
+    afroMesh.position.set(0, heroHeadY, 0);
+    gH.add(afroMesh);
+  }
+
+  // (4) Neon Punk Mohawk (Shaved Fade Base + Continuous Skull-Hugging Sculpted Crest Fin!)
+  {
+    const gH = makeHairGroup('mohawk');
+    const fadeBase = new THREE.Mesh(hg.hairBuzzHero, hairMat);
+    fadeBase.scale.setScalar(1.015);
+    fadeBase.position.set(0, heroHeadY, 0);
+    gH.add(fadeBase);
+    const finShape = new THREE.Shape();
+    // 2D (x2d = forward -Z, y2d = up +Y) following the exact skull arc from hairline to nape
+    finShape.moveTo(0.068, 0.106);
+    finShape.quadraticCurveTo(0.095, 0.168, 0.072, 0.205);
+    finShape.quadraticCurveTo(0.010, 0.224, -0.058, 0.212);
+    finShape.quadraticCurveTo(-0.132, 0.194, -0.172, 0.120);
+    finShape.quadraticCurveTo(-0.175, 0.040, -0.132, -0.028);
+    finShape.lineTo(-0.102, -0.015);
+    finShape.quadraticCurveTo(-0.112, 0.070, -0.065, 0.122);
+    finShape.quadraticCurveTo(0.005, 0.138, 0.068, 0.106);
+    finShape.closePath();
+    const finGeo = new THREE.ExtrudeGeometry(finShape, {
+      depth: 0.032,
+      bevelEnabled: true,
+      bevelThickness: 0.009,
+      bevelSize: 0.008,
+      bevelSegments: 2,
+      curveSegments: 14
+    });
+    finGeo.translate(0, 0, -0.016);
+    finGeo.rotateY(Math.PI / 2);
+    const finMesh = new THREE.Mesh(finGeo, hairMat);
+    finMesh.scale.setScalar(1.02);
+    finMesh.position.set(0, heroHeadY, 0);
+    gH.add(finMesh);
+  }
+
+  // (5) Sunset Beach Mullet (Sculpted Feathered Top + Flowing Layered Back Drape Behind Ears!)
+  {
+    const gH = makeHairGroup('mullet');
+    const mulletMesh = new THREE.Mesh(hg.hairMulletHero, hairMat);
+    mulletMesh.scale.setScalar(1.02);
+    mulletMesh.position.set(0, heroHeadY, 0);
+    gH.add(mulletMesh);
+  }
+
+  // (6) Island Locs / Dreads (Contoured Crown + Curved Bezier Tube Locs Strictly Behind Face!)
+  {
+    const gH = makeHairGroup('dreads');
+    const crownCap = new THREE.Mesh(hg.hairBuzzHero, hairMat);
+    crownCap.scale.setScalar(1.025);
+    crownCap.position.set(0, heroHeadY + 0.004, 0);
+    gH.add(crownCap);
+    // 11 gracefully curved locs strictly behind the front hairline (|ang| >= 72 deg from nose)
+    const locAngles = [
+      -1.26, -1.58, -1.92, -2.26, -2.62, Math.PI,
+       2.62,  2.26,  1.92,  1.58,  1.26
+    ];
+    for (let i = 0; i < locAngles.length; i++) {
+      const a = locAngles[i];
+      const sx = Math.sin(a);
+      const sz = -Math.cos(a); // +Z is back, -Z is front
+      const lenDrop = 0.095 + (i % 3) * 0.022 + (Math.abs(a) > 2.1 ? 0.028 : 0);
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(sx * 0.088, heroHeadY + 0.130, sz * 0.088 + 0.010),
+        new THREE.Vector3(sx * 0.146, heroHeadY + 0.082, sz * 0.152 + 0.014),
+        new THREE.Vector3(sx * 0.142, heroHeadY - lenDrop, sz * 0.160 + 0.018)
+      );
+      const locMesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 10, 0.0145, 7, false), hairMat);
+      gH.add(locMesh);
+    }
+  }
+
+  // (7) Miami Executive Slick-Back (Clean Contoured Swept-Back Hairline!)
+  {
+    const gH = makeHairGroup('slick');
+    const slickMesh = new THREE.Mesh(hg.hairSlickHero, hairMat);
+    slickMesh.scale.setScalar(1.02);
+    slickMesh.position.set(0, heroHeadY, 0);
+    gH.add(slickMesh);
   }
 
   // Grounded soft contact shadow under protagonist sneakers (eliminates floating look!)
@@ -3366,36 +3626,152 @@ export function createPlayerCharacter() {
   const tearLensGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.006, bevelEnabled: false, curveSegments: 14 });
   const tearFrameGeo = new THREE.ExtrudeGeometry(tearShape, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.0018, bevelSize: 0.0028, bevelSegments: 2, curveSegments: 14 });
 
-  const browBar = new THREE.Mesh(new THREE.BoxGeometry(0.140, 0.004, 0.006), goldMat);
-  browBar.position.set(0, heroHeadY + 0.028, -0.115);
+  const browBar = new THREE.Mesh(new THREE.BoxGeometry(0.148, 0.004, 0.006), goldMat);
+  browBar.position.set(0, heroHeadY + 0.028, -0.126);
   const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.004, 0.006), goldMat);
-  bridge.position.set(0, heroHeadY + 0.016, -0.117);
+  bridge.position.set(0, heroHeadY + 0.016, -0.128);
 
-  // Place dark smoked lenses 1.4mm forward of frame bevel front face (-0.1158) so crisp gold rim outlines dark glass!
+  // Place dark smoked lenses cleanly in front of the flat squarish face plane so gold rim outlines dark glass!
   const lensL = new THREE.Mesh(tearLensGeo, aviatorGlassMat);
-  lensL.position.set(-0.040, heroHeadY + 0.008, -0.1185);
-  lensL.rotation.y = 0.14;
+  lensL.position.set(-0.042, heroHeadY + 0.008, -0.1295);
+  lensL.rotation.y = 0.06;
   const frameL = new THREE.Mesh(tearFrameGeo, goldMat);
-  frameL.position.set(-0.040, heroHeadY + 0.008, -0.1140);
-  frameL.rotation.y = 0.14;
+  frameL.position.set(-0.042, heroHeadY + 0.008, -0.1250);
+  frameL.rotation.y = 0.06;
 
   const lensR = new THREE.Mesh(tearLensGeo, aviatorGlassMat);
   lensR.scale.x = -1;
-  lensR.position.set(0.040, heroHeadY + 0.008, -0.1185);
-  lensR.rotation.y = -0.14;
+  lensR.position.set(0.042, heroHeadY + 0.008, -0.1295);
+  lensR.rotation.y = -0.06;
   const frameR = new THREE.Mesh(tearFrameGeo, goldMat);
   frameR.scale.x = -1;
-  frameR.position.set(0.040, heroHeadY + 0.008, -0.1140);
-  frameR.rotation.y = -0.14;
+  frameR.position.set(0.042, heroHeadY + 0.008, -0.1250);
+  frameR.rotation.y = -0.06;
 
-  const templeGeo = new THREE.BoxGeometry(0.004, 0.0045, 0.112);
+  const templeGeo = new THREE.BoxGeometry(0.004, 0.0045, 0.124);
   const templeL = new THREE.Mesh(templeGeo, goldMat);
-  templeL.position.set(-0.092, heroHeadY + 0.018, -0.062);
-  templeL.rotation.y = 0.12;
+  templeL.position.set(-0.106, heroHeadY + 0.018, -0.066);
+  templeL.rotation.y = 0.08;
   const templeR = new THREE.Mesh(templeGeo, goldMat);
-  templeR.position.set(0.092, heroHeadY + 0.018, -0.062);
-  templeR.rotation.y = -0.12;
-  rig.head.add(browBar, bridge, frameL, frameR, lensL, lensR, templeL, templeR);
+  templeR.position.set(0.106, heroHeadY + 0.018, -0.066);
+  templeR.rotation.y = -0.08;
+  const shadesGroup = new THREE.Group();
+  shadesGroup.add(browBar, bridge, frameL, frameR, lensL, lensR, templeL, templeR);
+  rig.head.add(shadesGroup);
+
+  // Dynamic Barber & Boutique Customization API (Hairstyles, Hair Dye, 7 Outfits & Shades)
+  const outfitTexCache = { hawaiian: shirtTex };
+  const pantTexCache = { hawaiian: pantMat.map };
+  const makeCustomShirtTex = (id) => {
+    if (outfitTexCache[id]) return outfitTexCache[id];
+    const oc = document.createElement('canvas');
+    oc.width = 512; oc.height = 512;
+    const octx = oc.getContext('2d');
+    if (id === 'miami_suit') {
+      const g = octx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0, '#faf7f2'); g.addColorStop(1, '#e6e0d6');
+      octx.fillStyle = g; octx.fillRect(0, 0, 512, 512);
+      octx.strokeStyle = 'rgba(180,170,160,0.22)';
+      for (let x = 0; x < 512; x += 12) { octx.beginPath(); octx.moveTo(x, 0); octx.lineTo(x, 512); octx.stroke(); }
+    } else if (id === 'black_tux') {
+      const g = octx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0, '#1a1b24'); g.addColorStop(1, '#0e0f16');
+      octx.fillStyle = g; octx.fillRect(0, 0, 512, 512);
+      octx.fillStyle = 'rgba(255,255,255,0.04)';
+      for (let x = 0; x < 512; x += 16) octx.fillRect(x, 0, 2, 512);
+    } else if (id === 'street_pink') {
+      const g = octx.createLinearGradient(0, 0, 512, 512);
+      g.addColorStop(0, '#161426'); g.addColorStop(0.55, '#2b1038'); g.addColorStop(1, '#121828');
+      octx.fillStyle = g; octx.fillRect(0, 0, 512, 512);
+      octx.fillStyle = '#ff2e88';
+      for (let y = 24; y < 512; y += 96) octx.fillRect(0, y, 512, 18);
+      octx.fillStyle = '#21e6d1';
+      for (let y = 46; y < 512; y += 96) octx.fillRect(0, y, 512, 9);
+    } else if (id === 'gold_boss') {
+      const g = octx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0, '#7c1830'); g.addColorStop(1, '#4c0d1e');
+      octx.fillStyle = g; octx.fillRect(0, 0, 512, 512);
+      octx.strokeStyle = 'rgba(244,196,78,0.45)'; octx.lineWidth = 4;
+      for (let i = 0; i < 36; i++) {
+        const px = (i * 97) % 512, py = (i * 131) % 512;
+        octx.beginPath(); octx.arc(px, py, 18, 0, Math.PI * 2); octx.stroke();
+      }
+    } else if (id === 'tactical') {
+      octx.fillStyle = '#38462c'; octx.fillRect(0, 0, 512, 512);
+      const camoCols = ['#2a3522', '#4c5a3b', '#202819', '#5a5038'];
+      for (let i = 0; i < 64; i++) {
+        octx.fillStyle = camoCols[i % camoCols.length];
+        octx.beginPath();
+        octx.ellipse((i * 89) % 512, (i * 127) % 512, 34 + (i % 4) * 10, 18 + (i % 3) * 8, i * 0.5, 0, Math.PI * 2);
+        octx.fill();
+      }
+    } else {
+      // sunset_surf
+      const g = octx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0, '#ff6e48'); g.addColorStop(0.5, '#ff3d7f'); g.addColorStop(1, '#ffb347');
+      octx.fillStyle = g; octx.fillRect(0, 0, 512, 512);
+      octx.fillStyle = 'rgba(255,255,255,0.16)';
+      for (let y = 0; y < 512; y += 32) octx.fillRect(0, y, 512, 6);
+    }
+    const t = new THREE.CanvasTexture(oc);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    outfitTexCache[id] = t;
+    return t;
+  };
+  const makeCustomPantTex = (id, hex) => {
+    if (pantTexCache[id]) return pantTexCache[id];
+    const t = makeDenimFabricTexture(hex);
+    pantTexCache[id] = t;
+    return t;
+  };
+  const hairTexCache = { '#18131d': hairMat.map };
+  const setHairstyle = (styleId = 'tommy', colorHex = '#18131d') => {
+    const validId = hairGroups[styleId] ? styleId : 'tommy';
+    for (const k of Object.keys(hairGroups)) hairGroups[k].visible = (k === validId);
+    const key = String(colorHex || '#18131d').toLowerCase();
+    if (!hairTexCache[key]) {
+      const numeric = parseInt(key.replace('#', ''), 16);
+      hairTexCache[key] = makeHairTexture(Number.isFinite(numeric) ? numeric : 0x18131d);
+    }
+    hairMat.map = hairTexCache[key];
+    hairMat.needsUpdate = true;
+  };
+  const OUTFIT_SPECS = {
+    hawaiian:    { pant: '#264570', under: 0xf4f1ea, shoe: 0xf8f6fa, stripe: 0x21e6d1, chain: true  },
+    miami_suit:  { pant: '#f0ece4', under: 0xff4c96, shoe: 0xf6f3ee, stripe: 0xff2e88, chain: true  },
+    black_tux:   { pant: '#151720', under: 0xfafafa, shoe: 0x14151c, stripe: 0xe8bc52, chain: false },
+    street_pink: { pant: '#232634', under: 0x21e6d1, shoe: 0x1e202c, stripe: 0xff2e88, chain: true  },
+    gold_boss:   { pant: '#e5d8c0', under: 0x1a141c, shoe: 0x4b2a1c, stripe: 0xe8bc52, chain: true  },
+    tactical:    { pant: '#282c24', under: 0x222620, shoe: 0x1e1d1a, stripe: 0x556046, chain: false },
+    sunset_surf: { pant: '#c9b48a', under: 0xfff6e8, shoe: 0xf8f6fa, stripe: 0xff6e48, chain: true  }
+  };
+  const setOutfit = (outfitId = 'hawaiian') => {
+    const id = OUTFIT_SPECS[outfitId] ? outfitId : 'hawaiian';
+    const spec = OUTFIT_SPECS[id];
+    shirtMat.map = makeCustomShirtTex(id);
+    shirtMat.needsUpdate = true;
+    pantMat.map = makeCustomPantTex(id, spec.pant);
+    pantMat.needsUpdate = true;
+    undershirtMat.color.setHex(spec.under);
+    shoeMat.color.setHex(spec.shoe);
+    shoeStripeMat.color.setHex(spec.stripe);
+    chain.visible = spec.chain;
+    pendant.visible = spec.chain;
+  };
+  const setShades = (mode = 'aviator') => {
+    shadesGroup.visible = mode !== 'none';
+    if (mode === 'pink') {
+      aviatorGlassMat.color.setHex(0x5a0d38);
+      goldMat.color.setHex(0xf4c860);
+    } else if (mode === 'dark') {
+      aviatorGlassMat.color.setHex(0x05070c);
+      goldMat.color.setHex(0x303642);
+    } else {
+      aviatorGlassMat.color.setHex(0x091318);
+      goldMat.color.setHex(0xe8bc52);
+    }
+  };
 
   // 3. 6 Detailed 3D Equippable Weapons mounted directly inside Sculpted Right Hand (elbowR Bone)
   const gunMetal = new THREE.MeshStandardMaterial({ color: 0x2b303c, metalness: 0.85, roughness: 0.24 });
@@ -3561,8 +3937,9 @@ export function createPlayerCharacter() {
   return {
     root, body, skinnedBody,
     hips: rig.hips, chest: rig.chest, head: rig.head,
-    armL: rig.armL, armR: rig.armR, legL: rig.legL, legR: rig.legR,
-    weapons, setWeapon
+    armL: rig.armL, armR: rig.armR, elbowL: rig.elbowL, elbowR: rig.elbowR,
+    legL: rig.legL, legR: rig.legR, kneeL: rig.kneeL, kneeR: rig.kneeR,
+    weapons, setWeapon, setHairstyle, setOutfit, setShades
   };
 }
 

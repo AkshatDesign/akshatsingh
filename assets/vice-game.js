@@ -9,8 +9,8 @@
 
   const scriptEl = document.currentScript;
   const moduleUrl = scriptEl && scriptEl.src
-    ? new URL('./vice-game-3d.js?v=33', scriptEl.src).href
-    : '/assets/vice-game-3d.js?v=33';
+    ? new URL('./vice-game-3d.js?v=45', scriptEl.src).href
+    : '/assets/vice-game-3d.js?v=45';
 
   let modulePromise = null;
   let loadingEl = null;
@@ -56,6 +56,22 @@
     if (typeof window.__stopMainWebsiteRadio === 'function') window.__stopMainWebsiteRadio();
     window.dispatchEvent(new CustomEvent('vice:game-open'));
     document.querySelectorAll('audio, video').forEach((m) => { try { m.pause(); } catch (_) {} });
+    // Pre-warm Special Intro RJ synchronously inside the user click gesture so autoplay never blocks after async module import
+    try {
+      const introAudio = new Audio('/assets/aistudio/Intro-RJ_902dec53.mp3');
+      introAudio.preload = 'auto';
+      introAudio.volume = 0.001;
+      introAudio.__claimed = false;
+      window.__VICE_INTRO_RJ_AUDIO__ = introAudio;
+      const p = introAudio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          if (!introAudio.__claimed) {
+            try { introAudio.pause(); introAudio.currentTime = 0; } catch (_) {}
+          }
+        }).catch(() => {});
+      }
+    } catch (_) {}
     if (!modulePromise) {
       showLoading();
       modulePromise = import(moduleUrl).catch((err) => {

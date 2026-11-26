@@ -70,9 +70,9 @@ import {
   createBoardingAirstairs,
   createMountViceRange,
   createSierraWestRange
-} from './vice-assets.js?v=24';
+} from './vice-assets.js?v=27';
 
-import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=18';
+import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=22';
 import {
   createMotorcycle,
   createPoliceCruiser,
@@ -83,8 +83,11 @@ import {
   createWildlifeAnimal,
   createMalibuClubBuilding,
   createNorthPointMall,
+  createOceanViewSafehouse,
+  createBarberShopBuilding,
+  createClothesStoreBuilding,
   VICE_CHEAT_CODES
-} from './vice-world-ext.js?v=1';
+} from './vice-world-ext.js?v=3';
 import {
   LEONIDA_PROJ,
   LEONIDA_PLACES,
@@ -103,6 +106,21 @@ import {
   buildImageBillboardMesh,
   buildMountainRopeway
 } from './leonida-props.js?v=6';
+import {
+  createSpeedboat,
+  createJetSki,
+  createHelicopter,
+  createPayNSprayBuilding,
+  createBurgerShotBuilding,
+  createAmmuNationBuilding,
+  SkidmarkPool,
+  RouteChevronGuide,
+  createSkyRings,
+  createMissionBeacon,
+  STREET_RACE_GATES,
+  TAXI_FARE_SPOTS,
+  SCAVENGER_UNLOCKS
+} from './vice-enhancements.js?v=2';
 
 /* AAA Filmic Contrast, Warm Miami Highlight Grade & Subtle Optical Vignette (runs post-OutputPass in sRGB) */
 const ViceAAAColorGradeShader = {
@@ -299,6 +317,50 @@ const WEATHER_PRESETS = [
   { id: 'storm', label: 'Storm',    icon: '⚡', rain: 1.0,  fogMult: 2.15, dark: 0.86 }
 ];
 
+const HAIR_STYLES = [
+  { id: 'tommy',  name: '1986 Swept Pompadour', sub: 'Classic Vice City signature wave', price: 0 },
+  { id: 'slick',  name: 'Miami Executive Slick', sub: 'Swept-back Ocean Drive kingpin cut', price: 45 },
+  { id: 'buzz',   name: 'Tactical Buzz Fade',   sub: 'Clean low-profile street fade', price: 35 },
+  { id: 'afro',   name: 'Disco Crown Afro',     sub: 'Malibu Club retro volume', price: 60 },
+  { id: 'mohawk', name: 'Neon Punk Mohawk',     sub: 'Spiked Vice Point rebel crest', price: 75 },
+  { id: 'mullet', name: 'Sunset Beach Mullet',  sub: 'Business front, boardwalk back', price: 55 },
+  { id: 'dreads', name: 'Island Locs',          sub: 'Tropical braided Vice Key locs', price: 85 }
+];
+
+const HAIR_COLORS = [
+  { id: 'espresso', name: 'Dark Espresso', hex: '#261a14' },
+  { id: 'jet',      name: 'Jet Black',     hex: '#121216' },
+  { id: 'chestnut', name: 'Sun Chestnut',  hex: '#5c3620' },
+  { id: 'blonde',   name: 'Beach Blonde',  hex: '#d9b566' },
+  { id: 'silver',   name: 'Platinum',      hex: '#cfd6e2' },
+  { id: 'pink',     name: 'Vice Neon',     hex: '#ff2e88' },
+  { id: 'cyan',     name: 'Malibu Cyan',   hex: '#21e6d1' }
+];
+
+const OUTFIT_CATALOG = [
+  { id: 'hawaiian',    name: 'Ocean Beach Hawaiian',  sub: 'Teal palm shirt & washed denim', price: 0 },
+  { id: 'miami_suit',  name: 'Pastel Miami Suit',     sub: 'White linen blazer & neon pink tee', price: 180 },
+  { id: 'street_pink', name: 'Malibu Club Nights',    sub: 'Magenta silk shirt & dark slacks', price: 140 },
+  { id: 'sunset_surf', name: 'Boardwalk Sunset',      sub: 'Coral resort shirt & cream chinos', price: 120 },
+  { id: 'black_tux',   name: 'Midnight Vice Tux',     sub: 'Tailored noir tuxedo & crimson tie', price: 280 },
+  { id: 'tactical',    name: 'Bayside Tactical',      sub: 'Armored dark jacket & cargo pants', price: 240 },
+  { id: 'gold_boss',   name: 'Kingpin Gold Blazer',   sub: '24K gold jacket & obsidian trousers', price: 420 }
+];
+
+const SHADE_STYLES = [
+  { id: 'aviator', name: 'Gold Aviators',   price: 0 },
+  { id: 'pink',    name: 'Vice Pink Tint',  price: 40 },
+  { id: 'dark',    name: 'Noir Wayfarers',  price: 40 },
+  { id: 'none',    name: 'No Sunglasses',   price: 0 }
+];
+
+const TV_CHANNELS = [
+  { id: 'news',    label: 'CH 04 · VICE NEWS' },
+  { id: 'weather', label: 'CH 07 · LEONIDA SKY' },
+  { id: 'race',    label: 'CH 12 · VICE TURBO' },
+  { id: 'synth',   label: 'CH 86 · WAVE VISUAL' }
+];
+
 const CORE_WAYPOINTS = [
   { id: 'start', label: 'Ocean Dr', zone: 'Ocean Drive South', county: 'Vice-Dale County', x: 3.2, z: 6, yaw: 0 },
   { id: 'fix-my-itch', label: '01 FixMyItch', zone: 'Ocean Beach', county: 'Vice-Dale County', x: -4.2, z: -82, yaw: 0 },
@@ -313,7 +375,11 @@ const CORE_WAYPOINTS = [
   { id: 'little-haiti', label: 'Little Haiti', zone: 'Little Haiti', county: 'Vice-Dale County', x: -384, z: -380, yaw: 0 },
   { id: 'vice-port', label: 'Vice Port', zone: 'Vice Port Docks', county: 'Vice-Dale County', x: -480, z: -140, yaw: 0 },
   { id: 'south-marina', label: 'South Marina', zone: 'Ocean Bay Marina', county: 'Vice-Dale County', x: -4.2, z: 260, yaw: 0 },
-  { id: 'ocean-view', label: 'Ocean View [IN]', zone: 'Ocean View Hotel', county: 'Vice-Dale County', x: -13.0, z: -48, yaw: Math.PI / 2 },
+  { id: 'ocean-view', label: 'Ocean View Safehouse [IN]', zone: 'Ocean View Hotel Safehouse', county: 'Vice-Dale County', x: -13.0, z: -48, yaw: Math.PI / 2 },
+  { id: 'barber-ocean', label: 'Vice Cuts Barber [IN]', zone: 'Ocean Beach Barber Shop', county: 'Vice-Dale County', x: -13.0, z: -221, yaw: Math.PI / 2 },
+  { id: 'clothes-vice', label: 'Vice Couture Clothes [IN]', zone: 'Vice Point Boutique', county: 'Vice-Dale County', x: -13.0, z: -384, yaw: Math.PI / 2 },
+  { id: 'barber-north', label: 'North Point Barber [IN]', zone: 'Vice Heights Barber Shop', county: 'Vice-Dale County', x: -13.0, z: -707, yaw: Math.PI / 2 },
+  { id: 'clothes-gash', label: 'Gash Clothes [IN]', zone: 'North Vice Designer Store', county: 'Vice-Dale County', x: -13.0, z: -808, yaw: Math.PI / 2 },
   { id: 'ammunation', label: 'Ammu-Nation [IN]', zone: 'Ammu-Nation', county: 'Vice-Dale County', x: -13.0, z: -190, yaw: Math.PI / 2 },
   { id: 'malibu-club', label: 'Malibu Club [IN]', zone: 'Malibu Club', county: 'Vice-Dale County', x: -13.0, z: -344, yaw: Math.PI / 2 },
   { id: 'airport', label: 'Int’l Airport [FLY]', zone: "Vice Int'l Airport", county: 'Vice-Dale County', x: -46, z: 66, yaw: 0 },
@@ -713,7 +779,7 @@ const CONTACT_SHOWROOM = {
   accent: 0xffd36b, accentHex: '#FFD36B', x: 24.5, z: -540, parkX: 11.5, parkZ: -540
 };
 
-const CAM_MODES = ['Chase', 'Low', 'Drone'];
+const CAM_MODES = ['Chase', 'Low', 'Hood', 'Drone'];
 const _vecA = new THREE.Vector3();
 const _vecB = new THREE.Vector3();
 const _projVec = new THREE.Vector3();
@@ -844,7 +910,7 @@ class ViceCity3DApp {
   constructor() {
     this.isSoftwareGl = detectSoftwareWebGL();
     this.isOpen = false;
-    this.started = false;
+    this.started = true;
     this.frameId = 0;
     this.frameCount = 0;
     this.paintIdx = 0;
@@ -912,6 +978,40 @@ class ViceCity3DApp {
     this.interiorPerks = [];
     this.parachuteMesh = null;
 
+    // Barber Shops, Clothes Stores, Ocean View Safehouse & Malibu Club Dance State
+    this.oceanViewSafehouse = null;
+    this.safehouseStations = [];
+    this.shopInteractZones = [];
+    this.barberPoles = [];
+    this.activeShop = null; // { kind: 'barber'|'clothes'|'wardrobe', label, snapshot }
+    this.tvOpen = false;
+    this.tvChannel = 0;
+    this.sleepAnimTimer = 0;
+    this.isDancing = false;
+    this.danceStyleIdx = 0;
+    this.danceRewardTimer = 0;
+    this.playerStyle = {
+      hair: 'tommy',
+      hairColor: '#261a14',
+      outfit: 'hawaiian',
+      shades: 'aviator',
+      ownedHair: ['tommy'],
+      ownedOutfits: ['hawaiian'],
+      ownedShades: ['aviator', 'none']
+    };
+    try {
+      const savedStyle = JSON.parse(localStorage.getItem('vice3d_style_v1') || 'null');
+      if (savedStyle && typeof savedStyle === 'object') {
+        if (typeof savedStyle.hair === 'string') this.playerStyle.hair = savedStyle.hair;
+        if (typeof savedStyle.hairColor === 'string') this.playerStyle.hairColor = savedStyle.hairColor;
+        if (typeof savedStyle.outfit === 'string') this.playerStyle.outfit = savedStyle.outfit;
+        if (typeof savedStyle.shades === 'string') this.playerStyle.shades = savedStyle.shades;
+        if (Array.isArray(savedStyle.ownedHair)) this.playerStyle.ownedHair = Array.from(new Set(['tommy', ...savedStyle.ownedHair]));
+        if (Array.isArray(savedStyle.ownedOutfits)) this.playerStyle.ownedOutfits = Array.from(new Set(['hawaiian', ...savedStyle.ownedOutfits]));
+        if (Array.isArray(savedStyle.ownedShades)) this.playerStyle.ownedShades = Array.from(new Set(['aviator', 'none', ...savedStyle.ownedShades]));
+      }
+    } catch (_) {}
+
     // Continuous Automatic Day/Night & Dynamic Weather Cycle State
     this.timeIdx = 0; // 0: Sunset, 1: Day, 2: Night, 3: Dawn
     this.dayTime = 17.6; // Continuous 24h solar clock (starts at Golden Sunset!)
@@ -930,6 +1030,33 @@ class ViceCity3DApp {
     this.mountViceRopeway = null;
     this.worldHazeGroup = null;
     this.worldHazeMats = [];
+    this._ambientWeights = { forest: 0, carnival: 0, malibu: 0, airport: 0, mall: 0 };
+
+    // Enhancements State: Boats, Missions, Phone, Car Damage/Mods, Graphics Preset & Persistent Save
+    this.boats = [];
+    this.activeBoat = null;
+    this.skyRings = [];
+    this.skidPool = null;
+    this.routeGuide = null;
+    this.missionBeacon = null;
+    this.activeSideMission = null;
+    this.customWaypoint = null;
+    this.stuntSlowMo = 0;
+    this.carHealth = 100;
+    this.carMods = { underglow: 'none', spoiler: false, goldChrome: false };
+    this.graphicsPreset = 'high';
+    this.phoneOpen = false;
+    this.phoneApp = 'home';
+    this.roadMaterials = [];
+    this.ammuNation = null;
+    this.burgerShot = null;
+    this.payNSpray = null;
+    this.footstepTimer = 0;
+    this.skidStampTimer = 0;
+    this.missionsCompleted = 0;
+    this.stuntJumpsDone = 0;
+    this.ambientChase = null;
+    this.loadPersistentSave();
 
     // Solid world collision geometry & O(1) spatial hash grid + interactive items
     this.boxColliders = [];
@@ -1063,6 +1190,7 @@ class ViceCity3DApp {
         rjRemainingMs: this.audio.rjRemainingMs,
         rjHost: this.audio.rjClip ? this.audio.rjClip.host : null,
         rjSrc: this.audio.rjClip ? this.audio.rjClip.src : null,
+        ambientAudio: this.audio.getAmbientLevels(),
         weaponWheelOpen: Boolean(this.weaponWheelOpen),
         weaponWheelHover: this.weaponWheelHover,
         weaponWheelHoverId: WEAPONS[this.weaponWheelHover] ? WEAPONS[this.weaponWheelHover].id : null,
@@ -1472,6 +1600,17 @@ class ViceCity3DApp {
     stage.innerHTML = `
       <div class="v3-mount" data-mount></div>
       <div class="v3-vignette"></div>
+      <div class="v3-rain-screen" data-rain-screen aria-hidden="true"></div>
+      <div class="v3-shutter" data-shutter aria-hidden="true"></div>
+      <!-- Active Side-Mission / Race / Taxi Objective Bar -->
+      <div class="v3-mission-bar" data-mission-bar hidden>
+        <div>
+          <div class="v3-mission-tag" data-mission-tag>SIDE JOB</div>
+          <div class="v3-mission-obj" data-mission-obj>Drive to target</div>
+        </div>
+        <div class="v3-mission-timer" data-mission-timer>00:00</div>
+        <button class="v3-mission-abort" type="button" data-mission-abort>End</button>
+      </div>
       <!-- In-Game Look-Through Reticle (Replaces OS System Cursor during Active 3D Look & Aim) -->
       <div class="v3-crosshair" data-crosshair>
         <span class="v3-reticle-ring"></span>
@@ -1516,7 +1655,7 @@ class ViceCity3DApp {
                   <div class="v3-knob" data-rad-vol role="slider" tabindex="0" aria-label="Power and volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" style="--r:27deg" title="Click Power · Drag or Scroll Volume"></div>
                   <small>Pwr · Vol</small>
                 </div>
-                <div class="v3-rad-lcd" data-rad-lcd title="Click to expand/fold radio deck (Press R to tune)">
+                <div class="v3-rad-lcd" data-rad-lcd title="Click to expand/fold radio deck (Press R to tune, O to turn off)">
                   <div class="v3-lcd-r">
                     <span class="v3-lcd-st">ST</span>
                     <span class="v3-lcd-f" data-rad-f>103.0</span>
@@ -1531,6 +1670,11 @@ class ViceCity3DApp {
                   <small>Tune</small>
                 </div>
               </div>
+              <div class="v3-rad-pwr-row">
+                <button class="v3-rad-pwr" type="button" data-rad-pwr title="Turn Car Radio On or Off (Press O)">Radio: ON</button>
+                <span class="v3-rad-ctrl"><b>[R]</b> Tune · <b>[O]</b> On/Off</span>
+              </div>
+              <div class="v3-rad-guide"><b>[R]</b> Station · <b>[O]</b> Radio Off · <b>[1–5]</b> Presets · Scroll Vol</div>
               <div class="v3-rad-bot">
                 <div class="v3-rad-pre" role="group" aria-label="Station presets">
                   ${RADIO_STATIONS.map((st, i) => `<button class="v3-rad-p" type="button" data-rad-pre="${i}" aria-pressed="${i === 0 ? 'true' : 'false'}" aria-label="${st.name}">${i + 1}</button>`).join('')}
@@ -1542,6 +1686,7 @@ class ViceCity3DApp {
         </div>
         <div class="v3-top-r">
           <div class="v3-top-tools">
+            <button class="v3-env-chip" type="button" data-phone-btn title="Open ViceFruit Smartphone (I)">📱 <span>Phone [I]</span></button>
             <button class="v3-env-chip mini" type="button" data-mg-btn title="Play GTA 5 Style Mini-Games (B)">🎮 <span>Mini-Games [B]</span></button>
             <button class="v3-env-chip proj" type="button" data-proj-btn title="Browse All 5 Projects & GPS Warp (P)">★ <span>Projects [P]</span></button>
             <button class="v3-env-chip" type="button" data-time-btn title="Cycle Time of Day (T)">☀ <span>Sunset</span></button>
@@ -1647,10 +1792,14 @@ class ViceCity3DApp {
         ${buildPortfolioSpeedoSVG()}
       </div>
 
-      <!-- Authentic GTA Bottom-Right Unboxed Vehicle Callout -->
+      <!-- Authentic GTA Bottom-Right Unboxed Vehicle Callout + Chassis Integrity -->
       <button class="v3-car-badge" type="button" data-car-badge title="Click or Left-Click on road to fire Drive-By Uzi">
         <strong data-car-name>VICE SUPERCAR</strong>
         <span data-car-sub>LMB · UZI DRIVE-BY</span>
+        <div class="v3-veh-hp-wrap" data-veh-hp-wrap>
+          <span class="v3-veh-hp-lbl">CHASSIS</span>
+          <div class="v3-veh-hp-track"><div class="v3-veh-hp-fill" data-veh-hp-fill></div></div>
+        </div>
       </button>
 
       <!-- Compact Horizontal Bottom-Right 1–7 Weapon Hotbar & Action Strip -->
@@ -1705,18 +1854,34 @@ class ViceCity3DApp {
               <span class="v3-sw-label">Finish</span>
               ${PAINTS.map((p, i) => `<button class="v3-swatch${i === 0 ? ' active' : ''}" type="button" data-paint="${i}" title="${p.name}" style="background:${p.swatch}"></button>`).join('')}
             </div>
-            <div class="v3-keys-hint" data-keys-hint>WASD Drive · Mouse Hover Look · R Radio · T/Y Time &amp; Weather · F Exit Car</div>
+            <div class="v3-keys-hint" data-keys-hint>WASD Drive · V Cam · I Phone · G Map · R/O Radio · F Enter/Exit</div>
             <div class="v3-tools">
               <button class="v3-tool-btn" type="button" data-veh-btn>Exit Car [F]</button>
               <button class="v3-tool-btn" type="button" data-taxi-btn title="Hail Kaufman Cabs Taxi Service [X]">Taxi [X]</button>
               <button class="v3-tool-btn" type="button" data-map-btn>Map [G]</button>
-              <button class="v3-tool-btn" type="button" data-cam>Cam: Chase</button>
+              <button class="v3-tool-btn" type="button" data-cam title="Cycle Chase / Low / Hood / Drone Camera [V]">Cam: Chase</button>
+              <button class="v3-tool-btn" type="button" data-gfx-btn title="Cycle Graphics Quality Preset (High / Med / Low)">Gfx: High</button>
               <button class="v3-tool-btn on" type="button" data-lights>Lights</button>
               <button class="v3-tool-btn" type="button" data-audio>Audio: Off</button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- GTA IV/V Style ViceFruit iFruit 86 Smartphone -->
+      <aside class="v3-phone" data-phone hidden role="dialog" aria-label="ViceFruit Smartphone">
+        <div class="v3-phone-notch"></div>
+        <div class="v3-phone-status">
+          <span>VICE-CELL 5G</span>
+          <span data-phone-clock>18:45</span>
+          <span data-phone-cash>$250</span>
+        </div>
+        <div class="v3-phone-screen" data-phone-screen></div>
+        <div class="v3-phone-foot">
+          <button class="v3-phone-home" type="button" data-phone-home title="Home Screen">⌂</button>
+          <button class="v3-phone-close" type="button" data-phone-close>Put Away [I]</button>
+        </div>
+      </aside>
 
       <div class="v3-touch" data-touch>
         <div class="v3-tgroup">
@@ -1731,13 +1896,54 @@ class ViceCity3DApp {
         </div>
       </div>
 
-      <div class="v3-ov" data-start-ov>
-        <div class="v3-start">
-          <div class="v3-start-k">Akshat Singh · Interactive 3D Open World</div>
-          <h2>Great State of Leonida</h2>
-          <p>Explore the entire Great State of Leonida — all 5 counties &amp; 68 named destinations from Mount Kalaga National Park (165m), Lake Leonida, Port Gellhorn, Ambrosia &amp; Leonida State Prison to Vice City Ocean Drive, Grassrivers, and the US-1A Leonida Keys! Pull up to 5 Art Deco Showcase Cinemas, hijack ANY car or fly jets from 4 airports, and unleash 7 Weapons [TAB].</p>
-          <button class="v3-start-btn" type="button" data-begin>Start Exploring</button>
-          <div class="v3-start-keys">WASD Move · F Exit / Steal NPC Car · TAB Weapon Wheel · Click Fire / Drive-By · P Projects · R In-Car Radio · G Leonida Map</div>
+      <!-- Malibu Club Live Dance Floor HUD Controls -->
+      <div class="v3-dance-bar" data-dance-bar role="region" aria-label="Malibu Club Dance Controls">
+        <div class="v3-dance-title">MALIBU DANCEFLOOR</div>
+        <div class="v3-dance-moves">
+          <button class="v3-dance-btn active" type="button" data-dance-move="0">[1] Disco Fever</button>
+          <button class="v3-dance-btn" type="button" data-dance-move="1">[2] Hands Up</button>
+          <button class="v3-dance-btn" type="button" data-dance-move="2">[3] Vice Groove</button>
+        </div>
+        <button class="v3-dance-stop" type="button" data-dance-stop>Stop [E]</button>
+      </div>
+
+      <!-- Barber Shop / Clothes Store / Safehouse Wardrobe Live 3D Customization Drawer -->
+      <aside class="v3-shop-drawer" data-shop-drawer hidden role="dialog" aria-label="Character Customization">
+        <div class="v3-shop-head">
+          <div>
+            <div class="v3-shop-kicker" data-shop-kicker>VICE CUTS BARBER</div>
+            <h3 class="v3-shop-title" data-shop-title>Barber Chair</h3>
+            <div class="v3-shop-cash" data-shop-cash>Cash: $250</div>
+          </div>
+          <button class="v3-dlg-close" type="button" data-shop-close>Close [ESC]</button>
+        </div>
+        <div class="v3-shop-body" data-shop-body></div>
+        <div class="v3-shop-foot">
+          <span class="v3-shop-tip">Hover to preview · Click to buy/equip</span>
+          <button class="v3-btn-primary" type="button" data-shop-done>Done</button>
+        </div>
+      </aside>
+
+      <!-- Ocean View Safehouse Sleep Transition Overlay -->
+      <div class="v3-sleep-ov" data-sleep-ov aria-live="polite">
+        <div class="v3-sleep-title">RESTING AT OCEAN VIEW</div>
+        <div class="v3-sleep-sub" data-sleep-sub>Advancing +6 Hours · Restoring Health &amp; Clearing Wanted Heat...</div>
+      </div>
+
+      <!-- Ocean View Safehouse 1986 Retro CRT TV Viewer Modal -->
+      <div class="v3-ov" data-tv-ov hidden>
+        <div class="v3-tv-set" role="dialog" aria-label="Ocean View Hotel Television">
+          <div class="v3-tv-bezel">
+            <div class="v3-tv-screen-wrap">
+              <canvas width="640" height="400" data-tv-canvas></canvas>
+            </div>
+          </div>
+          <div class="v3-tv-bar">
+            <div class="v3-tv-chs">
+              ${TV_CHANNELS.map((ch, i) => `<button class="v3-tv-ch${i === 0 ? ' active' : ''}" type="button" data-tv-ch="${i}">${ch.label}</button>`).join('')}
+            </div>
+            <button class="v3-dlg-close" type="button" data-tv-close>Power Off [ESC]</button>
+          </div>
         </div>
       </div>
 
@@ -1753,16 +1959,16 @@ class ViceCity3DApp {
           </div>
           <div class="v3-taxi-grid">
             ${[
+              { id: 'ocean-view', name: 'Ocean View Safehouse [IN]', fare: 20 },
               { id: 'malibu-club', name: 'The Malibu Club [IN]', fare: 25 },
+              { id: 'barber-ocean', name: 'Vice Cuts Barber [IN]', fare: 20 },
+              { id: 'clothes-vice', name: 'Vice Couture Clothes [IN]', fare: 25 },
               { id: 'north-mall', name: 'North Point Mall [IN]', fare: 35 },
               { id: 'pier', name: 'Vice Carnival Pier', fare: 30 },
               { id: 'airport', name: "Escobar Int'l Airport", fare: 40 },
               { id: 'village', name: 'Vice Hollow Community', fare: 55 },
-              { id: 'forest', name: 'Vice Pines Forest', fare: 50 },
               { id: 'mount-vice', name: 'Mount Vice Loop (118m)', fare: 75 },
-              { id: 'sierra-west', name: 'Sierra West Peaks (96m)', fare: 70 },
-              { id: 'ammunation', name: 'Ammu-Nation Ocean Dr', fare: 20 },
-              { id: 'start', name: 'Ocean Drive Beachfront', fare: 20 }
+              { id: 'ammunation', name: 'Ammu-Nation Ocean Dr', fare: 20 }
             ].map((d) => `
               <button class="v3-taxi-dest" type="button" data-taxi-dest="${d.id}" data-taxi-fare="${d.fare}">
                 <span>${d.name}</span>
@@ -1952,10 +2158,27 @@ class ViceCity3DApp {
       radVol: stage.querySelector('[data-rad-vol]'),
       radTune: stage.querySelector('[data-rad-tune]'),
       radLcd: stage.querySelector('[data-rad-lcd]'),
+      radPwr: stage.querySelector('[data-rad-pwr]'),
       radF: stage.querySelector('[data-rad-f]'),
       radN: stage.querySelector('[data-rad-n]'),
       radNd: stage.querySelector('[data-rad-nd]'),
       radPres: Array.from(stage.querySelectorAll('[data-rad-pre]')),
+      danceBar: stage.querySelector('[data-dance-bar]'),
+      danceMoveBtns: Array.from(stage.querySelectorAll('[data-dance-move]')),
+      danceStop: stage.querySelector('[data-dance-stop]'),
+      shopDrawer: stage.querySelector('[data-shop-drawer]'),
+      shopKicker: stage.querySelector('[data-shop-kicker]'),
+      shopTitle: stage.querySelector('[data-shop-title]'),
+      shopCash: stage.querySelector('[data-shop-cash]'),
+      shopBody: stage.querySelector('[data-shop-body]'),
+      shopClose: stage.querySelector('[data-shop-close]'),
+      shopDone: stage.querySelector('[data-shop-done]'),
+      sleepOv: stage.querySelector('[data-sleep-ov]'),
+      sleepSub: stage.querySelector('[data-sleep-sub]'),
+      tvOv: stage.querySelector('[data-tv-ov]'),
+      tvCanvas: stage.querySelector('[data-tv-canvas]'),
+      tvChBtns: Array.from(stage.querySelectorAll('[data-tv-ch]')),
+      tvClose: stage.querySelector('[data-tv-close]'),
       projPins: stage.querySelector('[data-proj-pins]'),
       projPinBtns: Array.from(stage.querySelectorAll('[data-proj-pin]')),
       projBtn: stage.querySelector('[data-proj-btn]'),
@@ -2084,8 +2307,8 @@ class ViceCity3DApp {
       camBtn: stage.querySelector('[data-cam]'),
       lightsBtn: stage.querySelector('[data-lights]'),
       audioBtn: stage.querySelector('[data-audio]'),
-      startOv: stage.querySelector('[data-start-ov]'),
-      beginBtn: stage.querySelector('[data-begin]'),
+      startOv: { hidden: true },
+      beginBtn: null,
       closeBtn: stage.querySelector('[data-close]'),
       modal: stage.querySelector('[data-modal]'),
       mImg: stage.querySelector('[data-m-img]'),
@@ -2097,10 +2320,28 @@ class ViceCity3DApp {
       mClose: stage.querySelector('[data-m-close]'),
       mPrev: stage.querySelector('[data-m-prev]'),
       mDriveNext: stage.querySelector('[data-m-drive-next]'),
-      mNext: stage.querySelector('[data-m-next]')
+      mNext: stage.querySelector('[data-m-next]'),
+      rainScreen: stage.querySelector('[data-rain-screen]'),
+      shutter: stage.querySelector('[data-shutter]'),
+      missionBar: stage.querySelector('[data-mission-bar]'),
+      missionTag: stage.querySelector('[data-mission-tag]'),
+      missionObj: stage.querySelector('[data-mission-obj]'),
+      missionTimer: stage.querySelector('[data-mission-timer]'),
+      missionAbort: stage.querySelector('[data-mission-abort]'),
+      phoneBtn: stage.querySelector('[data-phone-btn]'),
+      phone: stage.querySelector('[data-phone]'),
+      phoneClock: stage.querySelector('[data-phone-clock]'),
+      phoneCash: stage.querySelector('[data-phone-cash]'),
+      phoneScreen: stage.querySelector('[data-phone-screen]'),
+      phoneHome: stage.querySelector('[data-phone-home]'),
+      phoneClose: stage.querySelector('[data-phone-close]'),
+      gfxBtn: stage.querySelector('[data-gfx-btn]'),
+      vehHpFill: stage.querySelector('[data-veh-hp-fill]'),
+      vehHpWrap: stage.querySelector('[data-veh-hp-wrap]')
     };
     this.radarCtx = this.el.radarCanvas.getContext('2d');
     this.fullMapCtx = this.el.fullMapCanvas.getContext('2d');
+    this.tvCtx = this.el.tvCanvas ? this.el.tvCanvas.getContext('2d') : null;
   }
 
   initWebGL() {
@@ -2206,35 +2447,149 @@ class ViceCity3DApp {
     this.activeVehicle = this.heroVehicle;
     this.nearbyVehicleTarget = null;
 
-    // Playable 1986 Vice City Protagonist (steps out on 'F' to roam, fight, steal cars & fly planes!)
+    // Playable 1986 Vice City Protagonist (steps out on 'F' to roam, fight, customize, dance & fly!)
     this.player = createPlayerCharacter();
+    if (typeof this.player.setHairstyle === 'function') this.player.setHairstyle(this.playerStyle.hair, this.playerStyle.hairColor);
+    if (typeof this.player.setOutfit === 'function') this.player.setOutfit(this.playerStyle.outfit);
+    if (typeof this.player.setShades === 'function') this.player.setShades(this.playerStyle.shades);
+    this.player.root.position.set(this.carState.x, 0, this.carState.z);
+    this.player.root.visible = this.mode !== 'car';
     this.scene.add(this.player.root);
 
-    // Vice City Neon Parachute Canopy (automatically deploys when bailing out of an airplane mid-air!)
+    // Redesigned Vice City 7-Cell Rectangular Ram-Air Sport Parafoil + Dorsal Backpack Rig + Suspension Lines + Brake Toggles
     const paraGrp = new THREE.Group();
-    const paraCanopyMat = new THREE.MeshStandardMaterial({ color: 0xff2e88, roughness: 0.65, side: THREE.DoubleSide });
-    const paraStripeMat = new THREE.MeshStandardMaterial({ color: 0x21e6d1, roughness: 0.65, side: THREE.DoubleSide });
-    const paraCanopy = new THREE.Mesh(new THREE.SphereGeometry(2.35, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.48), paraCanopyMat);
-    paraCanopy.scale.set(1.22, 0.56, 0.88);
-    paraCanopy.position.y = 3.85;
-    paraGrp.add(paraCanopy);
-    const paraCenterStripe = new THREE.Mesh(new THREE.SphereGeometry(2.37, 16, 10, Math.PI * 0.35, Math.PI * 0.30, 0, Math.PI * 0.48), paraStripeMat);
-    paraCenterStripe.scale.set(1.22, 0.56, 0.88);
-    paraCenterStripe.position.y = 3.85;
-    paraGrp.add(paraCenterStripe);
-    const cordMat = new THREE.MeshBasicMaterial({ color: 0xe8e4f0 });
-    for (const sx of [-1.85, -0.75, 0.75, 1.85]) {
-      for (const sz of [-0.75, 0.75]) {
-        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 2.55, 4), cordMat);
-        cord.position.set(sx * 0.52, 2.55, sz * 0.45);
-        cord.rotation.z = Math.atan2(sx, 2.4) * 0.72;
-        cord.rotation.x = -Math.atan2(sz, 2.4) * 0.65;
-        paraGrp.add(cord);
-      }
+    const packGrp = new THREE.Group();
+    const packMat = new THREE.MeshStandardMaterial({ color: 0x1b2030, roughness: 0.62, metalness: 0.14 });
+    const strapMat = new THREE.MeshStandardMaterial({ color: 0x10131c, roughness: 0.72 });
+    const buckleMat = new THREE.MeshStandardMaterial({ color: 0xd8e0ec, metalness: 0.88, roughness: 0.22 });
+    const toggleMat = new THREE.MeshStandardMaterial({ color: 0xffd36b, emissive: 0x664400, emissiveIntensity: 0.35, roughness: 0.4 });
+    const cellPinkMat = new THREE.MeshStandardMaterial({ color: 0xff2e88, roughness: 0.56, side: THREE.DoubleSide });
+    const cellCyanMat = new THREE.MeshStandardMaterial({ color: 0x21e6d1, roughness: 0.56, side: THREE.DoubleSide });
+    const cellWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf6f4fc, roughness: 0.54, side: THREE.DoubleSide });
+    const cellDarkMat = new THREE.MeshStandardMaterial({ color: 0x1a1426, roughness: 0.78, side: THREE.DoubleSide });
+    const riserMat = new THREE.MeshStandardMaterial({ color: 0x262c3d, roughness: 0.66 });
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xeaf0f8 });
+
+    // Dorsal skydiving backpack container + twin shoulder harness straps
+    const mainPack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.52, 0.18), packMat);
+    mainPack.position.set(0, 1.18, 0.20);
+    const packTrim = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.04), cellCyanMat);
+    packTrim.position.set(0, 1.32, 0.29);
+    const chestStrap = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.055, 0.04), strapMat);
+    chestStrap.position.set(0, 1.24, -0.155);
+    const chestBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.065, 0.05), buckleMat);
+    chestBuckle.position.set(0, 1.24, -0.165);
+    packGrp.add(mainPack, packTrim, chestStrap, chestBuckle);
+    for (const sx of [-1, 1]) {
+      const sStrap = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.44, 0.34), strapMat);
+      sStrap.position.set(sx * 0.175, 1.32, 0.02);
+      packGrp.add(sStrap);
     }
+    paraGrp.add(packGrp);
+
+    // Overhead 7-Cell Arched Ram-Air Parafoil Canopy pivoted at harness riser root (y = 1.46) for natural inflation & pitch/bank!
+    const canopyPivot = new THREE.Group();
+    canopyPivot.position.set(0, 1.46, 0.04);
+    const canopyY = 3.10; // local height above shoulders (world ~4.56m)
+    const span = 5.65;
+    const chord = 2.25;
+    const nCells = 7;
+    const cellW = span / nCells;
+    const cellPalette = [cellPinkMat, cellWhiteMat, cellCyanMat, cellPinkMat, cellCyanMat, cellWhiteMat, cellPinkMat];
+
+    // Sculpted airfoil cross-section for each inflated ram-air cell
+    const airfoilShape = new THREE.Shape();
+    airfoilShape.moveTo(-chord * 0.5, 0.02);
+    airfoilShape.quadraticCurveTo(-chord * 0.15, 0.38, chord * 0.5, 0.02);
+    airfoilShape.quadraticCurveTo(0.0, 0.08, -chord * 0.5, 0.02);
+    const cellGeo = new THREE.ExtrudeGeometry(airfoilShape, {
+      depth: cellW * 0.94, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 2, curveSegments: 10
+    });
+    cellGeo.translate(0, 0, -cellW * 0.47);
+    cellGeo.rotateY(Math.PI / 2); // chord runs along -Z (leading edge) to +Z (trailing edge)
+
+    const archHeight = (x) => {
+      const nx = x / (span * 0.5);
+      return canopyY - nx * nx * 0.62;
+    };
+    const archSlope = (x) => {
+      const nx = x / (span * 0.5);
+      return -nx * 0.42;
+    };
+
+    for (let i = 0; i < nCells; i++) {
+      const cx = -span * 0.5 + (i + 0.5) * cellW;
+      const cy = archHeight(cx);
+      const cell = new THREE.Mesh(cellGeo, cellPalette[i % cellPalette.length]);
+      cell.position.set(cx, cy, 0.08);
+      cell.rotation.z = archSlope(cx);
+      canopyPivot.add(cell);
+
+      // Dark ram-air intake cell mouth on leading edge (-Z)
+      const mouth = new THREE.Mesh(new THREE.BoxGeometry(cellW * 0.80, 0.16, 0.05), cellDarkMat);
+      mouth.position.set(cx, cy + 0.09, -chord * 0.46 + 0.08);
+      mouth.rotation.z = archSlope(cx);
+      canopyPivot.add(mouth);
+    }
+
+    // Wingtip end-cell stabilizers on left & right tips
+    for (const sx of [-1, 1]) {
+      const tipX = sx * (span * 0.5 + 0.03);
+      const tipY = archHeight(tipX) - 0.14;
+      const stab = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.58, chord * 0.88), cellDarkMat);
+      stab.position.set(tipX, tipY, 0.12);
+      stab.rotation.z = -sx * 0.24;
+      canopyPivot.add(stab);
+    }
+
+    // Helper: create an accurately oriented cylinder connecting point A -> point B
+    const _upAxis = new THREE.Vector3(0, 1, 0);
+    const addLineMesh = (parent, ax, ay, az, bx, by, bz, radius, mat) => {
+      const pA = new THREE.Vector3(ax, ay, az);
+      const pB = new THREE.Vector3(bx, by, bz);
+      const dir = pB.clone().sub(pA);
+      const len = dir.length();
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, len, 5), mat);
+      m.position.copy(pA).addScaledVector(dir, 0.5);
+      m.quaternion.setFromUnitVectors(_upAxis, dir.normalize());
+      parent.add(m);
+      return m;
+    };
+
+    // Twin main shoulder risers rising up from harness + 16 fanned suspension lines to canopy cells + steering toggles
+    const toggleHandles = [];
+    for (const sx of [-1, 1]) {
+      const riserTopX = sx * 0.28;
+      const riserTopY = 0.64;
+      addLineMesh(canopyPivot, sx * 0.18, 0.0, 0.06, riserTopX, riserTopY, 0.04, 0.022, riserMat);
+      // Fanned suspension lines from riser top to 4 spanwise canopy stations x front & rear attachment points
+      const stations = [0.45, 1.25, 2.02, 2.68];
+      for (let k = 0; k < stations.length; k++) {
+        const tx = sx * stations[k];
+        const ty = archHeight(tx) + 0.04;
+        addLineMesh(canopyPivot, riserTopX, riserTopY, 0.00, tx, ty, -0.62, 0.0075, lineMat);
+        addLineMesh(canopyPivot, riserTopX, riserTopY, 0.08, tx, ty,  0.76, 0.0075, lineMat);
+      }
+      // Yellow steering brake toggle right at raised hand height
+      const togGrp = new THREE.Group();
+      togGrp.position.set(sx * 0.26, 0.44, -0.08);
+      const togGrip = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.013, 6, 12), toggleMat);
+      togGrp.add(togGrip);
+      canopyPivot.add(togGrp);
+      toggleHandles.push(togGrp);
+    }
+
+    paraGrp.add(canopyPivot);
     paraGrp.visible = false;
     this.player.root.add(paraGrp);
     this.parachuteMesh = paraGrp;
+    this.parachuteRig = {
+      root: paraGrp,
+      pack: packGrp,
+      canopy: canopyPivot,
+      toggleL: toggleHandles[0],
+      toggleR: toggleHandles[1]
+    };
 
     // 3D GPS Waypoint Sky Beam & Ground Ring (visible whenever a destination is active)
     const beaconGrp = new THREE.Group();
@@ -2397,6 +2752,7 @@ class ViceCity3DApp {
       map: ewTex.map, roughnessMap: ewTex.roughnessMap, normalMap: ewTex.normalMap,
       normalScale: new THREE.Vector2(0.42, 0.42), roughness: 0.54, metalness: 0.14, envMapIntensity: 1.12
     });
+    this.roadMaterials = [interMat, nsRoadMat, ewRoadMat];
 
     // 2a. Clean Intersection Squares (exact 16.8m x 16.8m at every Avenue x Cross-Street)
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x262934, metalness: 0.78, roughness: 0.28 });
@@ -3436,8 +3792,7 @@ class ViceCity3DApp {
 
     // 7. ARCHITECTURAL CITY: 5 DISTINCT ARCHITECTURAL STYLES + WALK-IN ENTERABLE INTERIORS!
     const hotelCatalog = [
-      // Ocean Drive Beachfront Row (Art Deco + Spanish Colonial + 3 WALK-IN ENTERABLE LANDMARKS!)
-      { x: -24.5, z: -48,  w: 24, h: 17, d: 15, base: '#EDE2D4', trimHex: '#FAF6F0', accent: 0xff2e88, accentHex: '#FF2E88', name: 'OCEAN VIEW',  sub: 'HOTEL · WALK IN',  seed: 1, cafe: true,  style: 'artdeco', enterable: 'hotel' },
+      // Ocean Drive Beachfront Row (Ocean View Hotel is mounted standalone as a 2-story usable safehouse!)
       { x: -24.5, z: -116, w: 22, h: 16, d: 15, base: '#F2E0CC', trimHex: '#FFF6EC', accent: 0x0ec4b8, accentHex: '#0EC4B8', name: 'THE COLONY',  sub: 'SPANISH VILLAS',   seed: 2, cafe: true,  style: 'colonial' },
       { x: -24.5, z: -190, w: 26, h: 18, d: 15, base: '#E4DDD6', trimHex: '#FAF4EE', accent: 0xff3a4c, accentHex: '#FF3A4C', name: 'AMMU-NATION', sub: 'GUNS · WALK IN',   seed: 3, cafe: false, style: 'artdeco', enterable: 'ammunation' },
       { x: -24.5, z: -252, w: 26, h: 24, d: 15, base: '#E8DCE8', trimHex: '#F8F2FA', accent: 0xff2e88, accentHex: '#FF2E88', name: 'CLEVELANDER', sub: 'LOUNGE & SUITES',  seed: 4, cafe: true,  style: 'midtown_tower' },
@@ -3561,6 +3916,184 @@ class ViceCity3DApp {
       accent: 0x21e6d1, accentHex: '#21E6D1'
     });
 
+    // 7d. STANDALONE 2-STORY USABLE OCEAN VIEW HOTEL SAFEHOUSE (Walkable 1st Floor Suite: Sleep, Watch TV, Eat Food, Wardrobe!)
+    const ovX = -24.5, ovZ = -48.0;
+    this.oceanViewSafehouse = createOceanViewSafehouse(maxAniso);
+    this.oceanViewSafehouse.root.position.set(ovX, 0.16, ovZ);
+    this.scene.add(this.oceanViewSafehouse.root);
+    if (this.oceanViewSafehouse.localColliders) {
+      this.oceanViewSafehouse.localColliders.forEach((c) => {
+        this.addBoxCollider(ovX + c.minX, ovX + c.maxX, ovZ + c.minZ, ovZ + c.maxZ);
+      });
+    }
+    this.safehouseStations = (this.oceanViewSafehouse.stationDefs || []).map((st) => ({
+      id: st.id,
+      label: st.label,
+      x: ovX + st.lx,
+      y: 0.16 + this.oceanViewSafehouse.floor1Y,
+      z: ovZ + st.lz
+    }));
+    this.enterableBuildings.push({
+      id: 'ocean-view', label: 'OCEAN VIEW SAFEHOUSE', kind: 'hotel',
+      doorX: ovX + 9.4, doorZ: ovZ,
+      insideX: ovX + 2.0, insideZ: ovZ, insideYaw: Math.PI / 2,
+      perkX: ovX - 0.5, perkZ: ovZ + 2.0,
+      bounds: { minX: ovX - 7.3, maxX: ovX + 7.3, minZ: ovZ - 11.2, maxZ: ovZ + 11.2, floor1Y: 0.16 + this.oceanViewSafehouse.floor1Y, ceilY: 9.25 },
+      accent: 0xff2e88, accentHex: '#FF2E88'
+    });
+
+    // 7e. WALK-IN BARBER SHOPS (2 Ocean Drive Locations — Get New 3D Hairstyles & Hair Colors!)
+    this.shopInteractZones = [];
+    this.barberPoles = [];
+    const barberSpots = [
+      { id: 'barber-ocean', x: -24.5, z: -221.0, title: 'VICE CUTS BARBER', accent: 0x21e6d1, accentHex: '#21E6D1' },
+      { id: 'barber-north', x: -24.5, z: -707.0, title: 'NORTH POINT BARBER', accent: 0xff2e88, accentHex: '#FF2E88' }
+    ];
+    barberSpots.forEach((bs) => {
+      const shop = createBarberShopBuilding(maxAniso, bs.title, bs.accentHex);
+      shop.root.position.set(bs.x, 0.16, bs.z);
+      this.scene.add(shop.root);
+      if (shop.localColliders) {
+        shop.localColliders.forEach((c) => {
+          this.addBoxCollider(bs.x + c.minX, bs.x + c.maxX, bs.z + c.minZ, bs.z + c.maxZ);
+        });
+      }
+      if (shop.barberPoles) this.barberPoles.push(...shop.barberPoles);
+      this.shopInteractZones.push({
+        id: bs.id, kind: 'barber', label: bs.title,
+        x: bs.x - 1.2, y: 0.16, z: bs.z, radius: 3.4, ring: shop.shopRing
+      });
+      this.enterableBuildings.push({
+        id: bs.id, label: bs.title, kind: 'barber',
+        doorX: bs.x + 8.4, doorZ: bs.z,
+        insideX: bs.x + 1.5, insideZ: bs.z, insideYaw: Math.PI / 2,
+        perkX: bs.x - 1.2, perkZ: bs.z, skipPerk: true,
+        bounds: { minX: bs.x - 6.6, maxX: bs.x + 6.6, minZ: bs.z - 8.1, maxZ: bs.z + 8.1 },
+        accent: bs.accent, accentHex: bs.accentHex
+      });
+    });
+
+    // 7f. WALK-IN DESIGNER CLOTHES STORES (2 Ocean Drive Locations — Buy & Equip Outfits + Shades!)
+    const clothesSpots = [
+      { id: 'clothes-vice', x: -24.5, z: -384.0, title: 'VICE COUTURE CLOTHES', accent: 0xff2e88, accentHex: '#FF2E88' },
+      { id: 'clothes-gash', x: -24.5, z: -808.0, title: 'GASH DESIGNER CLOTHES', accent: 0xffd36b, accentHex: '#FFD36B' }
+    ];
+    clothesSpots.forEach((csSpot) => {
+      const store = createClothesStoreBuilding(maxAniso, csSpot.title, csSpot.accentHex);
+      store.root.position.set(csSpot.x, 0.16, csSpot.z);
+      this.scene.add(store.root);
+      if (store.localColliders) {
+        store.localColliders.forEach((c) => {
+          this.addBoxCollider(csSpot.x + c.minX, csSpot.x + c.maxX, csSpot.z + c.minZ, csSpot.z + c.maxZ);
+        });
+      }
+      this.shopInteractZones.push({
+        id: csSpot.id, kind: 'clothes', label: csSpot.title,
+        x: csSpot.x - 1.4, y: 0.16, z: csSpot.z, radius: 3.8, ring: store.shopRing
+      });
+      this.enterableBuildings.push({
+        id: csSpot.id, label: csSpot.title, kind: 'clothes',
+        doorX: csSpot.x + 8.6, doorZ: csSpot.z,
+        insideX: csSpot.x + 1.5, insideZ: csSpot.z, insideYaw: Math.PI / 2,
+        perkX: csSpot.x - 1.4, perkZ: csSpot.z, skipPerk: true,
+        bounds: { minX: csSpot.x - 6.8, maxX: csSpot.x + 6.8, minZ: csSpot.z - 8.8, maxZ: csSpot.z + 8.8 },
+        accent: csSpot.accent, accentHex: csSpot.accentHex
+      });
+    });
+
+    // 7g. NEW ENTERABLE INTERIORS: PAY 'N' SPRAY MOD GARAGE, BURGER SHOT 24/7 DINER & AMMU-NATION GUN STORE + RANGE
+    const pnsX = -68.0, pnsZ = -182.0;
+    this.payNSpray = createPayNSprayBuilding(maxAniso);
+    this.payNSpray.root.position.set(pnsX, 0.16, pnsZ);
+    this.scene.add(this.payNSpray.root);
+    this.payNSpray.localColliders.forEach((c) => this.addBoxCollider(pnsX + c.minX, pnsX + c.maxX, pnsZ + c.minZ, pnsZ + c.maxZ));
+    this.shopInteractZones.push({ id: 'paynspray', kind: 'paynspray', label: "PAY 'N' SPRAY MOD GARAGE", x: pnsX + 1.5, y: 0.16, z: pnsZ, radius: 6.2, allowInCar: true });
+    this.enterableBuildings.push({
+      id: 'paynspray', label: "PAY 'N' SPRAY GARAGE", kind: 'garage',
+      doorX: pnsX + 8.6, doorZ: pnsZ, insideX: pnsX + 1.5, insideZ: pnsZ, insideYaw: Math.PI / 2,
+      perkX: pnsX + 1.5, perkZ: pnsZ, skipPerk: true,
+      bounds: { minX: pnsX - 6.8, maxX: pnsX + 6.8, minZ: pnsZ - 5.8, maxZ: pnsZ + 5.8 },
+      accent: 0xff8a2a, accentHex: '#FF8A2A'
+    });
+
+    const bsX = -68.0, bsZ = -262.0;
+    this.burgerShot = createBurgerShotBuilding(maxAniso);
+    this.burgerShot.root.position.set(bsX, 0.16, bsZ);
+    this.scene.add(this.burgerShot.root);
+    this.burgerShot.localColliders.forEach((c) => this.addBoxCollider(bsX + c.minX, bsX + c.maxX, bsZ + c.minZ, bsZ + c.maxZ));
+    this.shopInteractZones.push({ id: 'burgershot', kind: 'diner', label: 'BURGER SHOT 24/7 DINER', x: bsX - 0.8, y: 0.16, z: bsZ, radius: 4.0 });
+    this.enterableBuildings.push({
+      id: 'burgershot', label: 'BURGER SHOT 24/7', kind: 'diner',
+      doorX: bsX + 8.4, doorZ: bsZ, insideX: bsX + 2.0, insideZ: bsZ, insideYaw: Math.PI / 2,
+      perkX: bsX - 0.8, perkZ: bsZ, skipPerk: true,
+      bounds: { minX: bsX - 6.5, maxX: bsX + 6.5, minZ: bsZ - 5.5, maxZ: bsZ + 5.5 },
+      accent: 0xffd36b, accentHex: '#FFD36B'
+    });
+
+    const amX = -68.0, amZ = -102.0;
+    this.ammuNation = createAmmuNationBuilding(maxAniso);
+    this.ammuNation.root.position.set(amX, 0.16, amZ);
+    this.scene.add(this.ammuNation.root);
+    this.ammuNation.localColliders.forEach((c) => this.addBoxCollider(amX + c.minX, amX + c.maxX, amZ + c.minZ, amZ + c.maxZ));
+    this.ammuNationWorld = { x: amX, z: amZ };
+    this.shopInteractZones.push({ id: 'ammunation-shop', kind: 'ammu', label: 'AMMU-NATION & RANGE', x: amX + 2.8, y: 0.16, z: amZ - 1.5, radius: 4.2 });
+    this.enterableBuildings.push({
+      id: 'ammunation', label: 'AMMU-NATION GUN STORE', kind: 'ammu',
+      doorX: amX + 9.4, doorZ: amZ, insideX: amX + 3.2, insideZ: amZ, insideYaw: Math.PI / 2,
+      perkX: amX + 2.2, perkZ: amZ - 2.2, skipPerk: true,
+      bounds: { minX: amX - 7.8, maxX: amX + 7.8, minZ: amZ - 5.6, maxZ: amZ + 5.6 },
+      accent: 0xff3b4e, accentHex: '#FF3B4E'
+    });
+
+    // 7h. FLYABLE MAVERICK HELICOPTERS (Escobar Int'l Helipad & Vice Beach Marina Pad)
+    const heliDefs = [
+      { id: 'heli-airport', label: 'VICE MAVERICK CHOPPER', x: -64, y: 0.04, z: 62, yaw: 0, col: 0x21e6d1, stripe: 0xff2e88 },
+      { id: 'heli-marina',  label: 'VIP GOLDEN CHOPPER',    x: 24,  y: 0.18, z: -86, yaw: Math.PI * 0.5, col: 0xffd36b, stripe: 0x1a1528 }
+    ];
+    heliDefs.forEach((hd) => {
+      const hRig = createHelicopter(hd.col, hd.stripe);
+      hRig.root.position.set(hd.x, hd.y, hd.z);
+      hRig.root.rotation.y = hd.yaw;
+      this.scene.add(hRig.root);
+      this.flyablePlanes.push({
+        id: hd.id, label: hd.label, kind: 'heli', isHeli: true,
+        rig: hRig, root: hRig.root,
+        x: hd.x, y: hd.y, z: hd.z, yaw: hd.yaw, pitch: 0, roll: 0,
+        speed: 0, throttle: 0, vzHeli: 0, gearBlend: 1, resetTimer: 0,
+        topSpeed: 54, takeoffSpeed: 0, climbRate: 22,
+        homeX: hd.x, homeZ: hd.z, homeYaw: hd.yaw, radius: 5.2
+      });
+    });
+
+    // 7i. DRIVABLE WATERCRAFT (Speedboats & Jet Skis along Vice Beach, Pier & Leonida Keys)
+    const boatDefs = [
+      { id: 'boat-beach1', type: 'speedboat', label: 'VICE SQUALLO SPEEDBOAT', x: 46, z: -130, yaw: 0, col: 0xffffff, stripe: 0xff2e88 },
+      { id: 'boat-jetski1', type: 'jetski',   label: 'VICE WAVE RUNNER',       x: 43, z: -285, yaw: 0, col: 0x21e6d1, stripe: 0xff2e88 },
+      { id: 'boat-pier',   type: 'speedboat', label: 'CARNIVAL CRUISER BOAT',  x: 54, z: -458, yaw: -Math.PI * 0.4, col: 0xffd36b, stripe: 0x162038 },
+      { id: 'boat-jetski2', type: 'jetski',   label: 'STARFISH JET SKI',       x: 112, z: -332, yaw: Math.PI * 0.5, col: 0xff8a2a, stripe: 0x21e6d1 }
+    ];
+    this.boats = [];
+    boatDefs.forEach((bd, idx) => {
+      const bRig = bd.type === 'jetski' ? createJetSki(bd.col) : createSpeedboat(bd.col, bd.stripe);
+      bRig.root.position.set(bd.x, -0.44, bd.z);
+      bRig.root.rotation.y = bd.yaw;
+      this.scene.add(bRig.root);
+      this.boats.push({
+        ...bd, rig: bRig, root: bRig.root,
+        y: -0.44, speed: 0, steer: 0, roll: 0, pitch: 0, phase: idx * 1.5,
+        topSpeed: bRig.topSpeed || 35, homeX: bd.x, homeZ: bd.z, homeYaw: bd.yaw
+      });
+    });
+
+    // 7j. PERSISTENT AERIAL SKY-RINGS, SKIDMARK POOL, 3D ROUTE CHEVRONS & MISSION BEACON
+    this.skyRings = createSkyRings(this.scene);
+    this.skidPool = new SkidmarkPool(this.scene, 110);
+    this.routeGuide = new RouteChevronGuide(this.scene, 6);
+    this.missionBeacon = createMissionBeacon(this.scene);
+    this.setupCarModMeshes();
+    this.applyCarMods();
+    this.applyGraphicsPreset(this.graphicsPreset, false);
+
     // Glowing GTA Floor Doorway Rings + Interior Interactive Perk Pads for All Walk-In Buildings!
     this.doorBeacons = [];
     this.interiorPerks = [];
@@ -3573,6 +4106,8 @@ class ViceCity3DApp {
       doorRing.position.set(eb.doorX, 0.22, eb.doorZ);
       this.scene.add(doorRing);
       this.doorBeacons.push({ mesh: doorRing, phase: idx * 1.1 });
+
+      if (eb.skipPerk) return;
 
       const perkRing = new THREE.Mesh(
         new THREE.RingGeometry(0.95, 1.35, 24),
@@ -4544,6 +5079,24 @@ class ViceCity3DApp {
       const sh = new THREE.Mesh(pedShadowGeo, pedShadowMat);
       sh.position.y = 0.015;
       p.root.add(sh);
+      // Rain Umbrella (pops open automatically in tropical rain & thunderstorms!)
+      if (!bikini) {
+        if (!this._umbPoleGeo) {
+          this._umbPoleGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.05, 5);
+          this._umbCapGeo = new THREE.ConeGeometry(0.56, 0.24, 8);
+          this._umbPoleMat = new THREE.MeshStandardMaterial({ color: 0x222633, roughness: 0.5 });
+          this._umbMats = [0xff2e88, 0x21e6d1, 0xffd36b, 0x8b5cf6, 0xf8fafc].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.42, side: THREE.DoubleSide }));
+        }
+        const umb = new THREE.Group();
+        const uPole = new THREE.Mesh(this._umbPoleGeo, this._umbPoleMat);
+        uPole.position.set(0.24, 1.55, 0.06);
+        const uCap = new THREE.Mesh(this._umbCapGeo, this._umbMats[i % this._umbMats.length]);
+        uCap.position.set(0.24, 2.08, 0.06);
+        umb.add(uPole, uCap);
+        umb.visible = false;
+        p.root.add(umb);
+        p.umbrella = umb;
+      }
       p.root.position.set(p.x, p.y, p.z);
       p.root.rotation.y = axis === 'x' ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (dir > 0 ? 0 : Math.PI);
       this.scene.add(p.root);
@@ -4954,6 +5507,7 @@ class ViceCity3DApp {
         this.impactCooldown = 0.25;
         this.camShake = Math.min(0.42, impactSpd * 0.01);
         this.audio.impact(Math.min(1, impactSpd / 40));
+        this.damageCar(Math.min(22, (impactSpd - 7) * 0.65));
         for (let k = 0; k < 6; k++) {
           this.spawnParticle(
             cs.x + fwdX * 1.8, cs.y + 0.55, cs.z + fwdZ * 1.8,
@@ -5016,6 +5570,42 @@ class ViceCity3DApp {
       if (mvHit && mvHit.dist < 7.6) return Math.max(h, mvHit.roadY + 0.10);
     }
     return h;
+  }
+
+  getInteriorFloorY(x, z, curY = 0.16) {
+    // Ocean View Hotel Safehouse (-24.5, -48): true walkable 2-story interior + glitch-free grand staircase!
+    const ovX = -24.5, ovZ = -48.0;
+    const lx = x - ovX;
+    const lz = z - ovZ;
+    if (lx >= -7.8 && lx <= 7.8 && lz >= -11.8 && lz <= 11.8) {
+      const floor1Y = this.oceanViewSafehouse ? this.oceanViewSafehouse.floor1Y : 4.44;
+      const groundY = 0.16;
+      const upperY = groundY + floor1Y;
+
+      // West upper stair landing (lx: -7.6..-4.35, lz: -11.4..-7.15)
+      const onWestLanding = lx <= -4.35 && lz <= -7.15;
+      if (onWestLanding && curY >= upperY - 1.55) {
+        return upperY;
+      }
+
+      // Walkable 16-step grand staircase along North wall: lx +4.2 (ground) -> lx -4.6 (1st floor), lz -11.2..-7.35
+      if (lz >= -11.2 && lz <= -7.35 && lx >= -4.85 && lx <= 4.75) {
+        const t = THREE.MathUtils.clamp((4.2 - lx) / 8.8, 0, 1);
+        const stairY = groundY + t * floor1Y;
+        // Prevent snapping UP through the underside of the high stairs from ground floor!
+        if (stairY <= curY + 1.35 || curY >= groundY + 0.45) {
+          return stairY;
+        }
+        return groundY;
+      }
+
+      // Main 1st-floor suite deck (lz >= -7.35) — only active once player has climbed upstairs!
+      if (lz >= -7.35 && curY >= groundY + floor1Y * 0.58) {
+        return upperY;
+      }
+      return groundY;
+    }
+    return null;
   }
 
   fastTravelTo(wp) {
@@ -5098,8 +5688,8 @@ class ViceCity3DApp {
 
   syncReticleVisibility() {
     if (!this.el || !this.el.crosshair) return;
-    const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && !this.weaponWheelOpen && this.mode !== 'ride' && this.wastedTimer <= 0;
-    const armed = this.mode === 'foot' && this.weapon !== 'fists' && this.weapon !== 'bat';
+    const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.activeDialogue && !this.weaponWheelOpen && !this.activeShop && !this.tvOpen && !this.phoneOpen && this.sleepAnimTimer <= 0 && this.mode !== 'ride' && this.wastedTimer <= 0;
+    const armed = this.mode === 'foot' && !this.isDancing && this.weapon !== 'fists' && this.weapon !== 'bat';
     this.el.crosshair.classList.toggle('look-on', playing);
     this.el.crosshair.classList.toggle('on', playing && armed);
     this.el.crosshair.classList.toggle('locked', playing && this.pointerLocked);
@@ -5135,10 +5725,18 @@ class ViceCity3DApp {
     this.mode = nextMode;
     const isFoot = nextMode === 'foot';
     const isPlane = nextMode === 'plane';
+    const isBoat = nextMode === 'boat';
     const isRide = nextMode === 'ride';
     if (!isPlane && this.activePlane) {
       this.activePlane.resetTimer = Math.max(this.activePlane.resetTimer || 0, 0.2);
       this.activePlane = null;
+    }
+    if (!isBoat && this.activeBoat) {
+      this.activeBoat = null;
+    }
+    if (!isPlane && this.audio) {
+      if (typeof this.audio.stopPlaneSequence === 'function') this.audio.stopPlaneSequence();
+      if (typeof this.audio.setHeliRotor === 'function') this.audio.setHeliRotor(false, 0);
     }
     if (!isRide && this.activeRide) {
       this.activeRide = null;
@@ -5146,12 +5744,12 @@ class ViceCity3DApp {
     }
     this.fireHeld = false;
     const isRidingBike = nextMode === 'car' && Boolean(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
-    this.player.root.visible = isFoot || isRide || isRidingBike;
-    if (!isRidingBike && this.player && this.player.root && this.player.root.parent !== this.scene) {
+    const isRidingBoat = isBoat && Boolean(this.activeBoat);
+    this.player.root.visible = isFoot || isRide || isRidingBike || isRidingBoat;
+    if (!isRidingBike && !isRidingBoat && this.player && this.player.root && this.player.root.parent !== this.scene) {
       this.scene.add(this.player.root);
       this.player.root.scale.set(1, 1, 1);
       this.player.root.rotation.set(0, this.playerState.yaw, 0);
-      // Cleanly reset seated motorcycle straddle bones & body offset when dismounting to foot!
       const pM = this.player;
       if (pM.body) { pM.body.position.set(0, 0, 0); pM.body.rotation.set(0, 0, 0); }
       if (pM.chest) pM.chest.rotation.set(0, 0, 0);
@@ -5164,12 +5762,23 @@ class ViceCity3DApp {
     if (isRidingBike && this.activeVehicle.rig.riderSeat) {
       this.activeVehicle.rig.riderSeat.add(this.player.root);
       this.player.root.position.set(0, -0.26, 0.14);
-      this.player.root.rotation.set(0, 0, 0); // Face FORWARD (-Z) toward handlebars!
+      this.player.root.rotation.set(0, 0, 0);
+    } else if (isRidingBoat && this.activeBoat && this.activeBoat.rig) {
+      const boatSeat = this.activeBoat.rig.riderSeat || this.activeBoat.rig.seat;
+      if (boatSeat) {
+        boatSeat.add(this.player.root);
+        this.player.root.position.set(0, -0.58, 0.05);
+        this.player.root.rotation.set(0, 0, 0);
+      }
+    } else if (nextMode === 'car' && !isRidingBike) {
+      this.playerState.x = this.carState.x;
+      this.playerState.y = this.carState.y;
+      this.playerState.z = this.carState.z;
+      this.player.root.position.set(this.carState.x, this.carState.y, this.carState.z);
     }
     if (this.parachuteMesh && !isFoot) this.parachuteMesh.visible = false;
-    // Show sculpted seated protagonist inside whichever vehicle we're driving (and hide when exited!)
-    if (this.supercar && this.supercar.playerDriverMesh) {
-      this.supercar.playerDriverMesh.visible = nextMode === 'car' && (!this.activeVehicle || this.activeVehicle.isHero);
+    if (this.car && this.car.playerDriverMesh) {
+      this.car.playerDriverMesh.visible = nextMode === 'car' && (!this.activeVehicle || this.activeVehicle.isHero);
     }
     if (this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.playerDriverMesh) {
       this.activeVehicle.rig.playerDriverMesh.visible = nextMode === 'car';
@@ -5198,9 +5807,10 @@ class ViceCity3DApp {
     const armed = isFoot && this.weapon !== 'fists' && this.weapon !== 'bat';
     this.syncReticleVisibility();
     const curWep = WEAPONS.find((w) => w.id === this.weapon);
-    const hudWepLabel = isPlane
-      ? 'AIRCRAFT PILOT'
-      : (isRide ? 'CARNIVAL RIDE' : (isFoot ? (curWep ? curWep.label.toUpperCase() : 'FISTS') : 'DRIVE-BY UZI'));
+    const isHeli = isPlane && this.activePlane && this.activePlane.isHeli;
+    const hudWepLabel = isBoat
+      ? 'WATERCRAFT HELM'
+      : (isHeli ? 'CHOPPER PILOT' : (isPlane ? 'AIRCRAFT PILOT' : (isRide ? 'CARNIVAL RIDE' : (isFoot ? (curWep ? curWep.label.toUpperCase() : 'FISTS') : 'DRIVE-BY UZI'))));
     if (this.el.gtaWepTxt) {
       this.el.gtaWepTxt.textContent = hudWepLabel;
     } else if (this.el.gtaWepPill) {
@@ -5209,40 +5819,52 @@ class ViceCity3DApp {
     if (this.el.gtaWepIco) {
       this.el.gtaWepIco.innerHTML = getWeaponWheelSvg(isFoot ? (curWep ? curWep.id : 'fists') : 'smg');
     }
-    if (this.el.carName && !isPlane) {
+    if (this.el.carName && !isPlane && !isBoat) {
       this.el.carName.textContent = (this.activeVehicle && this.activeVehicle.label) || 'VICE SUPERCAR';
     }
     if (this.el.carSub) {
-      this.el.carSub.textContent = isPlane ? 'SPACE CLIMB · F BAILOUT' : 'LMB · UZI DRIVE-BY';
+      this.el.carSub.textContent = isBoat
+        ? 'W/S THROTTLE · SHIFT TURBO · F EXIT TO SHORE'
+        : (isHeli ? 'SPACE ASCEND · Q/SHIFT DESCEND · F EXIT' : (isPlane ? 'SPACE CLIMB · F BAILOUT' : 'LMB UZI · [V] HOOD CAM · [I] PHONE'));
     }
-    if (this.el.radarInfo && !isPlane) {
+    if (this.el.radarInfo && !isPlane && !isBoat) {
       const remTokens = this.tokens ? this.tokens.length - this.tokensCollected : 0;
       const txt = isRide ? 'Carnival Pier Ride' : (isFoot ? `On Foot · ${this.koCount} KO` : `${remTokens} Cash Piles`);
       this.lastRadarInfo = txt;
       this.el.radarInfo.textContent = txt;
     }
-    this.el.vehBtn.textContent = isPlane
-      ? 'Exit / Bailout [F]'
-      : (isRide ? 'Exit Ride [F]' : (isFoot ? 'Enter / Fly [F]' : 'Exit Car [F]'));
-    this.el.vehBtn.classList.toggle('on', isFoot || isPlane || isRide);
-    this.el.keysHint.textContent = isPlane
-      ? 'W/S Thrust · A/D Bank Turn · SPACE Climb · Q Dive · SHIFT Afterburner · F Land / Parachute'
-      : (isRide
-        ? 'Mouse 360° Scenic Look · E / F Exit Carnival Ride'
-        : (isFoot
-          ? 'WASD Walk · Mouse Look · TAB Weapon Wheel · Click Punch/Fire · E Talk/Ride/Play · F Car / Plane'
-          : 'WASD Drive · Click Drive-By Uzi · TAB Weapon Wheel · R Radio · T/Y Sky · F Exit Car'));
-    if (this.el.touchGo) this.el.touchGo.textContent = isPlane ? 'THRUST' : (isFoot ? 'WALK' : 'DRIVE');
-    if (this.el.touchAct) this.el.touchAct.textContent = isPlane ? 'CLIMB' : (isFoot ? (armed ? 'FIRE' : 'HIT') : 'NOS');
-    if (this.el.touchVeh) this.el.touchVeh.textContent = isPlane ? 'BAIL' : (isFoot ? 'BOARD' : 'FOOT');
-    if (!isFoot) this.el.carPrompt.classList.remove('on');
+    this.el.vehBtn.textContent = isBoat
+      ? 'Disembark [F]'
+      : (isPlane ? 'Exit / Bailout [F]' : (isRide ? 'Exit Ride [F]' : (isFoot ? 'Enter / Board [F]' : 'Exit Car [F]')));
+    this.el.vehBtn.classList.toggle('on', isFoot || isPlane || isRide || isBoat);
+    this.el.keysHint.textContent = isBoat
+      ? 'WASD Steer Boat · SHIFT Turbo Wake · V Cam · I Phone · F Disembark'
+      : (isHeli
+        ? 'SPACE Hover Up · Q/SHIFT Descend · W/S Pitch · A/D Yaw · V Cam · F Bailout'
+        : (isPlane
+          ? 'W/S Thrust · A/D Bank · SPACE Climb · Q Dive · SHIFT Burner · V Cam · F Bailout'
+          : (isRide
+            ? 'Mouse 360° Scenic Look · E / F Exit Ride'
+            : (isFoot
+              ? 'WASD Walk · TAB Weapons · E Shop/Interact · F Car/Boat/Chopper · V 1st-Person · I Phone'
+              : 'WASD Drive · R/O Radio · V Cam (Hood) · I Phone · E Pay n Spray · F Exit'))));
+    if (this.el.touchGo) this.el.touchGo.textContent = isBoat ? 'BOAT' : (isPlane ? 'THRUST' : (isFoot ? 'WALK' : 'DRIVE'));
+    if (this.el.touchAct) this.el.touchAct.textContent = isBoat ? 'TURBO' : (isPlane ? 'CLIMB' : (isFoot ? (armed ? 'FIRE' : 'HIT') : 'NOS'));
+    if (this.el.touchVeh) this.el.touchVeh.textContent = isBoat ? 'SHORE' : (isPlane ? 'BAIL' : (isFoot ? 'BOARD' : 'FOOT'));
+    if (!isFoot) {
+      this.el.carPrompt.classList.remove('on');
+      if (this.isDancing) this.stopDancing();
+      if (this.activeShop) this.closeShopMenu(false);
+      if (this.tvOpen) this.closeTvModal();
+    }
     if (isPlane || isRide) this.closeWeaponWheel(false);
     this.audio.setRadioInCar(this.isInCar());
     this.updateRadioHUD();
   }
 
   isInCar() {
-    return this.mode === 'car' && !(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+    // Enable FM Radio & RJ broadcasts in both cars and two-wheelers (motorcycles / scooters)
+    return this.mode === 'car';
   }
 
   openWeaponWheel(holdMode = false) {
@@ -5545,6 +6167,24 @@ class ViceCity3DApp {
       }
     }
 
+    let hitIndoorTarget = null;
+    if (this.ammuNation && this.ammuNation.rangeTargets) {
+      for (let i = 0; i < this.ammuNation.rangeTargets.length; i++) {
+        const rt = this.ammuNation.rangeTargets[i];
+        if (rt.hitCooldown > 0) continue;
+        rt.group.getWorldPosition(_vecA);
+        const ox = _vecA.x - muzzleX, oy = _vecA.y - muzzleY, oz = _vecA.z - muzzleZ;
+        const t = ox * dx + oy * dy + oz * dz;
+        if (t < 0.6 || t > bestDist) continue;
+        const cx = muzzleX + dx * t - _vecA.x;
+        const cy = muzzleY + dy * t - _vecA.y;
+        const cz = muzzleZ + dz * t - _vecA.z;
+        if (Math.hypot(cx, cz) < 0.88 && Math.abs(cy) < 1.1) {
+          bestDist = t; hitIndoorTarget = rt; hitPed = null; hitCar = null; hitParked = null; hitKb = null; hitRangeTarget = null;
+        }
+      }
+    }
+
     const endX = muzzleX + dx * bestDist;
     const endY = Math.max(0.15, muzzleY + dy * bestDist);
     const endZ = muzzleZ + dz * bestDist;
@@ -5558,7 +6198,22 @@ class ViceCity3DApp {
     this.scene.add(tLine);
     this.tracers.push({ mesh: tLine, geo: tGeo, mat: tMat, life: 0.085, maxLife: 0.085 });
 
-    if (hitRangeTarget) {
+    if (hitIndoorTarget) {
+      hitIndoorTarget.hitCooldown = 0.75;
+      hitIndoorTarget.group.rotation.x = -0.52;
+      this.audio.pickup();
+      this.cash += 50;
+      if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+      if (this.activeSideMission && this.activeSideMission.kind === 'indoorRange') {
+        this.activeSideMission.hits += 1;
+        this.el.combo.innerHTML = `BULLSEYE ${this.activeSideMission.hits}/${this.activeSideMission.goal}! <span>+$50</span>`;
+      } else {
+        this.el.combo.innerHTML = `AMMU-NATION RANGE BULLSEYE! <span>+$50</span>`;
+      }
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.0;
+      this.savePersistentSave();
+    } else if (hitRangeTarget) {
       this.onRangeTargetHit(hitRangeTarget);
     } else if (hitPed) {
       hitPed.hp -= dmg;
@@ -5973,6 +6628,16 @@ class ViceCity3DApp {
       this.audio.setRadioPower(!this.audio.radioPower);
     }
     this.updateRadioHUD();
+    if (this.el && this.el.combo) {
+      const isOn = this.audio.radioPower && this.audio.enabled;
+      const st = this.audio.getRadioStation();
+      const radioLabel = (this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike) ? 'BIKE RADIO' : 'CAR RADIO';
+      this.el.combo.innerHTML = isOn
+        ? `${radioLabel} ON · ${st.name.toUpperCase()} <span>[R] TUNE · [O] OFF</span>`
+        : `${radioLabel} OFF <span>PRESS [O] TO TURN ON</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.0;
+    }
   }
 
   setRadioVolume(v) {
@@ -5992,20 +6657,702 @@ class ViceCity3DApp {
     }
     const st = this.audio.getRadioStation();
     const isPlaying = this.audio.canPlayRadio();
+    const radioOff = !this.audio.radioPower;
     const activeRJ = isPlaying ? this.audio.getActiveRJ() : null;
-    this.el.radF.textContent = st.freq;
-    this.el.radN.textContent = isPlaying
-      ? (activeRJ ? activeRJ.short : st.name)
-      : `${st.name} · paused`;
+    this.el.radF.textContent = radioOff ? 'OFF' : st.freq;
+    this.el.radN.textContent = radioOff
+      ? 'RADIO OFF · Press [O]'
+      : (isPlaying ? (activeRJ ? activeRJ.short : st.name) : `${st.name} · muted`);
     const pct = (((parseFloat(st.freq) - 87.5) / (108 - 87.5)) * 100).toFixed(1);
     this.el.radNd.style.setProperty('--np', `${pct}%`);
-    this.el.radPres.forEach((b, i) => b.setAttribute('aria-pressed', String(i === this.audio.radioIdx)));
+    this.el.radPres.forEach((b, i) => b.setAttribute('aria-pressed', String(!radioOff && i === this.audio.radioIdx)));
     this.el.radTune.style.setProperty('--r', `${this.radioTuneRot}deg`);
     this.el.radVol.style.setProperty('--r', `${(this.audio.radioVolume * 2.7 - 135).toFixed(1)}deg`);
     this.el.radVol.setAttribute('aria-valuenow', String(this.audio.radioVolume));
+    if (this.el.radPwr) {
+      this.el.radPwr.textContent = radioOff ? 'Radio: OFF' : 'Radio: ON';
+      this.el.radPwr.classList.toggle('off', radioOff);
+    }
     this.el.radioDeck.classList.toggle('on', isPlaying);
     this.el.radioDeck.classList.toggle('rj-live', Boolean(activeRJ));
     this.el.radioDeck.classList.remove('dim');
+  }
+
+  savePlayerStyle() {
+    try {
+      localStorage.setItem('vice3d_style_v1', JSON.stringify(this.playerStyle));
+    } catch (_) {}
+  }
+
+  applyPlayerStyle(st = this.playerStyle) {
+    if (!this.player || !st) return;
+    if (typeof this.player.setHairstyle === 'function') this.player.setHairstyle(st.hair, st.hairColor);
+    if (typeof this.player.setOutfit === 'function') this.player.setOutfit(st.outfit);
+    if (typeof this.player.setShades === 'function') this.player.setShades(st.shades);
+  }
+
+  findNearestShopZone() {
+    if (!this.shopInteractZones) return null;
+    const isFoot = this.mode === 'foot';
+    const isCar = this.mode === 'car';
+    if (!isFoot && !isCar) return null;
+    const pos = isCar ? this.carState : this.playerState;
+    for (let i = 0; i < this.shopInteractZones.length; i++) {
+      const sz = this.shopInteractZones[i];
+      if (isCar && !sz.allowInCar) continue;
+      if (Math.hypot(pos.x - sz.x, pos.z - sz.z) <= sz.radius && Math.abs((pos.y || 0) - sz.y) < 2.2) {
+        return sz;
+      }
+    }
+    return null;
+  }
+
+  findNearestSafehouseStation() {
+    if (this.mode !== 'foot' || !this.safehouseStations) return null;
+    const ps = this.playerState;
+    let best = null, bestD = Infinity;
+    for (let i = 0; i < this.safehouseStations.length; i++) {
+      const st = this.safehouseStations[i];
+      const d = Math.hypot(ps.x - st.x, ps.z - st.z);
+      if (d <= 2.35 && Math.abs(ps.y - st.y) < 1.6 && d < bestD) {
+        best = st;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  isInsideMalibuDanceZone() {
+    if (this.mode !== 'foot') return false;
+    const ps = this.playerState;
+    return ps.x >= -39.5 && ps.x <= -19.5 && ps.z >= -353.5 && ps.z <= -334.5 && ps.y < 2.2;
+  }
+
+  openShopMenu(kind, label) {
+    if (!this.el || !this.el.shopDrawer) return;
+    if (this.isDancing) this.stopDancing();
+    if (this.phoneOpen) this.togglePhone(false);
+    this.releasePointerLock();
+    this.fireHeld = false;
+    this.activeShop = {
+      kind,
+      label,
+      snapshot: {
+        hair: this.playerStyle.hair,
+        hairColor: this.playerStyle.hairColor,
+        outfit: this.playerStyle.outfit,
+        shades: this.playerStyle.shades
+      }
+    };
+    const kickerMap = {
+      barber: 'BARBER CHAIR · LIVE 3D PREVIEW',
+      wardrobe: 'OCEAN VIEW SUITE · PRIVATE CLOSET',
+      paynspray: "PAY 'N' SPRAY · AUTO MOD & REPAIR GARAGE",
+      diner: 'BURGER SHOT 24/7 · VICE FAST FOOD',
+      ammu: 'AMMU-NATION · TACTICAL ARMORY & RANGE'
+    };
+    this.el.shopKicker.textContent = kickerMap[kind] || 'DESIGNER BOUTIQUE · LIVE 3D PREVIEW';
+    this.el.shopTitle.textContent = label || (kind === 'barber' ? 'Vice Cuts Barber' : 'Vice Couture');
+    this.el.shopDrawer.hidden = false;
+    this.renderShopDrawer();
+    this.syncReticleVisibility();
+  }
+
+  closeShopMenu(commit = true) {
+    if (!this.activeShop) return;
+    if (!commit && this.activeShop.snapshot && (this.activeShop.kind === 'barber' || this.activeShop.kind === 'clothes' || this.activeShop.kind === 'wardrobe')) {
+      this.playerStyle.hair = this.activeShop.snapshot.hair;
+      this.playerStyle.hairColor = this.activeShop.snapshot.hairColor;
+      this.playerStyle.outfit = this.activeShop.snapshot.outfit;
+      this.playerStyle.shades = this.activeShop.snapshot.shades;
+      this.applyPlayerStyle(this.playerStyle);
+    } else {
+      this.savePlayerStyle();
+      this.savePersistentSave();
+    }
+    this.activeShop = null;
+    if (this.el && this.el.shopDrawer) this.el.shopDrawer.hidden = true;
+    this.syncReticleVisibility();
+  }
+
+  renderShopDrawer() {
+    if (!this.activeShop || !this.el || !this.el.shopBody) return;
+    const kind = this.activeShop.kind;
+    if (this.el.shopCash) this.el.shopCash.textContent = `Cash: $${this.cash.toLocaleString()}`;
+    const body = this.el.shopBody;
+    body.innerHTML = '';
+
+    if (kind === 'paynspray') {
+      const vipFree = this.visited.size >= 1;
+      const goldUnlocked = this.visited.size >= 5;
+      const items = [
+        {
+          name: 'Full Repair & Clear Wanted',
+          sub: `Car Health ${Math.round(this.carHealth)}% · Clears VCPD heat & stops engine smoke`,
+          price: 50,
+          act: () => {
+            if (this.cash < 50) return this.showShopToast('NEED $50 FOR REPAIR');
+            this.cash -= 50;
+            this.carHealth = 100;
+            this.wantedStars = 0;
+            this.updateCarHealthHUD();
+            this.updateWantedHUD(0);
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast('VEHICLE REPAIRED · WANTED CLEARED!');
+          }
+        },
+        {
+          name: 'Neon Underglow: Vice Pink',
+          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'Glowing underbody neon kit',
+          price: vipFree ? 0 : 120,
+          active: this.carMods.underglow === 'pink',
+          act: () => {
+            const p = vipFree ? 0 : 120;
+            if (this.cash < p) return this.showShopToast(`NEED $${p}`);
+            this.cash -= p;
+            this.carMods.underglow = this.carMods.underglow === 'pink' ? 'none' : 'pink';
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast(this.carMods.underglow === 'pink' ? 'PINK NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
+          }
+        },
+        {
+          name: 'Neon Underglow: Miami Cyan',
+          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'Electric ocean neon underbody',
+          price: vipFree ? 0 : 120,
+          active: this.carMods.underglow === 'cyan',
+          act: () => {
+            const p = vipFree ? 0 : 120;
+            if (this.cash < p) return this.showShopToast(`NEED $${p}`);
+            this.cash -= p;
+            this.carMods.underglow = this.carMods.underglow === 'cyan' ? 'none' : 'cyan';
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast(this.carMods.underglow === 'cyan' ? 'CYAN NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
+          }
+        },
+        {
+          name: 'Carbon GT Wing Spoiler',
+          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'High-downforce rear wing',
+          price: vipFree ? 0 : 160,
+          active: this.carMods.spoiler,
+          act: () => {
+            const p = vipFree ? 0 : 160;
+            if (!this.carMods.spoiler && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (!this.carMods.spoiler) this.cash -= p;
+            this.carMods.spoiler = !this.carMods.spoiler;
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast(this.carMods.spoiler ? 'CARBON GT SPOILER INSTALLED' : 'SPOILER REMOVED');
+          }
+        },
+        {
+          name: '24K Gold Chrome Respray',
+          sub: goldUnlocked ? '5/5 Portfolio Showrooms Reward (FREE!)' : 'Unlock FREE at 5/5 showrooms or buy now',
+          price: goldUnlocked ? 0 : 500,
+          active: this.carMods.goldChrome,
+          act: () => {
+            const p = goldUnlocked ? 0 : 500;
+            if (!this.carMods.goldChrome && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (!this.carMods.goldChrome) this.cash -= p;
+            this.carMods.goldChrome = !this.carMods.goldChrome;
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast(this.carMods.goldChrome ? 'GOLD CHROME FINISH APPLIED!' : 'STANDARD PAINT RESTORED');
+          }
+        }
+      ];
+      const sec = document.createElement('div');
+      sec.innerHTML = '<div class="v3-shop-sec-lbl">Garage Services & Body Mods</div><div class="v3-shop-list"></div>';
+      const list = sec.querySelector('.v3-shop-list');
+      items.forEach((it) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `v3-shop-item${it.active ? ' active' : ''}`;
+        btn.innerHTML = `<div><div class="v3-shop-item-name">${it.name}</div><div class="v3-shop-item-sub">${it.sub}</div></div><span class="v3-shop-price ${it.active ? 'equipped' : ''}">${it.active ? 'INSTALLED' : (it.price === 0 ? 'FREE' : `$${it.price}`)}</span>`;
+        btn.addEventListener('click', () => { it.act(); this.savePersistentSave(); this.renderShopDrawer(); });
+        list.appendChild(btn);
+      });
+      body.appendChild(sec);
+
+      const secP = document.createElement('div');
+      secP.innerHTML = '<div class="v3-shop-sec-lbl">Respray Paint Booth ($25)</div><div class="v3-shop-swatches"></div>';
+      const swWrap = secP.querySelector('.v3-shop-swatches');
+      PAINTS.forEach((p, idx) => {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = `v3-shop-swatch${idx === this.paintIdx && !this.carMods.goldChrome ? ' active' : ''}`;
+        sw.style.background = p.swatch;
+        sw.title = p.name;
+        sw.addEventListener('click', () => {
+          this.carMods.goldChrome = false;
+          this.setPaint(idx);
+          this.applyCarMods();
+          if (this.audio) this.audio.sprayHiss();
+          this.showShopToast(`RESPRAYED · ${p.name.toUpperCase()}`);
+          this.renderShopDrawer();
+        });
+        swWrap.appendChild(sw);
+      });
+      body.appendChild(secP);
+      return;
+    }
+
+    if (kind === 'diner') {
+      const meals = [
+        { name: 'Vice Sprunk Soda', sub: 'Restores +25 Health', hp: 25, price: 10 },
+        { name: 'The Bleeder Burger', sub: 'Restores +50 Health · Fresh off the grill', hp: 50, price: 20 },
+        { name: 'Heart Stopper 6-Stack', sub: 'Restores 100% Health + Full Sprint Stamina', hp: 100, price: 35 }
+      ];
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="v3-shop-sec-lbl">Current Health: ${Math.round(this.playerHp)}% · Order Counter</div><div class="v3-shop-list"></div>`;
+      const list = sec.querySelector('.v3-shop-list');
+      meals.forEach((m) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'v3-shop-item';
+        btn.innerHTML = `<div><div class="v3-shop-item-name">${m.name}</div><div class="v3-shop-item-sub">${m.sub}</div></div><span class="v3-shop-price">$${m.price}</span>`;
+        btn.addEventListener('click', () => {
+          if (this.cash < m.price) return this.showShopToast(`NEED $${m.price}`);
+          this.cash -= m.price;
+          this.playerHp = Math.min(100, this.playerHp + m.hp);
+          this.updateHealthHUD();
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          if (this.audio) this.audio.pickup();
+          this.showShopToast(`ATE ${m.name.toUpperCase()} · HP ${Math.round(this.playerHp)}%`);
+          this.savePersistentSave();
+          this.renderShopDrawer();
+        });
+        list.appendChild(btn);
+      });
+      body.appendChild(sec);
+      return;
+    }
+
+    if (kind === 'ammu') {
+      const gear = [
+        {
+          name: 'Kevlar Body Armor (+100%)',
+          sub: 'Full ballistic protection vest',
+          price: 80,
+          act: () => {
+            if (this.cash < 80) return this.showShopToast('NEED $80');
+            this.cash -= 80;
+            this.playerArmor = 100;
+            this.updateHealthHUD();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.pickup();
+            this.showShopToast('BODY ARMOR EQUIPPED (100%)');
+          }
+        },
+        {
+          name: 'M4 Tactical Rifle + Full Ammo',
+          sub: 'Equips M4 Carbine ready for range & streets',
+          price: 60,
+          act: () => {
+            if (this.cash < 60) return this.showShopToast('NEED $60');
+            this.cash -= 60;
+            this.setWeapon('rifle');
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.pickup();
+            this.showShopToast('M4 CARBINE LOADED!');
+          }
+        },
+        {
+          name: 'Start Indoor Shooting Range',
+          sub: 'Hit 10 moving targets in the back bay · Prize $400!',
+          price: 0,
+          act: () => {
+            this.closeShopMenu(true);
+            this.startIndoorRange();
+          }
+        }
+      ];
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="v3-shop-sec-lbl">Armor: ${Math.round(this.playerArmor)}% · Counter & Back Range</div><div class="v3-shop-list"></div>`;
+      const list = sec.querySelector('.v3-shop-list');
+      gear.forEach((g) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'v3-shop-item';
+        btn.innerHTML = `<div><div class="v3-shop-item-name">${g.name}</div><div class="v3-shop-item-sub">${g.sub}</div></div><span class="v3-shop-price">${g.price === 0 ? 'PLAY' : `$${g.price}`}</span>`;
+        btn.addEventListener('click', () => { g.act(); this.savePersistentSave(); if (this.activeShop) this.renderShopDrawer(); });
+        list.appendChild(btn);
+      });
+      body.appendChild(sec);
+      return;
+    }
+
+    if (kind === 'barber') {
+      const secStyle = document.createElement('div');
+      secStyle.innerHTML = '<div class="v3-shop-sec-lbl">Hairstyles (7 3D Cuts)</div><div class="v3-shop-list"></div>';
+      const list = secStyle.querySelector('.v3-shop-list');
+      HAIR_STYLES.forEach((hs) => {
+        const owned = this.playerStyle.ownedHair.includes(hs.id) || hs.price === 0;
+        const equipped = this.playerStyle.hair === hs.id;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `v3-shop-item${equipped ? ' active' : ''}`;
+        btn.innerHTML = `<div><div class="v3-shop-item-name">${hs.name}</div><div class="v3-shop-item-sub">${hs.sub}</div></div><span class="v3-shop-price ${equipped ? 'equipped' : (owned ? 'owned' : '')}">${equipped ? 'EQUIPPED' : (owned ? 'OWNED' : `$${hs.price}`)}</span>`;
+        btn.addEventListener('mouseenter', () => {
+          if (this.player && this.player.setHairstyle) this.player.setHairstyle(hs.id, this.playerStyle.hairColor);
+        });
+        btn.addEventListener('mouseleave', () => this.applyPlayerStyle(this.playerStyle));
+        btn.addEventListener('click', () => {
+          if (!owned) {
+            if (this.cash < hs.price) {
+              this.showShopToast(`NEED $${hs.price} FOR ${hs.name.toUpperCase()}`);
+              return;
+            }
+            this.cash -= hs.price;
+            this.playerStyle.ownedHair.push(hs.id);
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          }
+          this.playerStyle.hair = hs.id;
+          this.activeShop.snapshot.hair = hs.id;
+          this.applyPlayerStyle(this.playerStyle);
+          this.savePlayerStyle();
+          if (this.audio) this.audio.pickup();
+          this.showShopToast(`NEW HAIRCUT · ${hs.name.toUpperCase()}`);
+          this.renderShopDrawer();
+        });
+        list.appendChild(btn);
+      });
+      body.appendChild(secStyle);
+
+      const secCol = document.createElement('div');
+      secCol.innerHTML = '<div class="v3-shop-sec-lbl">Hair Color Dye (Complimentary)</div><div class="v3-shop-swatches"></div>';
+      const swWrap = secCol.querySelector('.v3-shop-swatches');
+      HAIR_COLORS.forEach((hc) => {
+        const active = this.playerStyle.hairColor.toLowerCase() === hc.hex.toLowerCase();
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = `v3-shop-swatch${active ? ' active' : ''}`;
+        sw.style.background = hc.hex;
+        sw.title = hc.name;
+        sw.addEventListener('mouseenter', () => {
+          if (this.player && this.player.setHairstyle) this.player.setHairstyle(this.playerStyle.hair, hc.hex);
+        });
+        sw.addEventListener('mouseleave', () => this.applyPlayerStyle(this.playerStyle));
+        sw.addEventListener('click', () => {
+          this.playerStyle.hairColor = hc.hex;
+          this.activeShop.snapshot.hairColor = hc.hex;
+          this.applyPlayerStyle(this.playerStyle);
+          this.savePlayerStyle();
+          if (this.audio) this.audio.pickup();
+          this.showShopToast(`HAIR DYE · ${hc.name.toUpperCase()}`);
+          this.renderShopDrawer();
+        });
+        swWrap.appendChild(sw);
+      });
+      body.appendChild(secCol);
+      return;
+    }
+
+    // Clothes Store or Safehouse Wardrobe
+    const isWardrobe = kind === 'wardrobe';
+    const outfits = isWardrobe
+      ? OUTFIT_CATALOG.filter((o) => this.playerStyle.ownedOutfits.includes(o.id) || o.price === 0)
+      : OUTFIT_CATALOG;
+    const secOut = document.createElement('div');
+    secOut.innerHTML = `<div class="v3-shop-sec-lbl">${isWardrobe ? 'Owned Outfits (Buy More at Vice Couture / Gash)' : 'Designer Outfits (7 Styles)'}</div><div class="v3-shop-list"></div>`;
+    const list = secOut.querySelector('.v3-shop-list');
+    outfits.forEach((of) => {
+      const owned = this.playerStyle.ownedOutfits.includes(of.id) || of.price === 0;
+      const equipped = this.playerStyle.outfit === of.id;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `v3-shop-item${equipped ? ' active' : ''}`;
+      btn.innerHTML = `<div><div class="v3-shop-item-name">${of.name}</div><div class="v3-shop-item-sub">${of.sub}</div></div><span class="v3-shop-price ${equipped ? 'equipped' : (owned ? 'owned' : '')}">${equipped ? 'EQUIPPED' : (owned ? 'OWNED' : `$${of.price}`)}</span>`;
+      btn.addEventListener('mouseenter', () => {
+        if (this.player && this.player.setOutfit) this.player.setOutfit(of.id);
+      });
+      btn.addEventListener('mouseleave', () => this.applyPlayerStyle(this.playerStyle));
+      btn.addEventListener('click', () => {
+        if (!owned) {
+          if (this.cash < of.price) {
+            this.showShopToast(`NEED $${of.price} FOR ${of.name.toUpperCase()}`);
+            return;
+          }
+          this.cash -= of.price;
+          this.playerStyle.ownedOutfits.push(of.id);
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        }
+        this.playerStyle.outfit = of.id;
+        this.activeShop.snapshot.outfit = of.id;
+        this.applyPlayerStyle(this.playerStyle);
+        this.savePlayerStyle();
+        if (this.audio) this.audio.pickup();
+        this.showShopToast(`OUTFIT EQUIPPED · ${of.name.toUpperCase()}`);
+        this.renderShopDrawer();
+      });
+      list.appendChild(btn);
+    });
+    body.appendChild(secOut);
+
+    const secShades = document.createElement('div');
+    secShades.innerHTML = '<div class="v3-shop-sec-lbl">Eyewear &amp; Sunglasses</div><div class="v3-shop-shades"></div>';
+    const shWrap = secShades.querySelector('.v3-shop-shades');
+    SHADE_STYLES.forEach((sh) => {
+      const owned = this.playerStyle.ownedShades.includes(sh.id) || sh.price === 0;
+      const equipped = this.playerStyle.shades === sh.id;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `v3-shop-item${equipped ? ' active' : ''}`;
+      btn.innerHTML = `<div class="v3-shop-item-name" style="font-size:14px">${sh.name}</div><span class="v3-shop-price ${equipped ? 'equipped' : (owned ? 'owned' : '')}">${equipped ? 'ON' : (owned ? 'FREE' : `$${sh.price}`)}</span>`;
+      btn.addEventListener('mouseenter', () => {
+        if (this.player && this.player.setShades) this.player.setShades(sh.id);
+      });
+      btn.addEventListener('mouseleave', () => this.applyPlayerStyle(this.playerStyle));
+      btn.addEventListener('click', () => {
+        if (!owned) {
+          if (this.cash < sh.price) {
+            this.showShopToast(`NEED $${sh.price} FOR ${sh.name.toUpperCase()}`);
+            return;
+          }
+          this.cash -= sh.price;
+          this.playerStyle.ownedShades.push(sh.id);
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        }
+        this.playerStyle.shades = sh.id;
+        this.activeShop.snapshot.shades = sh.id;
+        this.applyPlayerStyle(this.playerStyle);
+        this.savePlayerStyle();
+        if (this.audio) this.audio.pickup();
+        this.renderShopDrawer();
+      });
+      shWrap.appendChild(btn);
+    });
+    body.appendChild(secShades);
+  }
+
+  showShopToast(msg) {
+    if (!this.el || !this.el.combo) return;
+    this.el.combo.innerHTML = `${msg} <span>STYLE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.4;
+  }
+
+  interactSafehouseStation(st) {
+    if (!st) return;
+    if (st.id === 'sleep') {
+      if (this.sleepAnimTimer > 0) return;
+      this.releasePointerLock();
+      this.sleepAnimTimer = 2.6;
+      const nextHour = (this.dayTime + 6) % 24;
+      const hh = String(Math.floor(nextHour)).padStart(2, '0');
+      const mm = String(Math.floor((nextHour % 1) * 60)).padStart(2, '0');
+      if (this.el.sleepSub) this.el.sleepSub.textContent = `Waking Up at ${hh}:${mm} · 100% Health Restored & Wanted Level Cleared`;
+      if (this.el.sleepOv) this.el.sleepOv.classList.add('on');
+      this.dayTime = nextHour;
+      this.playerHp = 100;
+      this.wantedStars = 0;
+      this.updateHealthHUD();
+      this.updateWantedHUD(0);
+      if (this.audio) this.audio.pickup();
+      this.syncReticleVisibility();
+    } else if (st.id === 'tv') {
+      this.openTvModal();
+    } else if (st.id === 'food') {
+      this.playerHp = Math.min(100, this.playerHp + 45);
+      this.playerArmor = Math.min(100, this.playerArmor + 25);
+      this.updateHealthHUD();
+      if (this.audio) this.audio.pickup();
+      if (this.el && this.el.combo) {
+        this.el.combo.innerHTML = `ATE PIZZA, BURGER &amp; SPRUNK · +45 HP +25 ARMOR <span>SAFEHOUSE</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 2.8;
+      }
+    } else if (st.id === 'wardrobe') {
+      this.openShopMenu('wardrobe', 'Ocean View Wardrobe');
+    }
+  }
+
+  openTvModal() {
+    if (!this.el || !this.el.tvOv) return;
+    this.releasePointerLock();
+    this.fireHeld = false;
+    this.tvOpen = true;
+    this.el.tvOv.hidden = false;
+    this.setTvChannel(this.tvChannel);
+    this.syncReticleVisibility();
+  }
+
+  closeTvModal() {
+    if (!this.tvOpen) return;
+    this.tvOpen = false;
+    if (this.el && this.el.tvOv) this.el.tvOv.hidden = true;
+    this.syncReticleVisibility();
+  }
+
+  setTvChannel(idx) {
+    this.tvChannel = ((idx % TV_CHANNELS.length) + TV_CHANNELS.length) % TV_CHANNELS.length;
+    if (this.el && this.el.tvChBtns) {
+      this.el.tvChBtns.forEach((b, i) => b.classList.toggle('active', i === this.tvChannel));
+    }
+  }
+
+  drawRetroTvScreen(elapsed) {
+    const ctx = this.tvCtx;
+    if (!ctx) return;
+    const W = 640, H = 400;
+    const ch = this.tvChannel;
+    if (ch === 0) {
+      // CH 04 · VICE NEWS LIVE
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0a1638');
+      bg.addColorStop(1, '#1c0c2e');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+      // Animated skyline backdrop
+      ctx.fillStyle = '#0e1f4d';
+      for (let i = 0; i < 14; i++) {
+        const bh = 70 + ((i * 37) % 110);
+        ctx.fillRect(i * 48, 250 - bh, 42, bh);
+      }
+      // Anchor desk + anchor silhouette
+      ctx.fillStyle = '#ff2e88';
+      ctx.fillRect(190, 232, 260, 82);
+      ctx.fillStyle = '#182442';
+      ctx.fillRect(200, 240, 240, 74);
+      ctx.fillStyle = '#f2c29b';
+      ctx.beginPath(); ctx.arc(320, 174 + Math.sin(elapsed * 4) * 2, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#243a68';
+      ctx.fillRect(284, 198, 72, 46);
+      // Breaking News Banner & Ticker
+      ctx.fillStyle = '#e62244';
+      ctx.fillRect(0, 314, W, 38);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px "Barlow Condensed", sans-serif';
+      ctx.fillText('LIVE · VICE CITY ACTION NEWS · OCEAN DRIVE TRAFFIC ALERT', 22, 340);
+      ctx.fillStyle = '#070b18';
+      ctx.fillRect(0, 352, W, 48);
+      const tickX = W - ((elapsed * 110) % (W + 860));
+      ctx.fillStyle = '#ffd36b';
+      ctx.font = 'bold 16px "JetBrains Mono", monospace';
+      ctx.fillText('BREAKING: MALIBU CLUB PACKED TONIGHT · MOUNT VICE ROPEWAY OPEN · VICE CUTS BARBER & VICE COUTURE NOW OPEN ON OCEAN DRIVE · ', tickX, 382);
+    } else if (ch === 1) {
+      // CH 07 · LEONIDA WEATHER RADAR
+      ctx.fillStyle = '#071a2c';
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(33, 230, 209, 0.22)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      const rCx = 320, rCy = 195;
+      for (const rad of [55, 110, 160]) {
+        ctx.beginPath(); ctx.arc(rCx, rCy, rad, 0, Math.PI * 2); ctx.stroke();
+      }
+      const sweep = elapsed * 1.4;
+      ctx.fillStyle = 'rgba(33, 230, 209, 0.25)';
+      ctx.beginPath(); ctx.moveTo(rCx, rCy); ctx.arc(rCx, rCy, 160, sweep, sweep + 0.55); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#21e6d1';
+      ctx.font = 'bold 22px "JetBrains Mono", monospace';
+      const wp = WEATHER_PRESETS[this.weatherIdx] || WEATHER_PRESETS[0];
+      const hh = String(Math.floor(this.dayTime)).padStart(2, '0');
+      const mm = String(Math.floor((this.dayTime % 1) * 60)).padStart(2, '0');
+      ctx.fillText(`LEONIDA DOPPLER · ${wp.label.toUpperCase()} · ${hh}:${mm}`, 24, 38);
+      ctx.fillStyle = '#ffd36b';
+      ctx.font = 'bold 16px "JetBrains Mono", monospace';
+      ctx.fillText('OCEAN BEACH 84°F · MOUNT VICE 62°F · CARNIVAL PIER BREEZE 9KT', 24, 376);
+    } else if (ch === 2) {
+      // CH 12 · VICE TURBO RACING
+      const sky = ctx.createLinearGradient(0, 0, 0, 210);
+      sky.addColorStop(0, '#1c0736');
+      sky.addColorStop(1, '#ff5c44');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, 210);
+      ctx.fillStyle = '#181c28';
+      ctx.fillRect(0, 210, W, 190);
+      // Perspective highway lines
+      ctx.strokeStyle = '#ff2e88';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(270, 210); ctx.lineTo(40, 400); ctx.moveTo(370, 210); ctx.lineTo(600, 400); ctx.stroke();
+      ctx.strokeStyle = '#ffd36b';
+      ctx.setLineDash([18, 16]);
+      ctx.lineDashOffset = -(elapsed * 220);
+      ctx.beginPath(); ctx.moveTo(320, 210); ctx.lineTo(320, 400); ctx.stroke();
+      ctx.setLineDash([]);
+      // Animated retro race car
+      const cx = 320 + Math.sin(elapsed * 2.3) * 72;
+      ctx.fillStyle = '#ff2e88';
+      ctx.fillRect(cx - 56, 294, 112, 34);
+      ctx.fillStyle = '#21e6d1';
+      ctx.fillRect(cx - 38, 276, 76, 20);
+      ctx.fillStyle = '#ff3844';
+      ctx.fillRect(cx - 48, 304, 24, 9);
+      ctx.fillRect(cx + 24, 304, 24, 9);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px "JetBrains Mono", monospace';
+      ctx.fillText('VICE TURBO GRAND PRIX · 1986 LIVE REPLAY', 24, 36);
+    } else {
+      // CH 86 · WAVE 103 SYNTHWAVE VISUALIZER
+      ctx.fillStyle = '#090418';
+      ctx.fillRect(0, 0, W, H);
+      const sunGrad = ctx.createLinearGradient(0, 80, 0, 240);
+      sunGrad.addColorStop(0, '#ffe066');
+      sunGrad.addColorStop(0.55, '#ff4d88');
+      sunGrad.addColorStop(1, '#7a1ca8');
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath(); ctx.arc(320, 175, 86, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#090418';
+      for (let sy = 175; sy < 260; sy += 13) ctx.fillRect(220, sy, 200, 4);
+      // Equalizer bars
+      for (let i = 0; i < 24; i++) {
+        const bh = 28 + Math.abs(Math.sin(elapsed * 5.2 + i * 0.55)) * 115;
+        ctx.fillStyle = i % 2 === 0 ? '#21e6d1' : '#ff2e88';
+        ctx.fillRect(28 + i * 24.5, 385 - bh, 17, bh);
+      }
+      ctx.fillStyle = '#21e6d1';
+      ctx.font = 'bold 20px "JetBrains Mono", monospace';
+      ctx.fillText('WAVE 103 · LATE NIGHT SYNTHWAVE TV', 24, 36);
+    }
+    // Subtle CRT scanlines & channel badge
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(W - 122, 12, 108, 26);
+    ctx.fillStyle = '#49c65e';
+    ctx.font = 'bold 14px "JetBrains Mono", monospace';
+    ctx.fillText(`CH 0${ch + 1} · CRT`, W - 110, 30);
+  }
+
+  startDancing(styleIdx = 0) {
+    if (this.mode !== 'foot') return;
+    this.isDancing = true;
+    this.danceStyleIdx = styleIdx % 3;
+    this.danceRewardTimer = 6.5;
+    this.fireHeld = false;
+    this.playerState.vx = 0;
+    this.playerState.vz = 0;
+    this.playerState.speed = 0;
+    if (this.el && this.el.danceBar) this.el.danceBar.classList.add('on');
+    this.setDanceStyle(this.danceStyleIdx);
+    if (this.el && this.el.combo) {
+      this.el.combo.innerHTML = `DANCING AT THE MALIBU CLUB · [1/2/3] MOVES <span>PARTY</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.6;
+    }
+    this.syncReticleVisibility();
+  }
+
+  setDanceStyle(idx) {
+    this.danceStyleIdx = ((idx % 3) + 3) % 3;
+    if (this.el && this.el.danceMoveBtns) {
+      this.el.danceMoveBtns.forEach((b, i) => b.classList.toggle('active', i === this.danceStyleIdx));
+    }
+  }
+
+  stopDancing() {
+    if (!this.isDancing) return;
+    this.isDancing = false;
+    if (this.el && this.el.danceBar) this.el.danceBar.classList.remove('on');
+    this.syncReticleVisibility();
   }
 
   setTimeOfDay(idx, silent = false) {
@@ -6061,7 +7408,7 @@ class ViceCity3DApp {
     let best = null;
     let bestD = maxDist;
 
-    // 0. Check flyable airport airplanes (boarding radius around wings/airstair!)
+    // 0. Check flyable airport airplanes & Maverick helicopters
     if (this.flyablePlanes) {
       for (let i = 0; i < this.flyablePlanes.length; i++) {
         const pl = this.flyablePlanes[i];
@@ -6070,6 +7417,17 @@ class ViceCity3DApp {
         if (d < maxDist + 3.4 && (!best || d - 2.0 < bestD)) {
           bestD = Math.max(0.1, d - 2.0);
           best = { kind: 'plane', plane: pl, label: pl.label, dist: d };
+        }
+      }
+    }
+    // 0b. Check drivable ocean speedboats & jet skis along beaches/piers
+    if (this.boats) {
+      for (let i = 0; i < this.boats.length; i++) {
+        const b = this.boats[i];
+        const d = Math.hypot(b.x - ps.x, b.z - ps.z);
+        if (d < maxDist + 3.6 && (!best || d - 1.6 < bestD)) {
+          bestD = Math.max(0.1, d - 1.6);
+          best = { kind: 'boat', boat: b, label: b.label, dist: d };
         }
       }
     }
@@ -6500,9 +7858,51 @@ class ViceCity3DApp {
     this.setMode('plane');
     this.drawRadar();
     this.audio.carDoor();
-    this.el.combo.innerHTML = `PILOTING · ${plane.label} <span>W THRUST · SPACE CLIMB</span>`;
+    if (plane.isHeli) {
+      if (typeof this.audio.setHeliRotor === 'function') this.audio.setHeliRotor(true, 0.35);
+      this.el.combo.innerHTML = `CHOPPER PILOT · ${plane.label} <span>SPACE UP · Q/SHIFT DOWN · W/S FLY</span>`;
+    } else {
+      if (typeof this.audio.startPlaneSequence === 'function') this.audio.startPlaneSequence();
+      this.el.combo.innerHTML = `PILOTING · ${plane.label} <span>W THRUST · SPACE CLIMB</span>`;
+    }
     this.el.combo.classList.add('on');
     this.streakTimer = 3.2;
+  }
+
+  enterBoat(boat) {
+    if (!boat) return;
+    this.cancelAutopilot();
+    this.activeBoat = boat;
+    this.orbitYawOffset = 0;
+    this.orbitPitchOffset = 0;
+    this.snapCameraNext = true;
+    if (this.el.carName) this.el.carName.textContent = boat.label;
+    this.setMode('boat');
+    this.drawRadar();
+    this.audio.carDoor();
+    this.el.combo.innerHTML = `AT THE HELM · ${boat.label} <span>WASD STEER · SHIFT TURBO · F SHORE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.0;
+  }
+
+  exitBoat() {
+    const b = this.activeBoat;
+    if (!b) { this.setMode('foot'); return; }
+    b.speed = 0;
+    const ps = this.playerState;
+    // Place safely onto nearest shoreline/pier boardwalk
+    const shoreX = b.x > 80 && b.x < 145 ? 122 : Math.min(25.5, b.x - 4.0);
+    ps.x = THREE.MathUtils.clamp(shoreX, -15, 138);
+    ps.z = b.z;
+    ps.y = Math.max(0.16, this.getSurfaceY(ps.x, ps.z, true));
+    ps.vx = 0; ps.vz = 0; ps.vy = 0; ps.grounded = true;
+    this.activeBoat = null;
+    this.setMode('foot');
+    this.player.root.position.set(ps.x, ps.y, ps.z);
+    this.player.root.rotation.y = ps.yaw;
+    this.snapCameraNext = true;
+    this.drawRadar();
+    this.audio.carDoor();
   }
 
   exitPlane() {
@@ -6511,26 +7911,30 @@ class ViceCity3DApp {
     const ps = this.playerState;
     const rx = Math.cos(pl.yaw), rz = -Math.sin(pl.yaw);
     if (pl.y > 4.5) {
-      // Dramatic mid-air parachute bailout!
       ps.x = pl.x - rx * 4.5;
       ps.z = pl.z - rz * 4.5;
-      ps.y = Math.max(4.5, pl.y - 1.2);
-      ps.vx = -Math.sin(pl.yaw) * Math.min(14, pl.speed * 0.25);
-      ps.vz = -Math.cos(pl.yaw) * Math.min(14, pl.speed * 0.25);
-      ps.vy = -2.8;
+      ps.y = Math.max(5.5, pl.y - 1.2);
+      const launchSpd = THREE.MathUtils.clamp(pl.speed * 0.32, 8.5, 16.0);
+      ps.vx = -Math.sin(pl.yaw) * launchSpd;
+      ps.vz = -Math.cos(pl.yaw) * launchSpd;
+      ps.vy = -3.6;
       ps.yaw = pl.yaw;
       ps.grounded = false;
       ps.parachuting = true;
+      ps.paraOpenT = 0.04;
+      ps.paraRoll = 0;
+      ps.paraPitch = 0;
+      ps.paraFlare = 0;
+      ps.paraSteer = 0;
       if (this.parachuteMesh) this.parachuteMesh.visible = true;
       pl.resetTimer = 4.2;
-      this.el.combo.innerHTML = `PARACHUTE DEPLOYED! <span>BAILOUT</span>`;
+      this.el.combo.innerHTML = `RAM-AIR CHUTE DEPLOYED · W DIVE · S FLARE · A/D STEER <span>SKYDIVE</span>`;
       this.el.combo.classList.add('on');
-      this.streakTimer = 3.0;
+      this.streakTimer = 3.8;
     } else {
-      // Clean tarmac disembark beside wing/airstair
       pl.speed = 0;
       pl.throttle = 0;
-      pl.y = 0.02;
+      pl.y = Math.max(0.02, this.getSurfaceY(pl.x, pl.z, false));
       pl.pitch = 0;
       pl.roll = 0;
       pl.gearBlend = 1;
@@ -6542,13 +7946,18 @@ class ViceCity3DApp {
       ps.yaw = pl.yaw;
       ps.grounded = true;
       ps.parachuting = false;
+      ps.paraOpenT = 0;
+      if (this.parachuteMesh) this.parachuteMesh.visible = false;
     }
     this.player.root.position.set(ps.x, ps.y, ps.z);
     this.player.root.rotation.y = ps.yaw;
     this.orbitYawOffset = pl.yaw;
-    this.orbitPitchOffset = 0.08;
+    this.targetOrbitYaw = pl.yaw;
+    this.orbitPitchOffset = 0.12;
     this.snapCameraNext = true;
     this.activePlane = null;
+    if (typeof this.audio.stopPlaneSequence === 'function') this.audio.stopPlaneSequence();
+    if (typeof this.audio.setHeliRotor === 'function') this.audio.setHeliRotor(false, 0);
     this.setMode('foot');
     this.drawRadar();
     this.audio.carDoor();
@@ -6560,14 +7969,20 @@ class ViceCity3DApp {
     pl.root.rotation.order = 'YXZ';
     pl.root.rotation.set(pl.pitch, pl.yaw, pl.roll);
 
-    // Smooth auto-retracting landing gear above 7m AGL
+    if (pl.isHeli) {
+      const spin = this.mode === 'plane' && this.activePlane === pl ? (14 + pl.throttle * 26) : 2.8;
+      if (rig.mainRotor) rig.mainRotor.rotation.y += dt * spin;
+      if (rig.tailRotor) rig.tailRotor.rotation.x += dt * spin * 1.45;
+      if (rig.strobe) rig.strobe.visible = (elapsed % 1.0) < 0.16;
+      return;
+    }
+
     const targetGear = pl.y < 7.0 ? 1 : 0;
     pl.gearBlend = THREE.MathUtils.damp(pl.gearBlend, targetGear, 4.2, dt);
     if (rig.gearGroup) {
       rig.gearGroup.visible = pl.gearBlend > 0.05;
       rig.gearGroup.scale.y = Math.max(0.05, pl.gearBlend);
     }
-    // Spin turbine blades / nose propeller proportional to throttle & airspeed
     const spinRate = 6 + pl.throttle * 34 + pl.speed * 0.45;
     if (rig.fanMeshes) {
       for (let i = 0; i < rig.fanMeshes.length; i++) rig.fanMeshes[i].rotation.z += dt * spinRate;
@@ -6575,7 +7990,6 @@ class ViceCity3DApp {
     if (rig.propHub) {
       rig.propHub.rotation.z += dt * (10 + pl.throttle * 42 + pl.speed * 0.55);
     }
-    // Glowing jet afterburner exhaust cones when throttling
     if (rig.afterburnerMat) {
       const abOp = pl.throttle > 0.12 ? THREE.MathUtils.clamp(pl.throttle * 0.85 + Math.sin(elapsed * 45) * 0.12, 0.1, 0.95) : 0;
       rig.afterburnerMat.opacity = abOp;
@@ -6603,6 +8017,10 @@ class ViceCity3DApp {
       this.exitPierRide();
       return;
     }
+    if (this.mode === 'boat') {
+      this.exitBoat();
+      return;
+    }
     if (this.mode === 'plane') {
       this.exitPlane();
       return;
@@ -6611,7 +8029,6 @@ class ViceCity3DApp {
       this.cancelAutopilot();
       cs.speed *= 0.12;
       if (this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike) {
-        // Quick clean motorcycle dismount to the left side!
         const rx = Math.cos(cs.yaw), rz = -Math.sin(cs.yaw);
         ps.x = cs.x - rx * 1.45;
         ps.z = cs.z - rz * 1.45;
@@ -6628,6 +8045,10 @@ class ViceCity3DApp {
       const target = this.findNearestVehicleTarget(5.4);
       if (target && target.kind === 'plane') {
         this.enterPlane(target.plane);
+        return;
+      }
+      if (target && target.kind === 'boat') {
+        this.enterBoat(target.boat);
         return;
       }
       if (target && target.kind === 'traffic') {
@@ -6770,6 +8191,51 @@ class ViceCity3DApp {
             else if (m === dR) ps.x = b.maxX + r;
             else if (m === dT) ps.z = b.minZ - r;
             else ps.z = b.maxZ + r;
+          }
+        }
+      }
+
+      // 2b. Ocean View Safehouse Floor-Aware Interior Colliders (Stairwell Glass Rail, Solid Under-Stairs & Furniture)
+      const ovX = -24.5, ovZ = -48.0;
+      const ovLx = ps.x - ovX, ovLz = ps.z - ovZ;
+      if (ovLx >= -8.0 && ovLx <= 8.0 && ovLz >= -12.0 && ovLz <= 12.0) {
+        const floorBoxes = ps.y > 2.35
+          ? [
+              // 1st-Floor Suite: Full stairwell glass railing (prevents falling through glass!) + solid furniture
+              { minX: ovX - 4.35, maxX: ovX + 7.35, minZ: ovZ - 7.50, maxZ: ovZ - 7.05 }, // stairwell safety railing
+              { minX: ovX - 7.05, maxX: ovX - 3.10, minZ: ovZ + 4.95, maxZ: ovZ + 8.25 }, // king bed
+              { minX: ovX + 5.25, maxX: ovX + 6.95, minZ: ovZ + 5.90, maxZ: ovZ + 9.30 }, // TV console
+              { minX: ovX + 3.65, maxX: ovX + 4.65, minZ: ovZ + 6.75, maxZ: ovZ + 8.85 }, // coffee table
+              { minX: ovX + 5.45, maxX: ovX + 7.10, minZ: ovZ - 5.10, maxZ: ovZ + 1.25 }, // kitchen counter & fridge
+              { minX: ovX + 2.75, maxX: ovX + 4.85, minZ: ovZ - 1.80, maxZ: ovZ + 1.00 }, // dining table
+              { minX: ovX - 7.30, maxX: ovX - 6.00, minZ: ovZ - 3.45, maxZ: ovZ - 0.15 }  // wardrobe closet
+            ]
+          : [
+              // Ground Lobby: Solid under-stair enclosure (stops walking under high steps!) + reception desk + lobby sofa
+              { minX: ovX - 7.30, maxX: ovX + 1.55, minZ: ovZ - 11.2, maxZ: ovZ - 7.42 }, // solid under-stairs wall
+              { minX: ovX - 6.10, maxX: ovX - 4.35, minZ: ovZ - 1.10, maxZ: ovZ + 5.50 }, // reception desk
+              { minX: ovX + 0.35, maxX: ovX + 2.05, minZ: ovZ + 5.20, maxZ: ovZ + 9.75 }  // lobby lounge sofa/table
+            ];
+        for (let fi = 0; fi < floorBoxes.length; fi++) {
+          const fb = floorBoxes[fi];
+          const cx = THREE.MathUtils.clamp(ps.x, fb.minX, fb.maxX);
+          const cz = THREE.MathUtils.clamp(ps.z, fb.minZ, fb.maxZ);
+          const dx = ps.x - cx, dz = ps.z - cz;
+          const dSq = dx * dx + dz * dz;
+          if (dSq < r * r) {
+            if (dSq > 0.00001) {
+              const d = Math.sqrt(dSq);
+              ps.x += (dx / d) * (r - d);
+              ps.z += (dz / d) * (r - d);
+            } else {
+              const dL = Math.abs(ps.x - fb.minX), dR = Math.abs(fb.maxX - ps.x);
+              const dT = Math.abs(ps.z - fb.minZ), dB = Math.abs(fb.maxZ - ps.z);
+              const m = Math.min(dL, dR, dT, dB);
+              if (m === dL) ps.x = fb.minX - r;
+              else if (m === dR) ps.x = fb.maxX + r;
+              else if (m === dT) ps.z = fb.minZ - r;
+              else ps.z = fb.maxZ + r;
+            }
           }
         }
       }
@@ -7315,6 +8781,20 @@ class ViceCity3DApp {
       ctx.fillText(sr.num, sx, sy + 2.6);
     });
 
+    // Custom Map Pin & Active Side-Mission Objective Marker on Full Map
+    if (this.customWaypoint) {
+      const [wx, wy] = toMap(this.customWaypoint.x, this.customWaypoint.z);
+      ctx.fillStyle = '#FFD36B';
+      ctx.beginPath(); ctx.arc(wx, wy, 7.2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#FF2E88'; ctx.lineWidth = 2.0; ctx.stroke();
+    }
+    if (this.activeSideMission && this.activeSideMission.target) {
+      const [mx, my] = toMap(this.activeSideMission.target.x, this.activeSideMission.target.z);
+      ctx.fillStyle = '#21E6D1';
+      ctx.beginPath(); ctx.arc(mx, my, 7.2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 2.0; ctx.stroke();
+    }
+
     // Parked Supercar Marker when roaming on foot or flying
     if (this.mode !== 'car') {
       const [cx, cy] = toMap(cs.x, cs.z);
@@ -7376,7 +8856,7 @@ class ViceCity3DApp {
     const cs = this.carState;
     const act = this.mode === 'plane' && this.activePlane
       ? this.activePlane
-      : ((this.mode === 'foot' || this.mode === 'ride') ? this.playerState : cs);
+      : (this.mode === 'boat' && this.activeBoat ? this.activeBoat : ((this.mode === 'foot' || this.mode === 'ride') ? this.playerState : cs));
     const inViceCore = isInCoreViceFootprint(act.x, act.z) || isInLegacyMountains(act.x, act.z);
     const scale = this.mode === 'plane' ? 0.14 : (this.mode === 'foot' ? 0.68 : (inViceCore ? 0.46 : 0.28));
     const toRadar = (wx, wz) => [w * 0.5 + (wx - act.x) * scale, h * 0.5 + (wz - act.z) * scale];
@@ -7710,6 +9190,32 @@ class ViceCity3DApp {
         ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.2; ctx.stroke();
       }
     }
+    if (this.boats) {
+      for (let i = 0; i < this.boats.length; i++) {
+        const b = this.boats[i];
+        if (this.mode === 'boat' && this.activeBoat === b) continue;
+        const [bx, by] = toRadar(b.x, b.z);
+        if (bx < 5 || bx > w - 5 || by < 5 || by > h - 5) continue;
+        ctx.fillStyle = '#21E6D1';
+        ctx.beginPath(); ctx.arc(bx, by, 3.8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (this.customWaypoint) {
+      const [wx, wy] = toRadar(this.customWaypoint.x, this.customWaypoint.z);
+      const clx = THREE.MathUtils.clamp(wx, 9, w - 9);
+      const cly = THREE.MathUtils.clamp(wy, 9, h - 9);
+      ctx.fillStyle = '#FFD36B';
+      ctx.beginPath(); ctx.arc(clx, cly, 5.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#FF2E88'; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+    if (this.activeSideMission && this.activeSideMission.target) {
+      const [mx, my] = toRadar(this.activeSideMission.target.x, this.activeSideMission.target.z);
+      const clx = THREE.MathUtils.clamp(mx, 9, w - 9);
+      const cly = THREE.MathUtils.clamp(my, 9, h - 9);
+      ctx.fillStyle = '#21E6D1';
+      ctx.beginPath(); ctx.arc(clx, cly, 5.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.4; ctx.stroke();
+    }
     // Flashing Red/Blue VCPD Police Cruiser Blips on Minimap Radar!
     if (this.policeUnits && this.policeUnits.length > 0) {
       const flashBlue = Math.floor(performance.now() / 180) % 2 === 0;
@@ -7756,20 +9262,6 @@ class ViceCity3DApp {
   }
 
   bindEvents() {
-    this.el.beginBtn.addEventListener('click', () => {
-      this.started = true;
-      this.el.startOv.hidden = true;
-      if (!this.audio.enabled) {
-        this.audio.setRadioInCar(this.isInCar());
-        this.audio.setEnabled(true);
-        this.el.audioBtn.textContent = 'Audio: On';
-        this.el.audioBtn.classList.add('on');
-        this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
-        this.updateRadioHUD();
-      }
-      this.syncReticleVisibility();
-      this.flashLockTip();
-    });
     this.el.closeBtn.addEventListener('click', () => this.close());
     this.el.mClose.addEventListener('click', () => {
       this.el.modal.hidden = true;
@@ -7859,11 +9351,27 @@ class ViceCity3DApp {
         btn.addEventListener('click', () => this.takeTaxiRide(btn.dataset.taxiDest, Number(btn.dataset.taxiFare || 25)));
       });
     }
-    // Main Website Car Radio Interactions (Tap LCD to fold/open, Pwr/Vol knob drag+click, Tune knob & 5 presets)
+    // Main Website Car Radio Interactions (Tap LCD to fold/open, explicit ON/OFF button, Pwr/Vol knob, Tune knob & 5 presets)
     this.el.radLcd.addEventListener('click', (e) => {
       e.stopPropagation();
       this.el.radioDeck.classList.toggle('open');
     });
+    if (this.el.radPwr) {
+      this.el.radPwr.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleRadioPower();
+      });
+    }
+    if (this.el.shopClose) this.el.shopClose.addEventListener('click', () => this.closeShopMenu(false));
+    if (this.el.shopDone) this.el.shopDone.addEventListener('click', () => this.closeShopMenu(true));
+    if (this.el.tvClose) this.el.tvClose.addEventListener('click', () => this.closeTvModal());
+    if (this.el.tvChBtns) {
+      this.el.tvChBtns.forEach((btn, i) => btn.addEventListener('click', () => this.setTvChannel(i)));
+    }
+    if (this.el.danceMoveBtns) {
+      this.el.danceMoveBtns.forEach((btn, i) => btn.addEventListener('click', () => this.setDanceStyle(i)));
+    }
+    if (this.el.danceStop) this.el.danceStop.addEventListener('click', () => this.stopDancing());
     this.el.radTune.addEventListener('click', (e) => { e.stopPropagation(); this.cycleRadio(1); });
     let radWheelT = 0;
     this.el.radTune.addEventListener('wheel', (e) => {
@@ -8031,20 +9539,34 @@ class ViceCity3DApp {
       const rect = this.el.fullMapCanvas.getBoundingClientRect();
       const u = THREE.MathUtils.clamp((e.clientX - rect.left) / rect.width, 0.02, 0.98);
       const v = THREE.MathUtils.clamp((e.clientY - rect.top) / rect.height, 0.02, 0.98);
-      const wx = LEONIDA_PROJ.minX + u * (LEONIDA_PROJ.maxX - LEONIDA_PROJ.minX);
-      const wz = LEONIDA_PROJ.minZ + v * (LEONIDA_PROJ.maxZ - LEONIDA_PROJ.minZ);
+      const wx = THREE.MathUtils.clamp(LEONIDA_PROJ.minX + u * (LEONIDA_PROJ.maxX - LEONIDA_PROJ.minX), LEONIDA_PROJ.minX + 30, LEONIDA_PROJ.maxX - 30);
+      const wz = THREE.MathUtils.clamp(LEONIDA_PROJ.minZ + v * (LEONIDA_PROJ.maxZ - LEONIDA_PROJ.minZ), LEONIDA_PROJ.minZ + 30, LEONIDA_PROJ.maxZ - 30);
       const zInfo = getLeonidaZone(wx, wz);
+      this.customWaypoint = { x: wx, z: wz, label: zInfo.street || 'Custom GPS Pin' };
       this.started = true; this.el.startOv.hidden = true;
       this.closeFullMap();
       this.planAutopilotTo({
         id: 'custom',
         label: zInfo.street || 'Leonida Pin',
         zone: zInfo.zone || 'State of Leonida',
-        x: THREE.MathUtils.clamp(wx, LEONIDA_PROJ.minX + 30, LEONIDA_PROJ.maxX - 30),
-        z: THREE.MathUtils.clamp(wz, LEONIDA_PROJ.minZ + 30, LEONIDA_PROJ.maxZ - 30),
+        x: wx,
+        z: wz,
         yaw: 0
       });
+      if (this.audio) this.audio.phoneChime();
     });
+
+    if (this.el.phoneBtn) this.el.phoneBtn.addEventListener('click', () => this.togglePhone());
+    if (this.el.phoneClose) this.el.phoneClose.addEventListener('click', () => this.togglePhone(false));
+    if (this.el.phoneHome) this.el.phoneHome.addEventListener('click', () => this.renderPhoneScreen('home'));
+    if (this.el.missionAbort) this.el.missionAbort.addEventListener('click', () => this.abortSideMission());
+    if (this.el.gfxBtn) {
+      this.el.gfxBtn.addEventListener('click', () => {
+        const order = ['high', 'med', 'low'];
+        const next = order[(order.indexOf(this.graphicsPreset) + 1) % order.length];
+        this.applyGraphicsPreset(next, true);
+      });
+    }
 
     this.el.audioBtn.addEventListener('click', () => {
       const next = !this.audio.enabled;
@@ -8078,6 +9600,8 @@ class ViceCity3DApp {
       this.pointerLocked = document.pointerLockElement === this.el.mount;
       if (this.pointerLocked && this.el.uiCursor) {
         this.el.uiCursor.classList.remove('on');
+      } else if (!this.pointerLocked && this.phoneOpen && this.el.uiCursor) {
+        this.el.uiCursor.classList.add('on');
       }
       if (this.el.lockTip && this.pointerLocked) {
         this.el.lockTip.classList.remove('on');
@@ -8086,20 +9610,28 @@ class ViceCity3DApp {
     });
 
     // Look-Through Camera Pointer Lock + LMB Fire (On-Foot Weapons AND Car Drive-By Uzi!)
+    window.addEventListener('pointerdown', () => {
+      if (this.isOpen && this.audio) this.audio.resumeUnlockedAmbient();
+    }, { passive: true });
+    window.addEventListener('keydown', () => {
+      if (this.isOpen && this.audio) this.audio.resumeUnlockedAmbient();
+    }, { passive: true });
     this.el.mount.addEventListener('pointerdown', (e) => {
       if (e.pointerType !== 'mouse') {
         this.dragging = true;
         this.lastPtrX = e.clientX; this.lastPtrY = e.clientY;
-      } else if (e.button === 0 && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen) {
+      } else if (e.button === 0 && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.activeShop && !this.tvOpen && !this.phoneOpen && this.sleepAnimTimer <= 0) {
         if (!this.pointerLocked) {
           this.requestPointerLockSafe();
         }
-        this.fireWeapon();
-        this.fireHeld = true;
+        if (!this.isDancing) {
+          this.fireWeapon();
+          this.fireHeld = true;
+        }
       }
     });
     this.el.mount.addEventListener('contextmenu', (e) => {
-      if (this.mode === 'foot') {
+      if (this.mode === 'foot' && !this.activeShop && !this.tvOpen && !this.isDancing) {
         e.preventDefault();
         this.triggerMeleeAttack('kick');
       }
@@ -8128,7 +9660,7 @@ class ViceCity3DApp {
         // 1. Pointer-Locked 360° Free-Look (Uses raw hardware movementX/Y, zero UI cursor!)
         if (this.pointerLocked) {
           if (this.el.uiCursor) this.el.uiCursor.classList.remove('on');
-          if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen) {
+          if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.activeShop && !this.tvOpen && !this.phoneOpen) {
             const dx = THREE.MathUtils.clamp(e.movementX || 0, -90, 90);
             const dy = THREE.MathUtils.clamp(e.movementY || 0, -90, 90);
             if (dx !== 0 || dy !== 0) this.applyHoverLook(dx, dy);
@@ -8137,8 +9669,10 @@ class ViceCity3DApp {
         }
 
         // 2. Unlocked Mode: Custom Vice Neon UI Pointer for HUD/Modals & Look-Through Hover-Look on 3D Canvas
+        this.lastClientX = e.clientX;
+        this.lastClientY = e.clientY;
         const uiCursor = this.el.uiCursor;
-        const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen;
+        const playing = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.activeShop && !this.tvOpen && !this.phoneOpen && this.sleepAnimTimer <= 0;
         const targetEl = e.target instanceof Element ? e.target : null;
         const overMount = Boolean(targetEl && targetEl.closest('[data-mount]'));
         if (uiCursor) {
@@ -8199,7 +9733,11 @@ class ViceCity3DApp {
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (this.weaponWheelOpen) this.closeWeaponWheel(false);
+        if (this.phoneOpen) this.togglePhone(false);
+        else if (this.weaponWheelOpen) this.closeWeaponWheel(false);
+        else if (this.activeShop) this.closeShopMenu(false);
+        else if (this.tvOpen) this.closeTvModal();
+        else if (this.isDancing) this.stopDancing();
         else if (this.taxiModalOpen) this.closeTaxiModal();
         else if (this.activeDialogue) this.closeNpcDialogue();
         else if (this.miniGameHubOpen) this.closeMiniGameHub();
@@ -8209,6 +9747,20 @@ class ViceCity3DApp {
         else this.close();
         return;
       }
+      if (e.key === 'i' || e.key === 'I') {
+        if (!this.activeShop && !this.tvOpen && !this.fullMapOpen && !this.projectsHubOpen && this.el.modal.hidden) {
+          e.preventDefault();
+          this.togglePhone();
+          return;
+        }
+      }
+      if (this.phoneOpen) return;
+      if (this.activeShop) return;
+      if (this.tvOpen) {
+        if (e.key >= '1' && e.key <= '4') { e.preventDefault(); this.setTvChannel(Number(e.key) - 1); }
+        return;
+      }
+      if (this.sleepAnimTimer > 0) return;
       if (e.key === 'Tab') {
         e.preventDefault();
         if (!e.repeat && !this.weaponWheelOpen) this.openWeaponWheel(true);
@@ -8262,8 +9814,37 @@ class ViceCity3DApp {
           return;
         }
         if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen) {
+          if (this.mode === 'car') {
+            const nearDriveShop = this.findNearestShopZone();
+            if (nearDriveShop) {
+              e.preventDefault();
+              this.openShopMenu(nearDriveShop.kind, nearDriveShop.label);
+              return;
+            }
+          }
           if (this.mode === 'foot') {
-            // Check if hailing a nearby Yellow Kaufman Cab Taxi!
+            if (this.isDancing) {
+              e.preventDefault();
+              this.stopDancing();
+              return;
+            }
+            const nearShop = this.findNearestShopZone();
+            if (nearShop) {
+              e.preventDefault();
+              this.openShopMenu(nearShop.kind, nearShop.label);
+              return;
+            }
+            const nearSafe = this.findNearestSafehouseStation();
+            if (nearSafe) {
+              e.preventDefault();
+              this.interactSafehouseStation(nearSafe);
+              return;
+            }
+            if (this.isInsideMalibuDanceZone()) {
+              e.preventDefault();
+              this.startDancing(0);
+              return;
+            }
             const nearVeh = this.findNearestVehicleTarget(6.2);
             if (nearVeh && ((nearVeh.vehicle && nearVeh.vehicle.isTaxi) || (nearVeh.mesh && nearVeh.mesh.userData && nearVeh.mesh.userData.carType === 'taxi'))) {
               e.preventDefault();
@@ -8285,13 +9866,34 @@ class ViceCity3DApp {
         return;
       }
       if (e.key === 'r' || e.key === 'R') {
-        if (this.isInCar()) { e.preventDefault(); this.cycleRadio(1); }
+        if (this.isInCar()) {
+          e.preventDefault();
+          if (e.shiftKey) this.toggleRadioPower();
+          else this.cycleRadio(1);
+        }
+        return;
+      }
+      if (e.key === 'o' || e.key === 'O') {
+        if (this.isInCar()) {
+          e.preventDefault();
+          this.toggleRadioPower();
+          return;
+        }
+      }
+      if (this.isInCar() && e.key >= '1' && e.key <= '5' && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen) {
+        e.preventDefault();
+        this.selectRadioStation(Number(e.key) - 1);
         return;
       }
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); this.setTimeOfDay(this.timeIdx + 1); return; }
       if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); this.setWeather(this.weatherIdx + 1); return; }
 
       if (this.mode === 'foot') {
+        if (this.isDancing && e.key >= '1' && e.key <= '3') {
+          e.preventDefault();
+          this.setDanceStyle(Number(e.key) - 1);
+          return;
+        }
         if (e.key >= '1' && e.key <= '7') {
           const w = WEAPONS[Number(e.key) - 1];
           if (w) this.setWeapon(w.id);
@@ -8343,6 +9945,7 @@ class ViceCity3DApp {
       if (e.key === ' ') { e.preventDefault(); this.keys.drift = true; drivingKey = true; }
       if (k === 'q' || e.key === 'Control') { this.keys.dive = true; }
       if (drivingKey) {
+        if (this.isDancing) this.stopDancing();
         this.cancelAutopilot();
         if (!this.started) {
           this.started = true;
@@ -8377,6 +9980,7 @@ class ViceCity3DApp {
     this.paintIdx = idx % PAINTS.length;
     this.car.applyPaint(this.paintIdx);
     this.el.paintBtns.forEach((b, i) => b.classList.toggle('active', i === this.paintIdx));
+    this.savePersistentSave();
   }
 
   cycleCamera() {
@@ -8531,11 +10135,44 @@ class ViceCity3DApp {
   open() {
     if (this.isOpen) return;
     this.isOpen = true;
+    this.started = true;
+    this.snapCameraNext = true;
     document.body.classList.add('vice-game-open');
     try { if (typeof window.__stopMainWebsiteRadio === 'function') window.__stopMainWebsiteRadio(); } catch (_) {}
     try { window.dispatchEvent(new CustomEvent('vice:game-open')); } catch (_) {}
     this.el.stage.classList.add('open');
     document.body.style.overflow = 'hidden';
+    // Always start the game with our character seated inside the car
+    const isSeatedInCar = this.mode === 'car' && !(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+    if (!isSeatedInCar) {
+      if (this.mode === 'ride') this.exitPierRide();
+      if (this.mode === 'plane') this.activePlane = null;
+      if (this.mode === 'boat') this.activeBoat = null;
+      this.activeVehicle = this.heroVehicle;
+      this.mode = 'car';
+      this.playerState.x = this.carState.x;
+      this.playerState.y = this.carState.y;
+      this.playerState.z = this.carState.z;
+    }
+    this.setMode('car');
+    try {
+      this.audio.setRadioInCar(true);
+      this.audio.radioPower = true;
+      if (!this.audio.enabled) {
+        this.audio.setEnabled(true);
+        this.el.audioBtn.textContent = 'Audio: On';
+        this.el.audioBtn.classList.add('on');
+        this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
+      }
+      const rjClip = this.audio.playSpecialIntroRJ();
+      if (rjClip && this.el && this.el.combo) {
+        this.el.combo.innerHTML = `${rjClip.short} · ${rjClip.host.toUpperCase()} <span>CAR RADIO</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 4.2;
+      }
+      this.updateRadioHUD();
+    } catch (_) {}
+    this.syncReticleVisibility();
     this.onResize();
     this.clock.getDelta();
     this.startLoop();
@@ -8544,6 +10181,11 @@ class ViceCity3DApp {
   close() {
     if (!this.isOpen) return;
     this.closeWeaponWheel(false);
+    this.closeShopMenu(false);
+    this.closeTvModal();
+    this.stopDancing();
+    this.sleepAnimTimer = 0;
+    if (this.el && this.el.sleepOv) this.el.sleepOv.classList.remove('on');
     this.isOpen = false;
     this.releasePointerLock();
     if (this.el.uiCursor) this.el.uiCursor.classList.remove('on');
@@ -8551,6 +10193,7 @@ class ViceCity3DApp {
     this.el.stage.classList.remove('open');
     this.el.modal.hidden = true;
     document.body.style.overflow = '';
+    if (typeof this.audio.stopPlaneSequence === 'function') this.audio.stopPlaneSequence();
     this.audio.setEnabled(false);
     this.el.audioBtn.textContent = 'Audio: Off';
     this.el.audioBtn.classList.remove('on');
@@ -9121,7 +10764,7 @@ class ViceCity3DApp {
     if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (_) {} }
     this.closeNpcDialogue();
     this.closeMiniGameHub();
-    if (this.fullMapOpen) this.toggleFullMap(false);
+    if (this.fullMapOpen) this.closeFullMap();
     this.taxiModalOpen = true;
     if (this.el.taxiOv) this.el.taxiOv.hidden = false;
     this.syncReticleVisibility();
@@ -9655,17 +11298,90 @@ class ViceCity3DApp {
           t.mesh.material.opacity = 0.50 + 0.36 * (0.5 + 0.5 * Math.sin(elapsed * 5.4 + t.phase));
         }
       }
+      if (m.danceSpotRing) {
+        const s = 1.0 + Math.sin(elapsed * 4.4) * 0.09;
+        m.danceSpotRing.scale.set(s, s, 1);
+      }
       if (m.dancers) {
         for (let i = 0; i < m.dancers.length; i++) {
           const d = m.dancers[i];
-          const b = Math.sin(elapsed * 6.4 + d.phase);
-          d.group.position.y = d.baseY + Math.abs(b) * (d.isDJ ? 0.06 : 0.12);
-          d.group.rotation.y += (d.isDJ ? Math.sin(elapsed * 2.2 + d.phase) * 0.22 * dt : Math.sin(elapsed * 1.8 + d.phase) * 0.65 * dt);
-          d.armL.rotation.z = d.isDJ ? 0.28 : 0.45 + b * 0.55;
-          d.armR.rotation.z = d.isDJ ? -0.28 : -0.45 - b * 0.55;
-          d.armL.rotation.x = d.isDJ ? -0.82 + b * 0.25 : b * 0.38;
-          d.armR.rotation.x = d.isDJ ? -0.82 - b * 0.25 : -b * 0.38;
+          const b = Math.sin(elapsed * 6.8 + d.phase);
+          const b2 = Math.cos(elapsed * 3.4 + d.phase);
+          const style = d.style || 0;
+          d.group.position.y = d.baseY + Math.abs(b) * (d.isDJ ? 0.05 : 0.14);
+          if (d.isDJ) {
+            d.group.rotation.y = (d.baseYaw || 0) + Math.sin(elapsed * 2.1 + d.phase) * 0.18;
+            d.armL.rotation.set(-0.78 + b * 0.25, 0, 0.26);
+            d.armR.rotation.set(-0.78 - b * 0.25, 0, -0.26);
+          } else {
+            d.group.rotation.y = (d.baseYaw || 0) + Math.sin(elapsed * 1.9 + d.phase) * 0.55;
+            if (d.upper) {
+              d.upper.rotation.z = b2 * 0.14;
+              d.upper.rotation.y = b * 0.22;
+            }
+            if (d.head) {
+              d.head.rotation.x = Math.sin(elapsed * 6.8 + d.phase) * 0.14;
+              d.head.rotation.y = -b2 * 0.18;
+            }
+            if (style === 0) {
+              // Classic 80s Disco Point
+              d.armR.rotation.set(1.55 + b * 0.72, 0, -0.45 - b * 0.35);
+              d.armL.rotation.set(0.35 - b * 0.35, 0, 0.52);
+            } else if (style === 1) {
+              // Hands-Up Rave Wave
+              d.armL.rotation.set(2.35 + b * 0.28, 0, 0.42 + b2 * 0.22);
+              d.armR.rotation.set(2.35 - b * 0.28, 0, -0.42 + b2 * 0.22);
+            } else if (style === 2) {
+              // Two-Step Groove Pump
+              d.armL.rotation.set(0.95 + b * 0.65, 0, 0.36);
+              d.armR.rotation.set(0.95 - b * 0.65, 0, -0.36);
+            } else {
+              // Side-to-Side Club Shimmy
+              d.armL.rotation.set(1.15, 0, 0.85 + b * 0.48);
+              d.armR.rotation.set(1.15, 0, -0.85 - b * 0.48);
+            }
+            if (d.legL) d.legL.rotation.x = b * 0.36;
+            if (d.legR) d.legR.rotation.x = -b * 0.36;
+          }
         }
+      }
+    }
+    // 1b. Spinning Helical Barber Poles, Shop Floor Rings & Ocean View Safehouse Animations
+    if (this.barberPoles && this.barberPoles.length) {
+      for (let i = 0; i < this.barberPoles.length; i++) {
+        this.barberPoles[i].rotation.y += dt * 2.8;
+      }
+    }
+    if (this.shopInteractZones) {
+      for (let i = 0; i < this.shopInteractZones.length; i++) {
+        const rg = this.shopInteractZones[i].ring;
+        if (rg) {
+          const s = 1.0 + Math.sin(elapsed * 3.8 + i) * 0.08;
+          rg.scale.set(s, s, 1);
+        }
+      }
+    }
+    if (this.oceanViewSafehouse) {
+      if (this.oceanViewSafehouse.tvScreenMat) {
+        const flick = 0.72 + Math.sin(elapsed * 9.0) * 0.14 + Math.cos(elapsed * 21.0) * 0.06;
+        this.oceanViewSafehouse.tvScreenMat.emissiveIntensity = flick;
+      }
+      if (this.oceanViewSafehouse.stationRings) {
+        for (let i = 0; i < this.oceanViewSafehouse.stationRings.length; i++) {
+          const sr = this.oceanViewSafehouse.stationRings[i];
+          const s = 1.0 + Math.sin(elapsed * 3.6 + i * 1.1) * 0.08;
+          sr.scale.set(s, s, 1);
+        }
+      }
+    }
+    if (this.tvOpen) {
+      this.drawRetroTvScreen(elapsed);
+    }
+    if (this.sleepAnimTimer > 0) {
+      this.sleepAnimTimer = Math.max(0, this.sleepAnimTimer - dt);
+      if (this.sleepAnimTimer <= 0) {
+        if (this.el && this.el.sleepOv) this.el.sleepOv.classList.remove('on');
+        this.syncReticleVisibility();
       }
     }
     // 2. Standalone Huge 2-Story North Point Mall Animations (Spinning Raffle Infernus, Fountain Spray & Shoppers!)
@@ -9701,7 +11417,12 @@ class ViceCity3DApp {
   }
 
   update(dt, elapsed) {
-    // GTA 5 Weapon Wheel bullet-time slow-motion + cheat speed modifiers
+    // GTA 5 Weapon Wheel bullet-time slow-motion + Stunt Jump Slow-Mo + cheat speed modifiers
+    if (this.stuntSlowMo > 0) {
+      this.stuntSlowMo = Math.max(0, this.stuntSlowMo - dt);
+      if (this.carState.airborne) dt *= 0.44;
+      else this.stuntSlowMo = 0;
+    }
     if (this.weaponWheelOpen) dt *= 0.22;
     if (this.cheats.slowMo) dt *= 0.52;
     else if (this.cheats.fastMo) dt *= 1.55;
@@ -9715,7 +11436,6 @@ class ViceCity3DApp {
       this.autoWeatherTimer -= dt;
       if (this.autoWeatherTimer <= 0) {
         const pool = [0, 1, 2, 3].filter((w) => w !== this.weatherIdx);
-        // Slightly favor clear/mist while regularly cycling into tropical rain & storms
         const nextW = (this.weatherIdx >= 2 && Math.random() < 0.58)
           ? (Math.random() < 0.55 ? 0 : 1)
           : pool[Math.floor(Math.random() * pool.length)];
@@ -9738,11 +11458,36 @@ class ViceCity3DApp {
     const isFoot = this.mode === 'foot';
     const isRide = this.mode === 'ride' && Boolean(this.activeRide);
     const isPlane = this.mode === 'plane' && Boolean(this.activePlane);
-    const act = isPlane ? this.activePlane : ((isFoot || isRide) ? ps : cs);
+    const isBoat = this.mode === 'boat' && Boolean(this.activeBoat);
+    const act = isPlane ? this.activePlane : (isBoat ? this.activeBoat : ((isFoot || isRide) ? ps : cs));
 
     this.updatePolice(dt, elapsed);
     this.updateWildlife(dt, elapsed);
     this.updateMalibuClub(dt, elapsed);
+    this.updateBoats(dt, elapsed);
+    this.updateSideMissions(dt, elapsed, act);
+    this.updateSkyRings(dt, elapsed, act);
+    if (this.ammuNation && this.ammuNation.rangeTargets) {
+      for (let ri = 0; ri < this.ammuNation.rangeTargets.length; ri++) {
+        const rt = this.ammuNation.rangeTargets[ri];
+        rt.group.position.z = rt.baseZ + Math.sin(elapsed * 2.1 + rt.phase) * 1.15;
+        if (rt.hitCooldown > 0) {
+          rt.hitCooldown = Math.max(0, rt.hitCooldown - dt);
+          if (rt.hitCooldown <= 0) rt.group.rotation.x = 0;
+        }
+      }
+    }
+    // Interior / Street footsteps while walking on foot
+    if (isFoot && ps.grounded && ps.speed > 1.2 && !this.isDancing) {
+      this._footstepAcc = (this._footstepAcc || 0) + dt * ps.speed * 0.48;
+      if (this._footstepAcc >= 1.0) {
+        this._footstepAcc = 0;
+        const isIndoor = (ps.x >= -84 && ps.x <= -16 && ps.z >= -1046 && ps.z <= -990)
+          || (ps.x >= -33 && ps.x <= -16 && ps.z >= -60 && ps.z <= -36)
+          || (ps.x >= -79 && ps.x <= -57 && ps.z >= -272 && ps.z <= -92);
+        if (this.audio && typeof this.audio.footstep === 'function') this.audio.footstep(isIndoor);
+      }
+    }
     if (this.barricadeBeacons && this.barricadeBeacons.length > 0) {
       const blinkOn = (elapsed % 1.1) < 0.52;
       for (let bi = 0; bi < this.barricadeBeacons.length; bi++) {
@@ -9849,6 +11594,19 @@ class ViceCity3DApp {
       if (this.rainLines.mesh.material) {
         this.rainLines.mesh.material.opacity = THREE.MathUtils.clamp(this.curRainLevel * 0.55, 0.05, 0.58);
       }
+    }
+    // Wet Road Reflections & Raindrop Lens Streaks!
+    if (this.roadMaterials && this.frameCount % 4 === 0) {
+      const wetRough = THREE.MathUtils.lerp(0.56, 0.22, this.curRainLevel);
+      const wetEnv = THREE.MathUtils.lerp(0.96, 1.55, this.curRainLevel);
+      for (let rm = 0; rm < this.roadMaterials.length; rm++) {
+        this.roadMaterials[rm].roughness = wetRough;
+        this.roadMaterials[rm].envMapIntensity = wetEnv;
+      }
+    }
+    if (this.el && this.el.rainScreen) {
+      const rainOp = this.curRainLevel > 0.14 ? (this.curRainLevel * 0.34).toFixed(2) : '0';
+      if (this.el.rainScreen.style.opacity !== rainOp) this.el.rainScreen.style.opacity = rainOp;
     }
 
     const envLerp = Math.min(1, dt * 3.5);
@@ -10003,7 +11761,7 @@ class ViceCity3DApp {
 
     // 3D Falling Rain Streaks (Single Draw Call anchored around active actor!)
     if (this.rainLines && this.rainLines.mesh.visible) {
-      this.rainLines.mesh.position.set(act.x, 0, act.z);
+      this.rainLines.mesh.position.set(act.x, Math.max(0, (act.y || 0) - 4), act.z);
       const pos = this.rainLines.positions;
       const spds = this.rainLines.speeds;
       const isStorm = this.weatherIdx === 3;
@@ -10185,86 +11943,112 @@ class ViceCity3DApp {
         }
       }
     }
-    // Update Flyable Airplanes (idle prop/turbine spin, active flight aerodynamics, or abandoned return!)
+    // Update Flyable Airplanes & VTOL Helicopters!
     if (this.flyablePlanes) {
-      const canFly = isPlane && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen;
+      const canFly = isPlane && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.phoneOpen;
       for (let i = 0; i < this.flyablePlanes.length; i++) {
         const pl = this.flyablePlanes[i];
         if (isPlane && this.activePlane === pl) {
-          const boost = canFly && this.keys.nitro;
-          if (canFly && this.keys.up) pl.throttle = Math.min(1.0, pl.throttle + dt * 0.58);
-          else if (canFly && this.keys.down) pl.throttle = Math.max(0.0, pl.throttle - dt * 0.72);
-          else if (pl.y > 2.0) pl.throttle = THREE.MathUtils.damp(pl.throttle, 0.58, 0.45, dt);
-          else pl.throttle = THREE.MathUtils.damp(pl.throttle, 0.0, 0.9, dt);
+          if (pl.isHeli) {
+            // True VTOL Helicopter Flight (Hover, Ascend [SPACE], Descend [Q/SHIFT], Forward/Back [W/S], Yaw [A/D])
+            let thrustIn = 0, yawIn = 0, vertIn = 0;
+            if (canFly && this.keys.up) thrustIn += 1;
+            if (canFly && this.keys.down) thrustIn -= 0.72;
+            if (canFly && this.keys.left) yawIn += 1;
+            if (canFly && this.keys.right) yawIn -= 1;
+            if (canFly && this.keys.drift) vertIn += 1;
+            if (canFly && (this.keys.dive || this.keys.nitro)) vertIn -= 1;
 
-          const maxSpd = boost ? pl.topSpeed * 1.18 : pl.topSpeed;
-          const targetSpd = pl.throttle * maxSpd;
-          const accelRate = pl.throttle > 0.05 ? 1.15 : (pl.y < 0.8 ? 1.8 : 0.42);
-          pl.speed = THREE.MathUtils.damp(pl.speed, targetSpd, accelRate, dt);
-          if (canFly && this.keys.down && pl.y < 0.8) pl.speed = Math.max(0, pl.speed - 28 * dt);
+            const hGroundY = Math.max(0.04, this.getSurfaceY(pl.x, pl.z, false));
+            const airborneH = pl.y > hGroundY + 0.35;
+            pl.throttle = THREE.MathUtils.damp(pl.throttle, airborneH || vertIn > 0 ? (0.62 + Math.max(0, vertIn) * 0.38) : 0.2, 3.5, dt);
+            pl.yaw += yawIn * 1.55 * dt;
+            const targetSpdH = airborneH ? thrustIn * pl.topSpeed : 0;
+            pl.speed = THREE.MathUtils.damp(pl.speed, targetSpdH, 2.4, dt);
+            pl.pitch = THREE.MathUtils.damp(pl.pitch, airborneH ? -thrustIn * 0.24 : 0, 5.2, dt);
+            pl.roll = THREE.MathUtils.damp(pl.roll, airborneH ? yawIn * 0.34 : 0, 5.2, dt);
 
-          // Steering & Bank-to-Turn Aerodynamics
-          let turnIn = 0;
-          if (canFly && this.keys.left) turnIn += 1;
-          if (canFly && this.keys.right) turnIn -= 1;
+            const hFwdX = -Math.sin(pl.yaw), hFwdZ = -Math.cos(pl.yaw);
+            pl.x += hFwdX * pl.speed * dt;
+            pl.z += hFwdZ * pl.speed * dt;
+            pl.y = THREE.MathUtils.clamp(pl.y + vertIn * 15.5 * dt, hGroundY, 260);
+            if (pl.y <= hGroundY + 0.04) {
+              pl.y = hGroundY;
+              pl.speed = THREE.MathUtils.damp(pl.speed, 0, 6, dt);
+            }
+            if (this.audio && typeof this.audio.setHeliRotor === 'function') {
+              this.audio.setHeliRotor(true, THREE.MathUtils.clamp(pl.throttle + Math.abs(pl.speed) / 80, 0.25, 1.0));
+            }
+          } else {
+            const boost = canFly && this.keys.nitro;
+            if (canFly && this.keys.up) pl.throttle = Math.min(1.0, pl.throttle + dt * 0.58);
+            else if (canFly && this.keys.down) pl.throttle = Math.max(0.0, pl.throttle - dt * 0.72);
+            else if (pl.y > 2.0) pl.throttle = THREE.MathUtils.damp(pl.throttle, 0.58, 0.45, dt);
+            else pl.throttle = THREE.MathUtils.damp(pl.throttle, 0.0, 0.9, dt);
 
-          const airborn = pl.y > 0.6;
-          const targetRoll = airborn ? turnIn * 0.62 : 0;
-          pl.roll = THREE.MathUtils.damp(pl.roll, targetRoll, 4.8, dt);
+            const maxSpd = boost ? pl.topSpeed * 1.18 : pl.topSpeed;
+            const targetSpd = pl.throttle * maxSpd;
+            const accelRate = pl.throttle > 0.05 ? 1.15 : (pl.y < 0.8 ? 1.8 : 0.42);
+            pl.speed = THREE.MathUtils.damp(pl.speed, targetSpd, accelRate, dt);
+            if (canFly && this.keys.down && pl.y < 0.8) pl.speed = Math.max(0, pl.speed - 28 * dt);
 
-          if (airborn) {
-            pl.yaw += pl.roll * 1.28 * dt;
-          } else if (pl.speed > 1.2) {
-            pl.yaw += turnIn * Math.min(1, pl.speed / 12) * 1.45 * dt;
-          }
+            let turnIn = 0;
+            if (canFly && this.keys.left) turnIn += 1;
+            if (canFly && this.keys.right) turnIn -= 1;
 
-          // Pitch Control (SPACE = Pull Up / Climb, Q/Ctrl = Dive, S airborne = gentle descent)
-          let targetPitch = 0;
-          if (canFly && this.keys.drift) targetPitch = 0.44;
-          else if (canFly && this.keys.dive) targetPitch = -0.36;
-          else if (airborn && canFly && this.keys.down) targetPitch = -0.22;
-          else if (!airborn && pl.speed > pl.takeoffSpeed * 1.12 && canFly && this.keys.up) targetPitch = 0.14;
-          pl.pitch = THREE.MathUtils.damp(pl.pitch, targetPitch, 4.2, dt);
+            const airborn = pl.y > 0.6;
+            const targetRoll = airborn ? turnIn * 0.62 : 0;
+            pl.roll = THREE.MathUtils.damp(pl.roll, targetRoll, 4.8, dt);
 
-          // Forward & Vertical Flight Integration
-          const cosP = Math.cos(pl.pitch);
-          const fwdX = -Math.sin(pl.yaw) * cosP;
-          const fwdZ = -Math.cos(pl.yaw) * cosP;
-          const liftRatio = THREE.MathUtils.clamp((pl.speed - pl.takeoffSpeed * 0.65) / (pl.takeoffSpeed * 0.45), 0, 1);
-          let vy = Math.sin(pl.pitch) * pl.speed * 0.78;
-          if (airborn && liftRatio < 0.85) vy -= (1 - liftRatio) * 10.5;
-          if (!airborn && (pl.speed < pl.takeoffSpeed || vy < 0)) vy = 0;
+            if (airborn) {
+              pl.yaw += pl.roll * 1.28 * dt;
+            } else if (pl.speed > 1.2) {
+              pl.yaw += turnIn * Math.min(1, pl.speed / 12) * 1.45 * dt;
+            }
 
-          const planeGroundY = Math.max(0.02, getTerrainHeight(pl.x, pl.z) + 0.04);
-          pl.x += fwdX * pl.speed * dt;
-          pl.z += fwdZ * pl.speed * dt;
-          pl.y = THREE.MathUtils.clamp(pl.y + vy * dt, planeGroundY, 340);
+            let targetPitch = 0;
+            if (canFly && this.keys.drift) targetPitch = 0.44;
+            else if (canFly && this.keys.dive) targetPitch = -0.36;
+            else if (airborn && canFly && this.keys.down) targetPitch = -0.22;
+            else if (!airborn && pl.speed > pl.takeoffSpeed * 1.12 && canFly && this.keys.up) targetPitch = 0.14;
+            pl.pitch = THREE.MathUtils.damp(pl.pitch, targetPitch, 4.2, dt);
 
-          // Smooth Touchdown Leveling
-          if (pl.y <= planeGroundY + 0.03) {
-            pl.y = planeGroundY;
-            pl.pitch = THREE.MathUtils.damp(pl.pitch, 0, 8, dt);
-            pl.roll = THREE.MathUtils.damp(pl.roll, 0, 8, dt);
-          }
+            const cosP = Math.cos(pl.pitch);
+            const fwdX = -Math.sin(pl.yaw) * cosP;
+            const fwdZ = -Math.cos(pl.yaw) * cosP;
+            const liftRatio = THREE.MathUtils.clamp((pl.speed - pl.takeoffSpeed * 0.65) / (pl.takeoffSpeed * 0.45), 0, 1);
+            let vy = Math.sin(pl.pitch) * pl.speed * 0.78;
+            if (airborn && liftRatio < 0.85) vy -= (1 - liftRatio) * 10.5;
+            if (!airborn && (pl.speed < pl.takeoffSpeed || vy < 0)) vy = 0;
 
-          // Full State of Leonida Scenic Airspace Soft Boundary Turnback (Covers all 5 Counties & Keys!)
-          if (pl.x < LEONIDA_PROJ.minX - 120 || pl.x > LEONIDA_PROJ.maxX + 120 || pl.z < LEONIDA_PROJ.minZ - 120 || pl.z > LEONIDA_PROJ.maxZ + 120) {
-            const toCenterYaw = Math.atan2(-(pl.x - (-1150)), -(pl.z - (-200)));
-            let dy = toCenterYaw - pl.yaw;
-            while (dy > Math.PI) dy -= Math.PI * 2;
-            while (dy < -Math.PI) dy += Math.PI * 2;
-            pl.yaw += Math.sign(dy) * Math.min(Math.abs(dy), dt * 1.4);
-          }
+            const planeGroundY = Math.max(0.02, getTerrainHeight(pl.x, pl.z) + 0.04);
+            pl.x += fwdX * pl.speed * dt;
+            pl.z += fwdZ * pl.speed * dt;
+            pl.y = THREE.MathUtils.clamp(pl.y + vy * dt, planeGroundY, 340);
 
-          // Subtle Wingtip Contrails / Jet Exhaust Haze at High Speed
-          if (pl.speed > 32 && Math.random() < (boost ? 0.85 : 0.42)) {
-            this.spawnParticle(
-              pl.x - fwdX * 4.5 + (Math.random() - 0.5) * 1.6,
-              pl.y + 1.4,
-              pl.z - fwdZ * 4.5 + (Math.random() - 0.5) * 1.6,
-              -fwdX * 3, 0.4, -fwdZ * 3,
-              boost ? 0xff8a2a : 0xeef6ff, 0.65, 0.55, 1.8, 0
-            );
+            if (pl.y <= planeGroundY + 0.03) {
+              pl.y = planeGroundY;
+              pl.pitch = THREE.MathUtils.damp(pl.pitch, 0, 8, dt);
+              pl.roll = THREE.MathUtils.damp(pl.roll, 0, 8, dt);
+            }
+
+            if (pl.x < LEONIDA_PROJ.minX - 120 || pl.x > LEONIDA_PROJ.maxX + 120 || pl.z < LEONIDA_PROJ.minZ - 120 || pl.z > LEONIDA_PROJ.maxZ + 120) {
+              const toCenterYaw = Math.atan2(-(pl.x - (-1150)), -(pl.z - (-200)));
+              let dy = toCenterYaw - pl.yaw;
+              while (dy > Math.PI) dy -= Math.PI * 2;
+              while (dy < -Math.PI) dy += Math.PI * 2;
+              pl.yaw += Math.sign(dy) * Math.min(Math.abs(dy), dt * 1.4);
+            }
+
+            if (pl.speed > 32 && Math.random() < (boost ? 0.85 : 0.42)) {
+              this.spawnParticle(
+                pl.x - fwdX * 4.5 + (Math.random() - 0.5) * 1.6,
+                pl.y + 1.4,
+                pl.z - fwdZ * 4.5 + (Math.random() - 0.5) * 1.6,
+                -fwdX * 3, 0.4, -fwdZ * 3,
+                boost ? 0xff8a2a : 0xeef6ff, 0.65, 0.55, 1.8, 0
+              );
+            }
           }
         } else if (pl.resetTimer > 0) {
           // Abandoned mid-air plane glides out briefly then respawns cleanly on Airport Apron!
@@ -10647,7 +12431,7 @@ class ViceCity3DApp {
         pMesh.legR.rotation.x = 1.15;
       }
     } else if (isFoot) {
-      const canAct = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && this.wastedTimer <= 0;
+      const canAct = this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && !this.activeShop && !this.tvOpen && this.sleepAnimTimer <= 0 && !this.isDancing && this.wastedTimer <= 0;
       let moveFwd = 0, moveStrafe = 0;
       if (canAct) {
         if (this.keys.up) moveFwd += 1;
@@ -10663,82 +12447,175 @@ class ViceCity3DApp {
       let mz = cfZ * moveFwd + crZ * moveStrafe;
       const mLen = Math.hypot(mx, mz);
       const sprinting = Boolean(canAct && this.keys.nitro && mLen > 0.05);
-      let hillFactor = 1.0;
-      if (mLen > 0.05) {
-        const dirX = mx / mLen, dirZ = mz / mLen;
-        const hNow = this.getSurfaceY(ps.x, ps.z, true);
-        const hNext = this.getSurfaceY(ps.x + dirX * 1.0, ps.z + dirZ * 1.0, true);
-        const uphillSlope = Math.max(0, hNext - hNow);
-        hillFactor = THREE.MathUtils.clamp(1.0 - uphillSlope * 0.24, 0.62, 1.0);
-      }
-      const targetMaxSpd = (ps.attackTimer > 0 ? 1.8 : (sprinting ? 8.6 : 4.5)) * hillFactor;
 
-      // Smooth biomechanical acceleration & deceleration (zero robotic instant start/stop!)
-      const targetVx = mLen > 0.05 ? (mx / mLen) * targetMaxSpd : 0;
-      const targetVz = mLen > 0.05 ? (mz / mLen) * targetMaxSpd : 0;
-      const velDamp = mLen > 0.05 ? 11.5 : 14.5;
-      ps.vx = THREE.MathUtils.damp(ps.vx || 0, targetVx, velDamp, dt);
-      ps.vz = THREE.MathUtils.damp(ps.vz || 0, targetVz, velDamp, dt);
-
-      const footStepDist = Math.hypot(ps.vx * dt, ps.vz * dt);
-      const footSub = footStepDist > 0.28 ? 2 : 1;
-      for (let fs = 0; fs < footSub; fs++) {
-        ps.x += (ps.vx * dt) / footSub;
-        ps.z += (ps.vz * dt) / footSub;
-        this.resolvePlayerCollisions();
-      }
-      const moveSpeed = Math.hypot(ps.vx, ps.vz);
-      ps.speed = moveSpeed;
-
+      let moveSpeed = 0;
       let yawDeltaRate = 0;
-      if (moveSpeed > 0.25 && ps.attackTimer <= 0) {
-        const targetYaw = Math.atan2(-ps.vx, -ps.vz);
-        let dy = targetYaw - ps.yaw;
-        while (dy > Math.PI) dy -= Math.PI * 2;
-        while (dy < -Math.PI) dy += Math.PI * 2;
-        const stepYaw = dy * Math.min(1, dt * 11.5);
-        ps.yaw += stepYaw;
-        yawDeltaRate = THREE.MathUtils.clamp(dy, -1.2, 1.2);
-      }
-      // Natural turn banking lean & landing knee compression
-      ps.turnLean = THREE.MathUtils.damp(ps.turnLean || 0, -yawDeltaRate * Math.min(1, moveSpeed / 6.5) * 0.16, 10, dt);
-      ps.landSquash = THREE.MathUtils.damp(ps.landSquash || 0, 0, 12, dt);
 
-      // Ground-speed-matched stride phase (zero foot-sliding!)
-      if (moveSpeed > 0.15) {
-        const cadence = sprinting ? 1.56 : 1.88;
-        ps.walkPhase += dt * moveSpeed * cadence;
+      if (ps.parachuting) {
+        // TRUE STEERABLE RAM-AIR PARAFOIL FLIGHT PHYSICS (W = Dive Faster, S = Flare/Brake, A/D = Bank & Turn!)
+        ps.paraOpenT = Math.min(1.0, (ps.paraOpenT || 0) + dt * 1.95);
+        const openEase = 1 - Math.pow(1 - ps.paraOpenT, 3);
+        const turnInput = canAct ? moveStrafe : 0;
+        const pitchInput = canAct ? moveFwd : 0; // +1 dive (W), -1 flare (S)
+
+        ps.paraSteer = THREE.MathUtils.damp(ps.paraSteer || 0, turnInput, 7.5, dt);
+        ps.paraFlare = THREE.MathUtils.damp(ps.paraFlare || 0, Math.max(0, -pitchInput), 8.0, dt);
+        ps.paraRoll = THREE.MathUtils.damp(ps.paraRoll || 0, -turnInput * 0.40, 6.5, dt);
+        ps.paraPitch = THREE.MathUtils.damp(ps.paraPitch || 0, pitchInput * 0.24, 6.5, dt);
+
+        // Smooth heading turn + gentle auto-align camera behind glide heading when user isn't actively orbiting
+        const yawStep = -turnInput * 1.72 * dt;
+        ps.yaw += yawStep;
+        if (Math.abs(turnInput) > 0.05 && (performance.now() - this.lastLookTime > 550)) {
+          let dCam = ps.yaw - this.targetOrbitYaw;
+          while (dCam > Math.PI) dCam -= Math.PI * 2;
+          while (dCam < -Math.PI) dCam += Math.PI * 2;
+          this.targetOrbitYaw += dCam * Math.min(1, dt * 2.6);
+        }
+
+        // Forward ram-air glide airspeed & controlled sink rate
+        const targetAirSpd = pitchInput > 0 ? 20.5 : (pitchInput < 0 ? 5.2 : 13.4);
+        const fx = -Math.sin(ps.yaw), fz = -Math.cos(ps.yaw);
+        const targetVx = fx * targetAirSpd;
+        const targetVz = fz * targetAirSpd;
+        ps.vx = THREE.MathUtils.damp(ps.vx || 0, targetVx, 3.8, dt);
+        ps.vz = THREE.MathUtils.damp(ps.vz || 0, targetVz, 3.8, dt);
+
+        ps.x += ps.vx * dt;
+        ps.z += ps.vz * dt;
+        this.resolvePlayerCollisions();
+        moveSpeed = Math.hypot(ps.vx, ps.vz);
+        ps.speed = moveSpeed;
+        ps.turnLean = ps.paraRoll * 0.55;
+        ps.landSquash = 0;
+
+        // Animate 7-cell parafoil inflation billow, bank roll, dive/flare pitch, wind sway & brake toggles!
+        if (this.parachuteRig) {
+          this.parachuteRig.root.visible = true;
+          const billow = ps.paraOpenT < 1 ? (1 + Math.sin(ps.paraOpenT * Math.PI) * 0.14) : 1.0;
+          const sx = THREE.MathUtils.lerp(0.14, 1.0, openEase) * billow;
+          const sy = THREE.MathUtils.lerp(0.28, 1.0, openEase);
+          const sz = THREE.MathUtils.lerp(0.18, 1.0, openEase) * billow;
+          this.parachuteRig.canopy.scale.set(sx, sy, sz);
+          this.parachuteRig.canopy.rotation.z = ps.paraRoll + Math.sin(elapsed * 2.1) * 0.035;
+          this.parachuteRig.canopy.rotation.x = -ps.paraPitch + Math.cos(elapsed * 1.7) * 0.025;
+          if (this.parachuteRig.toggleL && this.parachuteRig.toggleR) {
+            const pullL = Math.max(0, -ps.paraSteer) * 0.20 + ps.paraFlare * 0.22;
+            const pullR = Math.max(0,  ps.paraSteer) * 0.20 + ps.paraFlare * 0.22;
+            this.parachuteRig.toggleL.position.y = 0.44 - pullL;
+            this.parachuteRig.toggleR.position.y = 0.44 - pullR;
+          }
+        }
+      } else {
+        let hillFactor = 1.0;
+        if (mLen > 0.05) {
+          const dirX = mx / mLen, dirZ = mz / mLen;
+          const hNow = this.getSurfaceY(ps.x, ps.z, true);
+          const hNext = this.getSurfaceY(ps.x + dirX * 1.0, ps.z + dirZ * 1.0, true);
+          const uphillSlope = Math.max(0, hNext - hNow);
+          hillFactor = THREE.MathUtils.clamp(1.0 - uphillSlope * 0.24, 0.62, 1.0);
+        }
+        const targetMaxSpd = (ps.attackTimer > 0 ? 1.8 : (sprinting ? 8.6 : 4.5)) * hillFactor;
+
+        // Smooth biomechanical acceleration & deceleration (zero robotic instant start/stop!)
+        const targetVx = mLen > 0.05 ? (mx / mLen) * targetMaxSpd : 0;
+        const targetVz = mLen > 0.05 ? (mz / mLen) * targetMaxSpd : 0;
+        const velDamp = ps.grounded ? (mLen > 0.05 ? 11.5 : 14.5) : 3.2;
+        ps.vx = THREE.MathUtils.damp(ps.vx || 0, targetVx, velDamp, dt);
+        ps.vz = THREE.MathUtils.damp(ps.vz || 0, targetVz, velDamp, dt);
+
+        const footStepDist = Math.hypot(ps.vx * dt, ps.vz * dt);
+        const footSub = footStepDist > 0.28 ? 2 : 1;
+        for (let fs = 0; fs < footSub; fs++) {
+          ps.x += (ps.vx * dt) / footSub;
+          ps.z += (ps.vz * dt) / footSub;
+          this.resolvePlayerCollisions();
+        }
+        moveSpeed = Math.hypot(ps.vx, ps.vz);
+        ps.speed = moveSpeed;
+
+        if (moveSpeed > 0.25 && ps.attackTimer <= 0) {
+          const targetYaw = Math.atan2(-ps.vx, -ps.vz);
+          let dy = targetYaw - ps.yaw;
+          while (dy > Math.PI) dy -= Math.PI * 2;
+          while (dy < -Math.PI) dy += Math.PI * 2;
+          const stepYaw = dy * Math.min(1, dt * 11.5);
+          ps.yaw += stepYaw;
+          yawDeltaRate = THREE.MathUtils.clamp(dy, -1.2, 1.2);
+        }
+        ps.turnLean = THREE.MathUtils.damp(ps.turnLean || 0, -yawDeltaRate * Math.min(1, moveSpeed / 6.5) * 0.16, 10, dt);
+        ps.landSquash = THREE.MathUtils.damp(ps.landSquash || 0, 0, 12, dt);
+
+        if (moveSpeed > 0.15) {
+          const cadence = sprinting ? 1.56 : 1.88;
+          ps.walkPhase += dt * moveSpeed * cadence;
+        }
       }
 
-      if (canAct && this.keys.drift && ps.grounded) {
-        ps.vy = 7.4;
-        ps.grounded = false;
-        this.audio.jump();
-      }
       const onPierDeck = ps.x >= 17.5 && ps.x <= 141.5 && ps.z >= -448 && ps.z <= -412;
-      const footFloorY = onPierDeck ? 0.16 : this.getSurfaceY(ps.x, ps.z, true);
+      const interiorY = this.getInteriorFloorY(ps.x, ps.z, ps.y);
+      const footFloorY = interiorY !== null ? interiorY : (onPierDeck ? 0.16 : this.getSurfaceY(ps.x, ps.z, true));
+      const altAboveGround = ps.y - footFloorY;
+
+      if (canAct && this.keys.drift) {
+        if (ps.grounded) {
+          ps.vy = 7.4;
+          ps.grounded = false;
+          this.audio.jump();
+        } else if (!ps.parachuting && altAboveGround > 6.5 && ps.vy < -2.2) {
+          // Manual Mid-Air Parachute Deployment when jumping off Mount Vice cliffs, skyscrapers, or bridges!
+          ps.parachuting = true;
+          ps.paraOpenT = 0.04;
+          ps.paraRoll = 0;
+          ps.paraPitch = 0;
+          ps.paraFlare = 0;
+          ps.paraSteer = 0;
+          ps.vy = Math.max(ps.vy * 0.45, -5.5);
+          if (this.parachuteMesh) this.parachuteMesh.visible = true;
+          this.el.combo.innerHTML = `RAM-AIR CHUTE DEPLOYED · W DIVE · S FLARE · A/D STEER <span>BASE JUMP</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 3.4;
+        }
+      }
+
       if (ps.grounded) {
         if (ps.y > footFloorY && ps.y - footFloorY < 0.85) ps.y = footFloorY;
+        else if (ps.y - footFloorY > 1.25) ps.grounded = false;
         else ps.y = footFloorY;
       }
       if (!ps.grounded || ps.y > footFloorY + 0.02) {
         if (ps.parachuting) {
-          ps.vy = THREE.MathUtils.damp(ps.vy, -6.2, 4.5, dt);
-          if (this.parachuteMesh) {
-            this.parachuteMesh.visible = true;
-            this.parachuteMesh.rotation.z = Math.sin(elapsed * 2.2) * 0.06 - ps.turnLean * 0.5;
-          }
+          const pitchInput = canAct ? moveFwd : 0;
+          const targetSink = pitchInput > 0 ? -9.2 : (pitchInput < 0 ? -2.2 : -4.8);
+          ps.vy = THREE.MathUtils.damp(ps.vy, targetSink, 4.8, dt);
         } else {
-          ps.vy -= 21.0 * dt;
+          ps.vy = Math.max(-34.0, ps.vy - 21.0 * dt);
+          // Show helpful Spacebar deploy prompt during high freefall!
+          if (altAboveGround > 7.5 && ps.vy < -4.0 && this.streakTimer <= 0.1) {
+            this.el.combo.innerHTML = `FREEFALL · PRESS [SPACE] TO DEPLOY PARACHUTE <span>${Math.round(altAboveGround)}M</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 0.5;
+          }
         }
         ps.y += ps.vy * dt;
         if (ps.y <= footFloorY) {
+          const wasParachuting = ps.parachuting;
           ps.y = footFloorY;
           ps.vy = 0;
           ps.grounded = true;
           ps.parachuting = false;
+          ps.paraOpenT = 0;
+          ps.paraRoll = 0;
+          ps.paraPitch = 0;
           if (this.parachuteMesh) this.parachuteMesh.visible = false;
-          ps.landSquash = 0.22;
+          ps.landSquash = wasParachuting ? 0.30 : 0.22;
+          if (wasParachuting) {
+            ps.vx *= 0.35;
+            ps.vz *= 0.35;
+            this.el.combo.innerHTML = `TOUCHDOWN · SMOOTH LANDING! <span>SAFE</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 2.0;
+          }
         }
       }
 
@@ -10749,8 +12626,9 @@ class ViceCity3DApp {
 
       this.resolvePlayerCollisions();
       if (ps.grounded) {
+        const postIntY = this.getInteriorFloorY(ps.x, ps.z, ps.y);
         const postPier = ps.x >= 17.5 && ps.x <= 141.5 && ps.z >= -448 && ps.z <= -412;
-        ps.y = postPier ? 0.16 : this.getSurfaceY(ps.x, ps.z, true);
+        ps.y = postIntY !== null ? postIntY : (postPier ? 0.16 : this.getSurfaceY(ps.x, ps.z, true));
       }
 
       // Weapons cooldowns, SMG / Rifle auto-fire, Muzzle Flash & Crosshair recoil pulse
@@ -11138,20 +13016,90 @@ class ViceCity3DApp {
           if (ankleL) ankleL.rotation.x = 0;
           if (ankleR) ankleR.rotation.x = 0;
         }
+      } else if (this.isDancing) {
+        // Full-Body 1986 Malibu Club Dance Choreography (3 Switchable Styles + Periodic VIP Vibe Tips!)
+        const b1 = Math.sin(elapsed * 6.8);
+        const b2 = Math.cos(elapsed * 3.4);
+        const bounce = Math.abs(b1) * 0.10;
+        pMesh.body.position.set(0, bounce, 0);
+        pMesh.body.rotation.set(0, b2 * 0.28, b2 * 0.08);
+        if (chest) chest.rotation.set(Math.sin(elapsed * 6.8) * 0.09, b1 * 0.28, -b2 * 0.12);
+        if (head) head.rotation.set(b1 * 0.14, -b2 * 0.24, b2 * 0.08);
+        if (this.danceStyleIdx === 0) {
+          // 1: Disco Fever (Saturday Night Point & Hip Groove)
+          pMesh.armR.rotation.set(1.85 + b1 * 0.72, 0.18, -0.36 - b1 * 0.26);
+          pMesh.armL.rotation.set(0.45 - b1 * 0.35, -0.18, 0.56);
+          if (elbowR) elbowR.rotation.x = 0.22 + Math.max(0, -b1) * 0.75;
+          if (elbowL) elbowL.rotation.x = 1.12;
+        } else if (this.danceStyleIdx === 1) {
+          // 2: Hands Up Club Rave
+          pMesh.armL.rotation.set(2.42 + b1 * 0.26, 0.12, 0.36 + b2 * 0.22);
+          pMesh.armR.rotation.set(2.42 - b1 * 0.26, -0.12, -0.36 + b2 * 0.22);
+          if (elbowL) elbowL.rotation.x = 0.45 + Math.abs(b1) * 0.42;
+          if (elbowR) elbowR.rotation.x = 0.45 + Math.abs(b2) * 0.42;
+        } else {
+          // 3: Vice Two-Step Groove
+          pMesh.armL.rotation.set(1.05 + b1 * 0.52, 0.35, 0.32 + b2 * 0.26);
+          pMesh.armR.rotation.set(1.05 - b1 * 0.52, -0.35, -0.32 - b2 * 0.26);
+          if (elbowL) elbowL.rotation.x = 1.25 + b1 * 0.32;
+          if (elbowR) elbowR.rotation.x = 1.25 - b1 * 0.32;
+        }
+        pMesh.legL.rotation.x = b1 * 0.34;
+        pMesh.legR.rotation.x = -b1 * 0.34;
+        if (kneeL) kneeL.rotation.x = -Math.abs(b1) * 0.44;
+        if (kneeR) kneeR.rotation.x = -Math.abs(b2) * 0.44;
+        if (ankleL) ankleL.rotation.x = 0;
+        if (ankleR) ankleR.rotation.x = 0;
+
+        this.danceRewardTimer -= dt;
+        if (this.danceRewardTimer <= 0) {
+          this.danceRewardTimer = 8.0;
+          this.cash += 25;
+          if (this.el && this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          if (this.audio) this.audio.pickup();
+          if (this.el && this.el.combo) {
+            this.el.combo.innerHTML = `MALIBU DANCE FLOOR VIBES · CROWD LOVES IT! <span>+$25</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 2.2;
+          }
+        }
       } else if (ps.parachuting) {
-        // Parachute Skydiving Descent Pose (Hands gripping risers overhead, legs relaxed!)
+        // Authentic Ram-Air Harness Descent Pose (Hands gripping overhead toggles, pulling dynamically on turns & flare!)
+        const steerL = Math.max(0, -(ps.paraSteer || 0));
+        const steerR = Math.max(0,  (ps.paraSteer || 0));
+        const flare = ps.paraFlare || 0;
         pMesh.body.position.y = THREE.MathUtils.damp(pMesh.body.position.y, 0, 10, dt);
-        pMesh.body.rotation.set(0.08, 0, ps.turnLean * 0.6);
-        if (chest) chest.rotation.set(-0.08, 0, 0);
-        if (head) head.rotation.set(-0.12, 0, 0);
-        pMesh.armL.rotation.set(2.38, 0.14, 0.24);
-        pMesh.armR.rotation.set(2.38, -0.14, -0.24);
-        if (elbowL) elbowL.rotation.x = 0.42;
-        if (elbowR) elbowR.rotation.x = 0.42;
-        pMesh.legL.rotation.x = 0.22 + Math.sin(elapsed * 2.4) * 0.08;
-        pMesh.legR.rotation.x = -0.14 - Math.sin(elapsed * 2.4) * 0.08;
-        if (kneeL) kneeL.rotation.x = -0.36;
-        if (kneeR) kneeR.rotation.x = -0.28;
+        pMesh.body.rotation.set(0.14 - (ps.paraPitch || 0) * 0.65, 0, (ps.paraRoll || 0) * 0.72);
+        if (chest) chest.rotation.set(-0.08 + flare * 0.12, 0, (ps.paraRoll || 0) * 0.25);
+        if (head) head.rotation.set(-0.18 + (ps.paraPitch || 0) * 0.4, (ps.paraSteer || 0) * 0.22, 0);
+        // Hands raised to overhead brake toggles; steering/flaring pulls elbows cleanly downward!
+        pMesh.armL.rotation.set(2.45 - (steerL * 0.42 + flare * 0.48), 0.14, 0.24);
+        pMesh.armR.rotation.set(2.45 - (steerR * 0.42 + flare * 0.48), -0.14, -0.24);
+        if (elbowL) elbowL.rotation.x = 0.36 + steerL * 0.55 + flare * 0.62;
+        if (elbowR) elbowR.rotation.x = 0.36 + steerR * 0.55 + flare * 0.62;
+        // Relaxed knees tucked forward slightly in the wind stream (and bent for landing flare!)
+        pMesh.legL.rotation.x = 0.26 + flare * 0.36 + Math.sin(elapsed * 2.4) * 0.07;
+        pMesh.legR.rotation.x = -0.06 + flare * 0.30 - Math.sin(elapsed * 2.4) * 0.07;
+        if (kneeL) kneeL.rotation.x = -0.44 - flare * 0.36;
+        if (kneeR) kneeR.rotation.x = -0.34 - flare * 0.32;
+        if (ankleL) ankleL.rotation.x = -0.18;
+        if (ankleR) ankleR.rotation.x = -0.18;
+      } else if (!ps.grounded && altAboveGround > 5.0 && ps.vy < -4.2) {
+        // High-Altitude Skydiving Freefall X-Pose (belly-down arched skydiver catching wind!)
+        const flutter = Math.sin(elapsed * 14.0) * 0.08;
+        pMesh.body.rotation.x = THREE.MathUtils.damp(pMesh.body.rotation.x, -1.18, 6, dt);
+        pMesh.body.rotation.y = THREE.MathUtils.damp(pMesh.body.rotation.y, 0, 8, dt);
+        pMesh.body.rotation.z = THREE.MathUtils.damp(pMesh.body.rotation.z, ps.turnLean * 1.4, 8, dt);
+        if (chest) chest.rotation.set(0.26, 0, 0);
+        if (head) head.rotation.set(0.55, 0, 0);
+        pMesh.armL.rotation.set(1.25 + flutter, 0.2, 0.85);
+        pMesh.armR.rotation.set(1.25 - flutter, -0.2, -0.85);
+        if (elbowL) elbowL.rotation.x = 0.65;
+        if (elbowR) elbowR.rotation.x = 0.65;
+        pMesh.legL.rotation.x = -0.22 + flutter;
+        pMesh.legR.rotation.x = -0.22 - flutter;
+        if (kneeL) kneeL.rotation.x = -0.58;
+        if (kneeR) kneeR.rotation.x = -0.58;
       } else if (!ps.grounded) {
         const airRise = THREE.MathUtils.clamp(ps.vy * 0.05, -0.35, 0.35);
         pMesh.body.rotation.x = THREE.MathUtils.damp(pMesh.body.rotation.x, 0, 10, dt);
@@ -11310,14 +13258,32 @@ class ViceCity3DApp {
       pMesh.root.position.set(ps.x, ps.y, ps.z);
       pMesh.root.rotation.y = ps.yaw;
 
-      // Dynamic GTA 5 Prompt: Ride Pier Attraction [E] | Talk to NPC [E] | Start Mini-Game [E] | Enter/Fly Vehicle [F] | Walk Inside!
+      // Dynamic GTA 5 Prompt: Barber / Clothes [E] | Safehouse Actions [E] | Malibu Dance [E] | Ride / NPC / Mini-Game [E] | Vehicle [F]
+      const nearShop = this.findNearestShopZone();
+      const nearSafe = this.findNearestSafehouseStation();
+      const canDanceHere = !this.isDancing && this.isInsideMalibuDanceZone();
       const nearRide = this.findNearestPierRide(8.5);
       const nearNpc = this.findNearestTalkableNpc(4.6);
       const nearPad = this.findNearestMiniGamePad(6.5);
       const nearTarget = this.findNearestVehicleTarget(5.4);
       this.nearbyVehicleTarget = nearTarget;
-      const uiFree = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue;
-      if (uiFree && nearRide) {
+      const uiFree = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen && !this.taxiModalOpen && !this.activeDialogue && !this.activeShop && !this.tvOpen && this.sleepAnimTimer <= 0;
+      if (uiFree && nearShop) {
+        const promptMap = {
+          barber: `Press E · Sit in Barber Chair (${nearShop.label})`,
+          paynspray: `Press E · Enter Pay 'n' Spray Garage (Repair · Underglow · Spoiler)`,
+          diner: `Press E · Order Food at ${nearShop.label} (+HP)`,
+          ammu: `Press E · ${nearShop.label} (Armor · M4 · Indoor Range)`
+        };
+        this.el.carPrompt.textContent = promptMap[nearShop.kind] || `Press E · Browse Outfits (${nearShop.label})`;
+        this.el.carPrompt.classList.add('on');
+      } else if (uiFree && nearSafe) {
+        this.el.carPrompt.textContent = `Press E · ${nearSafe.label}`;
+        this.el.carPrompt.classList.add('on');
+      } else if (uiFree && canDanceHere) {
+        this.el.carPrompt.textContent = `Press E · Dance on The Malibu Club Dancefloor`;
+        this.el.carPrompt.classList.add('on');
+      } else if (uiFree && nearRide) {
         this.el.carPrompt.textContent = `Press E · Ride ${nearRide.label}`;
         this.el.carPrompt.classList.add('on');
       } else if (uiFree && nearPad) {
@@ -11329,6 +13295,8 @@ class ViceCity3DApp {
       } else if (uiFree && nearTarget) {
         if (nearTarget.kind === 'plane') {
           this.el.carPrompt.textContent = `Press F · Fly ${nearTarget.label}`;
+        } else if (nearTarget.kind === 'boat') {
+          this.el.carPrompt.textContent = `Press F · Board ${nearTarget.label} (Watercraft)`;
         } else if (nearTarget.isTaxi || (nearTarget.kind === 'traffic' && nearTarget.tc && nearTarget.tc.userData && nearTarget.tc.userData.kind === 'taxi')) {
           this.el.carPrompt.textContent = `Press E · Hail Kaufman Cab | Press F · Steal Taxi`;
         } else if (nearTarget.isBike) {
@@ -11347,12 +13315,25 @@ class ViceCity3DApp {
             if (Math.hypot(ps.x - eb.doorX, ps.z - eb.doorZ) < 5.2) { nearDoor = eb; break; }
           }
         }
+        const inOceanLobby = ps.x >= -32.2 && ps.x <= -16.8 && ps.z >= -59.5 && ps.z <= -36.5 && ps.y < 2.2;
         if (nearDoor && uiFree) {
           this.el.carPrompt.textContent = `Walk Inside · ${nearDoor.label}`;
+          this.el.carPrompt.classList.add('on');
+        } else if (inOceanLobby && uiFree) {
+          this.el.carPrompt.textContent = `Walk Up North Stairs · 1st Floor Ocean View Suite (Sleep · TV · Food · Wardrobe)`;
           this.el.carPrompt.classList.add('on');
         } else {
           this.el.carPrompt.classList.remove('on');
         }
+      }
+    } else if (this.mode === 'car') {
+      const nearDriveShop = this.findNearestShopZone();
+      const uiFreeCar = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.activeShop && !this.phoneOpen;
+      if (uiFreeCar && nearDriveShop) {
+        this.el.carPrompt.textContent = `Press E · Open ${nearDriveShop.label} (Repair · Repaint · Neon · Spoiler)`;
+        this.el.carPrompt.classList.add('on');
+      } else {
+        this.el.carPrompt.classList.remove('on');
       }
     } else {
       this.el.carPrompt.classList.remove('on');
@@ -11580,6 +13561,12 @@ class ViceCity3DApp {
           u.wheelSpin = (u.wheelSpin || 0) - Math.abs(u.baseSpeed * trafficMult) * dt * 2.5;
           for (let w = 0; w < u.carRig.wheelSpinGroups.length; w++) u.carRig.wheelSpinGroups[w].rotation.x = u.wheelSpin;
         }
+        // Working Traffic Brake Lights & Periodic Blinking Intersection Turn Signals!
+        if (u.carRig && u.carRig.tailMat) {
+          const nearCross = Math.abs((tc.position.z % 160)) < 16;
+          const blink = nearCross && (Math.floor(elapsed * 4.5 + i) % 2 === 0);
+          u.carRig.tailMat.emissiveIntensity = blink ? 2.4 : 1.05;
+        }
         // Subtle damaged hood smoke if injured below 65% HP
         if (u.hp < (u.maxHp || 100) * 0.65 && tc.visible && Math.random() < 0.16) {
           const fx = -Math.sin(tc.rotation.y), fz = -Math.cos(tc.rotation.y);
@@ -11587,14 +13574,17 @@ class ViceCity3DApp {
         }
       }
 
+      if (u.stun > 0 && u.carRig && u.carRig.tailMat) {
+        u.carRig.tailMat.emissiveIntensity = 2.8;
+      }
+
       const tdxAct = tc.position.x - act.x, tdzAct = tc.position.z - act.z;
-      const tVis = (tdxAct * tdxAct + tdzAct * tdzAct) < 48400; // 220m visibility culling
+      const tVis = (tdxAct * tdxAct + tdzAct * tdzAct) < (this.trafficCullSq || 48400);
       if (tc.visible !== tVis) tc.visible = tVis;
 
       const tdx = tc.position.x - cs.x, tdz = tc.position.z - cs.z;
-      if (tdx * tdx + tdz * tdz > 100) continue; // Skip 3-point car collision when >10m away
+      if (tdx * tdx + tdz * tdz > 100) continue;
 
-      // 3-point hull vs traffic AABB push-out
       const tMinX = tc.position.x - 1.02, tMaxX = tc.position.x + 1.02;
       const tMinZ = tc.position.z - 2.25, tMaxZ = tc.position.z + 2.25;
       for (const off of [1.4, 0, -1.4]) {
@@ -11620,6 +13610,7 @@ class ViceCity3DApp {
             this.impactCooldown = 0.26;
             this.camShake = 0.30;
             this.audio.impact(0.8);
+            this.damageCar(Math.min(18, 4 + Math.abs(cs.speed) * 0.35));
             for (let k = 0; k < 6; k++) {
               this.spawnParticle(cx, 0.6, cz, (Math.random() - 0.5) * 7, 2.5 + Math.random() * 3, (Math.random() - 0.5) * 7, 0xffaa38, 0.4, 0.45, 0.2, 9.8);
             }
@@ -11901,6 +13892,9 @@ class ViceCity3DApp {
       } else {
         ped.curSpeed = THREE.MathUtils.damp(ped.curSpeed, 0, 8, dt);
       }
+      if (ped.umbrella) {
+        ped.umbrella.visible = this.curRainLevel > 0.25 && ped.state === 'walk';
+      }
 
       // Smooth shortest-angle yaw turn (NPCs never snap 180° abruptly!)
       let dYaw = targetYaw - ped.curYaw;
@@ -12123,6 +14117,7 @@ class ViceCity3DApp {
               cs.airborne = true;
               cs.airTime = 0;
               cs.vy = Math.min(13.5, cs.speed * 0.27);
+              this.stuntSlowMo = 1.45;
               this.audio.jump();
             }
           }
@@ -12131,16 +14126,12 @@ class ViceCity3DApp {
     }
     const hCenter = this.getSurfaceY(cs.x, cs.z, false);
     const carOnSlope = !isInCoreViceFootprint(cs.x, cs.z) || hCenter > 0.25;
-    // Compute exact terrain pitch & roll FIRST (with CORRECT right-hand roll sign!) so 9-point rigid-body clearance matches the actual mesh pose!
     let targetSlopePitch = 0, targetSlopeRoll = 0;
     if (carOnSlope && !cs.airborne) {
       const hFront = this.getSurfaceY(cs.x + fwdX * 1.9, cs.z + fwdZ * 1.9, false);
       const hBack  = this.getSurfaceY(cs.x - fwdX * 1.9, cs.z - fwdZ * 1.9, false);
       const hRight = this.getSurfaceY(cs.x + rightX * 1.1, cs.z + rightZ * 1.1, false);
       const hLeft  = this.getSurfaceY(cs.x - rightX * 1.1, cs.z - rightZ * 1.1, false);
-      // Local frame (rotation.order='YXZ', forward=-Z, right=+X):
-      // +pitch lifts -Z (front) -> atan2(hFront - hBack, 3.8)
-      // +roll  lifts +X (right) -> atan2(hRight - hLeft, 2.2) (fixes uphill side-slope clipping!)
       targetSlopePitch = THREE.MathUtils.clamp(Math.atan2(hFront - hBack, 3.8), -0.74, 0.74);
       targetSlopeRoll  = THREE.MathUtils.clamp(Math.atan2(hRight - hLeft, 2.2), -0.64, 0.64);
     }
@@ -12149,9 +14140,6 @@ class ViceCity3DApp {
 
     let carGroundY = hCenter + 0.05;
     if (carOnSlope) {
-      // Exact 9-point rigid-body footprint clearance across center, 4 wheel hubs & 4 bumper corners:
-      // For Euler(pitch, yaw, roll, 'YXZ'), local (sx, 0, -sz) has vertical offset dy = sz*sin(pitch) + sx*sin(roll)*cos(pitch).
-      // Solving centerY >= terrainY - dy + pad guarantees ZERO wheel or bumper penetration into mountain slopes, crests, or dips!
       const sinP = Math.sin(cs.slopePitch);
       const cosP = Math.cos(cs.slopePitch);
       const sinRcosP = Math.sin(cs.slopeRoll) * cosP;
@@ -12175,15 +14163,13 @@ class ViceCity3DApp {
       }
       carGroundY = reqY;
     }
-    // SEAWAYS Cheat: Drive smoothly right across the Atlantic Ocean surface!
     if (this.cheats.seaways && cs.x > 28 && cs.z > -1110 && carGroundY < -0.25) {
       carGroundY = -0.28;
       if (carAbsSpd > 5 && Math.random() < 0.55) {
         this.spawnParticle(cs.x - fwdX * 2.0 + (Math.random() - 0.5) * 1.4, -0.1, cs.z - fwdZ * 2.0, (Math.random() - 0.5) * 2.5, 2.2, (Math.random() - 0.5) * 2.5, 0x9cf4ff, 0.55, 0.72, 1.2, 7.5);
       }
     }
-    // COMEFLYWITHME Cheat: Flying Cars takeoff & glide above Vice City!
-    if (this.cheats.flyingCars && !isFoot && !isPlane && !isRide && cs.speed > 22) {
+    if (this.cheats.flyingCars && !isFoot && !isPlane && !isRide && !isBoat && cs.speed > 22) {
       const climbInput = (this.keys.up || this.keys.nitro) ? 1.0 : (this.keys.down ? -1.0 : 0.12);
       const lift = (cs.speed - 20) * 0.28 * climbInput;
       cs.y = THREE.MathUtils.clamp(cs.y + lift * dt, carGroundY, 92);
@@ -12200,15 +14186,18 @@ class ViceCity3DApp {
           cs.y = carGroundY;
           cs.vy = 0;
           cs.airborne = false;
+          this.stuntSlowMo = 0;
           this.camShake = Math.max(this.camShake, 0.22);
           this.audio.impact(0.5);
-          if (cs.airTime > 0.45) {
-            const bonus = 500;
+          if (cs.airTime > 0.42) {
+            const bonus = Math.round(450 + cs.airTime * 350);
+            this.stuntJumpsDone = (this.stuntJumpsDone || 0) + 1;
             this.cash += bonus;
             this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
-            this.el.combo.innerHTML = `STUNT JUMP! <span>+$${bonus}</span>`;
+            this.el.combo.innerHTML = `STUNT JUMP #${this.stuntJumpsDone} · ${cs.airTime.toFixed(1)}s AIR! <span>+$${bonus}</span>`;
             this.el.combo.classList.add('on');
-            this.streakTimer = 3.2;
+            this.streakTimer = 3.4;
+            this.savePersistentSave();
           }
           for (let k = 0; k < 6; k++) {
             this.spawnParticle(cs.x + (Math.random() - 0.5) * 1.6, carGroundY + 0.25, cs.z + (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 5, 1.8 + Math.random() * 2, (Math.random() - 0.5) * 5, 0xffd36b, 0.42, 0.48, 0.25, 9.8);
@@ -12285,8 +14274,44 @@ class ViceCity3DApp {
       activeRig.bodyGroup.position.y = cs.airborne ? 0 : Math.sin(elapsed * 22) * Math.min(carAbsSpd * 0.0004, 0.012);
     }
 
+    // Keep standing player mesh strictly synchronized with vehicle (never left behind when driving car/boat!)
+    if (!isFoot && !isPlane && !isRide && !isBoat && !this.carjackAnim && this.player) {
+      if (activeRig.isBike) {
+        if (activeRig.riderSeat && this.player.root.parent !== activeRig.riderSeat) {
+          activeRig.riderSeat.add(this.player.root);
+          this.player.root.position.set(0, -0.26, 0.14);
+          this.player.root.rotation.set(0, 0, 0);
+        }
+        this.player.root.visible = true;
+      } else {
+        if (this.player.root.visible) this.player.root.visible = false;
+        ps.x = cs.x; ps.y = cs.y; ps.z = cs.z;
+        this.player.root.position.set(cs.x, cs.y, cs.z);
+        if (activeRig.playerDriverMesh && !activeRig.playerDriverMesh.visible) {
+          activeRig.playerDriverMesh.visible = true;
+        }
+      }
+    } else if (isBoat && this.activeBoat && this.player) {
+      const boatSeat = this.activeBoat.rig && (this.activeBoat.rig.riderSeat || this.activeBoat.rig.seat);
+      if (boatSeat && this.player.root.parent !== boatSeat) {
+        boatSeat.add(this.player.root);
+        this.player.root.position.set(0, -0.58, 0.05);
+        this.player.root.rotation.set(0, 0, 0);
+      }
+      this.player.root.visible = true;
+      const pM = this.player;
+      if (pM.chest) pM.chest.rotation.set(-0.14, 0, 0);
+      if (pM.head) pM.head.rotation.set(0.10, 0, 0);
+      pM.armL.rotation.set(0.95, 0, -0.14);
+      pM.armR.rotation.set(0.95, 0, 0.14);
+      pM.legL.rotation.set(1.22, 0, -0.12);
+      pM.legR.rotation.set(1.22, 0, 0.12);
+      if (pM.legL.userData && pM.legL.userData.knee) pM.legL.userData.knee.rotation.x = -1.18;
+      if (pM.legR.userData && pM.legR.userData.knee) pM.legR.userData.knee.rotation.x = -1.18;
+    }
+
     // Two-Wheeler Seated Rider Posture (Facing FORWARD -Z, leaning into handlebars, feet tucked on pegs!)
-    if (!isFoot && !isPlane && !isRide && activeRig.isBike && this.player && this.player.root.visible) {
+    if (!isFoot && !isPlane && !isRide && !isBoat && activeRig.isBike && this.player && this.player.root.visible) {
       const pM = this.player;
       const isScooter = activeRig.bikeKind === 'faggio';
       const leanFwd = isScooter ? -0.10 : (-0.30 - speedFactor * 0.14);
@@ -12331,8 +14356,22 @@ class ViceCity3DApp {
       for (let i = 0; i < this.car.nitroFlames.length; i++) this.car.nitroFlames[i].scale.set(1, flameScale, 1);
     }
 
-    if (drifting && !cs.airborne && Math.random() < 0.65) {
-      this.spawnParticle(cs.x - fwdX * 1.4 + (Math.random() - 0.5) * 1.4, 0.24, cs.z - fwdZ * 1.4, (Math.random() - 0.5) * 1.4, 0.9, (Math.random() - 0.5) * 1.4, 0xe8e4f0, 0.85, 0.65, 2.4);
+    if (drifting && !cs.airborne) {
+      if (Math.random() < 0.65) {
+        this.spawnParticle(cs.x - fwdX * 1.4 + (Math.random() - 0.5) * 1.4, cs.y + 0.24, cs.z - fwdZ * 1.4, (Math.random() - 0.5) * 1.4, 0.9, (Math.random() - 0.5) * 1.4, 0xe8e4f0, 0.85, 0.65, 2.4);
+      }
+      if (this.skidPool && this.frameCount % 2 === 0 && !activeRig.isBike) {
+        this.skidPool.stampPair(cs.x - fwdX * 1.35, cs.y + 0.05, cs.z - fwdZ * 1.35, cs.yaw, 0.82);
+      }
+    }
+    // Rain Tire Water Spray behind rear wheels!
+    if (!isFoot && !isPlane && !isBoat && this.curRainLevel > 0.22 && carAbsSpd > 10 && !cs.airborne && Math.random() < 0.55) {
+      this.spawnParticle(cs.x - fwdX * 1.65 + (Math.random() - 0.5) * 1.5, cs.y + 0.26, cs.z - fwdZ * 1.65, -fwdX * 2.5 + (Math.random() - 0.5) * 1.4, 1.35 + Math.random() * 0.9, -fwdZ * 2.5 + (Math.random() - 0.5) * 1.4, 0xd4eefc, 0.68, 0.44, 1.8, 3.2);
+    }
+    // Damaged Car Engine Hood Smoke (<45 HP) & Sparks (<20 HP)!
+    if (this.carHealth < 45 && !isPlane && !isBoat && Math.random() < (this.carHealth < 20 ? 0.52 : 0.22)) {
+      const smokeCol = this.carHealth < 20 ? (Math.random() < 0.35 ? 0xff7a22 : 0x262430) : 0xb8bcc8;
+      this.spawnParticle(cs.x + fwdX * 1.55 + (Math.random() - 0.5) * 0.5, cs.y + 1.05, cs.z + fwdZ * 1.55 + (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.8, 2.2 + Math.random() * 1.2, (Math.random() - 0.5) * 0.8, smokeCol, 0.82, 0.68, 1.6, -0.5);
     }
     if (nitroActive && Math.random() < 0.7) {
       this.spawnParticle(cs.x - fwdX * 2.5 + (Math.random() - 0.5) * 0.9, cs.y + 0.28, cs.z - fwdZ * 2.5, 0, 0.4, 0, 0x21e6d1, 0.52, 0.35, 1.4);
@@ -12417,21 +14456,47 @@ class ViceCity3DApp {
       ? (58 + speedRatio * 15)
       : (isFoot ? (this.weapon !== 'fists' ? 50 : 56) : (55 + speedRatio * 14 + (nitroActive ? 5 : 0)));
 
-    if (!this.started) {
-      const a = elapsed * 0.22;
-      _vecA.set(cs.x + Math.sin(a) * 6.8, 2.15, cs.z + Math.cos(a) * 6.8);
-      _vecB.set(cs.x, 0.9, cs.z - 0.5);
-      targetFov = 48;
-    } else if (isPlane) {
-      // Cinematic Vice City Aerial Flight Chase Camera (frames wingspan, afterburners & skyline below!)
+    // Floating 3D Street Chevron Arrows toward active Mission Target, GPS Autopilot, or Custom Map Waypoint!
+    if (this.routeGuide) {
+      const guideTgt = (this.activeSideMission && this.activeSideMission.target)
+        ? this.activeSideMission.target
+        : (this.autopilotQueue.length > 0 ? this.autopilotQueue[0] : this.customWaypoint);
+      if (guideTgt && !isPlane) {
+        const dG = Math.hypot(guideTgt.x - act.x, guideTgt.z - act.z);
+        if (dG < 12 && this.customWaypoint && guideTgt === this.customWaypoint) {
+          this.customWaypoint = null;
+          this.routeGuide.hide();
+        } else {
+          this.routeGuide.update(act, guideTgt, (gx, gz, b) => this.getSurfaceY(gx, gz, b), elapsed);
+        }
+      } else {
+        this.routeGuide.hide();
+      }
+    }
+
+    if (isPlane) {
       const pl = this.activePlane;
-      const yaw = pl.yaw + this.orbitYawOffset;
-      const pDist = (pl.kind === 'prop' ? 14.5 : 18.5) + speedRatio * 4.5;
-      const pHeight = 4.6 + speedRatio * 1.4 - pl.pitch * 4.2 + this.orbitPitchOffset * 5.0;
-      _vecA.set(pl.x + Math.sin(yaw) * pDist, pl.y + pHeight, pl.z + Math.cos(yaw) * pDist);
-      _vecB.set(pl.x - Math.sin(pl.yaw) * 14.0, pl.y + 1.4 + pl.pitch * 6.0, pl.z - Math.cos(pl.yaw) * 14.0);
+      if (camMode === 'Hood') {
+        const fxP = -Math.sin(pl.yaw), fzP = -Math.cos(pl.yaw);
+        _vecA.set(pl.x + fxP * 1.6, pl.y + (pl.isHeli ? 1.55 : 2.1), pl.z + fzP * 1.6);
+        _vecB.set(pl.x + fxP * 32, pl.y + 1.4 + pl.pitch * 18, pl.z + fzP * 32);
+        targetFov = 68;
+      } else {
+        const yaw = pl.yaw + this.orbitYawOffset;
+        const pDist = (pl.isHeli ? 12.2 : (pl.kind === 'prop' ? 14.5 : 18.5)) + speedRatio * 4.5;
+        const pHeight = (pl.isHeli ? 3.8 : 4.6) + speedRatio * 1.4 - pl.pitch * 4.2 + this.orbitPitchOffset * 5.0;
+        _vecA.set(pl.x + Math.sin(yaw) * pDist, pl.y + pHeight, pl.z + Math.cos(yaw) * pDist);
+        _vecB.set(pl.x - Math.sin(pl.yaw) * 14.0, pl.y + 1.4 + pl.pitch * 6.0, pl.z - Math.cos(pl.yaw) * 14.0);
+      }
+    } else if (isBoat) {
+      const b = this.activeBoat;
+      const yaw = b.yaw + this.orbitYawOffset;
+      const bDist = camMode === 'Hood' ? -0.4 : 9.4;
+      const bH = camMode === 'Hood' ? 1.65 : 3.2 + this.orbitPitchOffset * 2.2;
+      _vecA.set(b.x + Math.sin(yaw) * bDist, b.y + bH, b.z + Math.cos(yaw) * bDist);
+      _vecB.set(b.x - Math.sin(b.yaw) * 14.0, b.y + 0.9, b.z - Math.cos(b.yaw) * 14.0);
+      targetFov = 58 + Math.min(12, Math.abs(b.speed) * 0.25);
     } else if (this.carjackAnim && this.carjackAnim.kind === 'steal') {
-      // Dynamic GTA Cinematic Side-Action Camera framing open door, protagonist & ejected NPC driver!
       const cj = this.carjackAnim;
       _vecA.set(
         cj.carX - cj.rx * 4.9 - cj.fx * 3.1,
@@ -12441,7 +14506,6 @@ class ViceCity3DApp {
       _vecB.set(cj.doorX, 1.02, cj.doorZ);
       targetFov = 46;
     } else if (isRide) {
-      // Sweeping Scenic / Thrill Ride Camera for Carnival Pier Attractions!
       const r = this.activeRide;
       const yaw = (r.ropewayKey ? (this.player.root.rotation.y + 0.55) : (r.id === 'ferris' ? elapsed * 0.18 : (r.id === 'carousel' ? elapsed * 0.55 : this.player.root.rotation.y))) + this.orbitYawOffset;
       const dist = r.ropewayKey ? 11.5 : (r.id === 'ferris' ? 9.5 : (r.id === 'coaster' ? 6.8 : 5.6));
@@ -12449,7 +14513,33 @@ class ViceCity3DApp {
       _vecA.set(ps.x + Math.sin(yaw) * dist, ps.y + hOff + this.orbitPitchOffset * 2.4, ps.z + Math.cos(yaw) * dist);
       _vecB.set(ps.x, ps.y + 1.1, ps.z);
       targetFov = r.id === 'coaster' ? 64 : (r.ropewayKey ? 60 : 56);
+    } else if (isFoot && this.activeShop) {
+      const isBarber = this.activeShop.kind === 'barber';
+      const frontDist = isBarber ? 1.85 : 2.95;
+      const frontYaw = ps.yaw + Math.PI + Math.sin(elapsed * 0.45) * 0.16;
+      const sideRightX = Math.cos(frontYaw) * (isBarber ? 0.34 : 0.56);
+      const sideRightZ = -Math.sin(frontYaw) * (isBarber ? 0.34 : 0.56);
+      _vecA.set(
+        ps.x + Math.sin(frontYaw) * frontDist + sideRightX,
+        ps.y + (isBarber ? 1.62 : 1.38),
+        ps.z + Math.cos(frontYaw) * frontDist + sideRightZ
+      );
+      _vecB.set(ps.x + sideRightX * 0.55, ps.y + (isBarber ? 1.56 : 1.08), ps.z + sideRightZ * 0.55);
+      targetFov = isBarber ? 42 : 48;
+    } else if (isFoot && this.isDancing) {
+      const dYaw = elapsed * 0.42 + this.orbitYawOffset;
+      _vecA.set(ps.x + Math.sin(dYaw) * 3.8, ps.y + 1.92, ps.z + Math.cos(dYaw) * 3.8);
+      _vecB.set(ps.x, ps.y + 1.15, ps.z);
+      targetFov = 54;
+    } else if (isFoot && camMode === 'Hood') {
+      // First-person on-foot eye-level view!
+      const yaw = this.orbitYawOffset;
+      if (this.player.root.visible) this.player.root.visible = false;
+      _vecA.set(ps.x, ps.y + 1.66, ps.z);
+      _vecB.set(ps.x - Math.sin(yaw) * 14.0, ps.y + 1.62 - this.orbitPitchOffset * 6.5, ps.z - Math.cos(yaw) * 14.0);
+      targetFov = 68;
     } else if (isFoot) {
+      if (!this.player.root.visible) this.player.root.visible = true;
       const armed = this.weapon !== 'fists';
       let indoorBounds = null;
       if (this.enterableBuildings) {
@@ -12461,19 +14551,38 @@ class ViceCity3DApp {
           }
         }
       }
-      const footDist = ps.parachuting ? 7.2 : (indoorBounds ? 3.25 : (armed ? 3.85 : 4.6));
-      const footH = (ps.parachuting ? 3.2 : (indoorBounds ? 1.82 : (armed ? 1.88 : 2.05))) + this.orbitPitchOffset * 2.1;
+      const footDist = ps.parachuting ? 8.8 : (indoorBounds ? 2.95 : (armed ? 3.85 : 4.6));
+      const footH = (ps.parachuting ? 3.55 : (indoorBounds ? 1.72 : (armed ? 1.88 : 2.05))) + this.orbitPitchOffset * (ps.parachuting ? 2.6 : 1.7);
       const yaw = this.orbitYawOffset;
       const shoulderR = ps.parachuting ? 0 : (armed ? 0.58 : 0.16);
       const rx = Math.cos(yaw) * shoulderR, rz = -Math.sin(yaw) * shoulderR;
       let cx = ps.x + Math.sin(yaw) * footDist + rx;
       let cz = ps.z + Math.cos(yaw) * footDist + rz;
+      let cy = ps.y + footH;
       if (indoorBounds) {
         cx = THREE.MathUtils.clamp(cx, indoorBounds.minX + 0.65, indoorBounds.maxX - 0.65);
         cz = THREE.MathUtils.clamp(cz, indoorBounds.minZ + 0.65, indoorBounds.maxZ - 0.65);
+        if (indoorBounds.floor1Y && ps.y < indoorBounds.floor1Y - 1.15) {
+          // Ground floor lobby: clamp strictly below the 1st-floor slab so camera NEVER clips through the floor!
+          cy = THREE.MathUtils.clamp(cy, 1.15, indoorBounds.floor1Y - 0.55);
+        } else if (indoorBounds.floor1Y && ps.y >= indoorBounds.floor1Y - 1.15) {
+          // 1st-floor suite: clamp cleanly between hardwood deck and suite ceiling!
+          cy = THREE.MathUtils.clamp(cy, indoorBounds.floor1Y + 0.65, (indoorBounds.ceilY || 9.25) - 0.50);
+        } else if (indoorBounds.ceilY) {
+          cy = Math.min(cy, indoorBounds.ceilY - 0.45);
+        }
       }
-      _vecA.set(cx, ps.y + footH, cz);
-      _vecB.set(ps.x - Math.sin(yaw) * 6.0 + rx * 0.4, ps.y + 1.42 - this.orbitPitchOffset * 2.2, ps.z - Math.cos(yaw) * 6.0 + rz * 0.4);
+      if (ps.parachuting) targetFov = 64;
+      _vecA.set(cx, cy, cz);
+      _vecB.set(ps.x - Math.sin(yaw) * 6.0 + rx * 0.4, ps.y + (ps.parachuting ? 2.15 : 1.42) - this.orbitPitchOffset * 2.2, ps.z - Math.cos(yaw) * 6.0 + rz * 0.4);
+    } else if (camMode === 'Hood') {
+      // First-Person Car / Bike Hood Cockpit Camera!
+      const fxC = -Math.sin(cs.yaw), fzC = -Math.cos(cs.yaw);
+      const hoodH = activeRig.isBike ? 1.42 : 1.30;
+      const hoodOff = activeRig.isBike ? 0.25 : 0.48;
+      _vecA.set(cs.x + fxC * hoodOff, cs.y + hoodH, cs.z + fzC * hoodOff);
+      _vecB.set(cs.x + fxC * 28.0 - Math.sin(this.orbitYawOffset) * 8, cs.y + hoodH - 0.08 + (cs.slopePitch || 0) * 14, cs.z + fzC * 28.0);
+      targetFov = 68 + speedRatio * 10;
     } else if (camMode === 'Low') {
       camDist = activeRig.isBike ? 4.4 : 5.6; camHeight = activeRig.isBike ? 1.38 : 1.28; lookAhead = 12.0; targetFov = 62 + speedRatio * 15;
       const yaw = cs.yaw + this.orbitYawOffset;
@@ -12525,17 +14634,18 @@ class ViceCity3DApp {
     this.updateProjectPins(act);
 
     // 8. Exact Main Portfolio Dual-Dial Sports-Car Speedometer & Tachometer + GTA V Special Bar & Clock
-    const kmh = isPlane ? Math.round(act.speed * 1.94) : Math.round(carAbsSpd * 3.9);
-    const mph = isPlane ? Math.round(act.speed * 1.94) : Math.round(carAbsSpd * 2.55);
+    const kmh = isPlane ? Math.round(Math.abs(act.speed) * 1.94) : (isBoat ? Math.round(Math.abs(act.speed) * 1.94) : Math.round(carAbsSpd * 3.9));
+    const mph = isPlane ? Math.round(Math.abs(act.speed) * 1.94) : (isBoat ? Math.round(Math.abs(act.speed) * 1.94) : Math.round(carAbsSpd * 2.55));
     const gearNum = cs.speed < -0.5 ? 0 : mph < 3 ? 0 : Math.min(6, Math.floor(mph / 28) + 1);
     this.audio.update(
-      isFoot ? 0 : speedRatio,
+      (isFoot || isPlane) ? 0 : (isBoat ? THREE.MathUtils.clamp(Math.abs(act.speed) / 38, 0, 1) : speedRatio),
       isPlane ? (act.throttle > 0.75) : nitroActive,
       drifting,
       Boolean(activeRig.isBike),
       act.y,
       gearNum
     );
+    this.updateAmbientZoneAudio(act, isPlane, isRide, dt);
     if (this.leonidaWorld && typeof this.leonidaWorld.update === 'function') {
       const liveNightMix = this.skyDome && this.skyDome.material && this.skyDome.material.uniforms ? this.skyDome.material.uniforms.uNightMix.value : 0;
       this.leonidaWorld.update(dt, act, kmh, this.mode === 'car', (ev) => this.handleLeonidaToll(ev), elapsed, liveNightMix);
@@ -12551,29 +14661,29 @@ class ViceCity3DApp {
     if (mph !== this.lastHudKmh) {
       this.lastHudKmh = mph;
       if (this.el.speed) this.el.speed.textContent = String(Math.min(999, mph)).padStart(3, '0');
-      if (this.el.cluster) this.el.cluster.classList.toggle('over', !isPlane && mph > 55);
+      if (this.el.cluster) this.el.cluster.classList.toggle('over', !isPlane && !isBoat && mph > 55);
     }
     const gearStr = isPlane
       ? `${Math.round(act.y)}M`
-      : (cs.speed < -0.5 ? 'R' : mph < 3 ? 'N' : String(gearNum));
+      : (isBoat ? 'SEA' : (cs.speed < -0.5 ? 'R' : mph < 3 ? 'N' : String(gearNum)));
     if (gearStr !== this.lastHudGear) {
       this.lastHudGear = gearStr;
       if (this.el.gear) this.el.gear.textContent = gearStr;
     }
     if (this.el.spdLim) {
-      const limTxt = isPlane ? 'AIRSPEED' : 'LIMIT 55';
+      const limTxt = isPlane ? 'AIRSPEED' : (isBoat ? 'MARINA' : 'LIMIT 55');
       if (this.el.spdLim.textContent !== limTxt) this.el.spdLim.textContent = limTxt;
     }
     if (this.el.spdUnit) {
-      const unitTxt = isPlane ? 'KTS' : 'MPH';
+      const unitTxt = (isPlane || isBoat) ? 'KTS' : 'MPH';
       if (this.el.spdUnit.textContent !== unitTxt) this.el.spdUnit.textContent = unitTxt;
     }
     if (this.el.tchUnit) {
-      const tUnitTxt = isPlane ? 'ALT' : 'GEAR';
+      const tUnitTxt = isPlane ? 'ALT' : (isBoat ? 'HELM' : 'GEAR');
       if (this.el.tchUnit.textContent !== tUnitTxt) this.el.tchUnit.textContent = tUnitTxt;
     }
     if (isPlane && this.el.carName && this.frameCount % 6 === 0) {
-      const gTxt = act.gearBlend > 0.5 ? 'GEAR DN' : 'GEAR UP';
+      const gTxt = act.isHeli ? 'VTOL' : (act.gearBlend > 0.5 ? 'GEAR DN' : 'GEAR UP');
       this.el.carName.textContent = `${act.label} · ${Math.round(act.y)}M · ${gTxt}`;
     }
 
@@ -12690,6 +14800,8 @@ class ViceCity3DApp {
           this.visited.add(sr.id);
           this.el.progress.textContent = `${this.visited.size} / 5 Projects · ${this.tokensCollected} / ${this.tokens.length} Cash Piles`;
           this.el.wpBtns.forEach((b) => b.classList.toggle('visited', this.visited.has(b.dataset.wp)));
+          this.checkScavengerUnlocks();
+          this.savePersistentSave();
         }
         break;
       }
@@ -12712,6 +14824,742 @@ class ViceCity3DApp {
       } else {
         this.el.srBar.classList.remove('on');
       }
+    }
+  }
+
+  updateAmbientZoneAudio(act, isPlane, isRide, dt) {
+    if (!this.audio || typeof this.audio.setAmbientZones !== 'function') return;
+    const w = this._ambientWeights;
+    const x = act.x;
+    const y = act.y || 0;
+    const z = act.z;
+
+    // 1. THE MALIBU CLUB (interior at x:[-41.4..-18.6], z:[-354.4..-333.6] + curbside bleed)
+    let malibuW = 0;
+    if (x >= -42.5 && x <= -17.5 && z >= -355.5 && z <= -332.5) {
+      malibuW = 1.0;
+    } else {
+      const dxM = Math.max(-42.5 - x, 0, x - (-17.5));
+      const dzM = Math.max(-355.5 - z, 0, z - (-332.5));
+      const dM = Math.hypot(dxM, dzM);
+      if (dM < 44) {
+        malibuW = (1 - dM / 44) * 0.52;
+      }
+    }
+
+    // 2. VICE CARNIVAL PIER (pier deck x:[18..138], z:[-450..-410] + boardwalk approach + pier rides)
+    let carnivalW = 0;
+    if (isRide && this.activeRide && !this.activeRide.ropewayKey) {
+      carnivalW = 1.0;
+    } else {
+      const dxC = Math.max(18 - x, 0, x - 138);
+      const dzC = Math.max(-450 - z, 0, z - (-410));
+      const dC = Math.hypot(dxC, dzC);
+      if (dC <= 12) carnivalW = 1.0;
+      else if (dC < 78) carnivalW = 1 - (dC - 12) / 66;
+    }
+
+    // 3. FORESTS & MOUNTAINS (Vice Pines, Mount Vice, Sierra West, Mount Kalaga, Ropeways, Swamps & Dense Leonida Woodland Corridors)
+    let forestW = 0;
+    if (isRide && this.activeRide && this.activeRide.ropewayKey) {
+      forestW = 1.0;
+    } else {
+      // 3a. Vice Pines Deep Forest (x < -345, z in [-1155..-940])
+      const dxVP = Math.max(0, x - (-345));
+      const dzVP = Math.max(-1155 - z, 0, z - (-940));
+      const dVP = Math.hypot(dxVP, dzVP);
+      if (dVP < 55) forestW = Math.max(forestW, 1 - dVP / 55);
+
+      // 3b. Mount Vice & northern foothills (z < -1110 inside legacy mountains)
+      if (z < -1085 && x > -620 && x < 160) {
+        forestW = Math.max(forestW, THREE.MathUtils.clamp((-1085 - z) / 55, 0, 1));
+      }
+
+      // 3c. Sierra West Peaks & Redrock mountains (x < -470, z in [-790..260])
+      if (x < -460 && z > -790 && z < 260) {
+        forestW = Math.max(forestW, THREE.MathUtils.clamp((-460 - x) / 55, 0, 1));
+      }
+
+      // 3d. Mount Kalaga National Park & Summit (around (-1080, -2250))
+      const dKalaga = Math.hypot(x + 1080, z + 2250);
+      if (dKalaga < 460) {
+        forestW = Math.max(forestW, THREE.MathUtils.clamp(1 - (dKalaga - 280) / 180, 0, 1));
+      }
+
+      // 3e. Elevation mountain ambience anywhere above 14m terrain
+      if (!isPlane && y > 14) {
+        forestW = Math.max(forestW, THREE.MathUtils.clamp((y - 14) / 22, 0, 1));
+      }
+
+      // 3f. Leonida dense forest corridors, swamps & alpine timber towns (outside core Vice City)
+      if (!isInCoreViceFootprint(x, z) && !isInLegacyMountains(x, z) && getLandFactor(x, z) > 0.12) {
+        let inUrbanTown = false;
+        let inNaturePlace = false;
+        for (let i = 0; i < LEONIDA_PLACES.length; i++) {
+          const pl = LEONIDA_PLACES[i];
+          const d = Math.hypot(x - pl.x, z - pl.z);
+          if (pl.kind === 'mountain' || pl.kind === 'alpine' || pl.kind === 'swamp') {
+            if (d < pl.radius + 90) { inNaturePlace = true; break; }
+          } else if (d < pl.radius * 0.92) {
+            inUrbanTown = true;
+            break;
+          }
+        }
+        if (inNaturePlace) {
+          forestW = Math.max(forestW, 0.95);
+        } else if (!inUrbanTown) {
+          forestW = Math.max(forestW, 0.78);
+        }
+      }
+    }
+
+    // 4. NORTH POINT MALL INTERIOR (standalone 68m x 54m mall at X=-50, Z=-1018, bounds x:[-82..-18], z:[-1043..-993])
+    let mallW = 0;
+    if (!isPlane) {
+      if (x >= -82.0 && x <= -18.0 && z >= -1043.0 && z <= -993.0) {
+        mallW = 1.0;
+      } else if (x > -18.0 && x < -12.5 && z >= -1028.0 && z <= -1008.0) {
+        // Short doorway fade right at the East main entrance glass foyer
+        mallW = (1 - (x - (-18.0)) / 5.5) * 0.45;
+      }
+    }
+
+    // 5. AIRPORT AMBIENCE (strictly inside Escobar / Vice Int'l Airport perimeter fence or regional airfield compounds)
+    // Zero bleed outside the airport gates/fence; smoothly fades in/out via vice-audio.js envelope, and ducks to 0 once inside a plane.
+    let airportW = 0;
+    if (!isPlane) {
+      if (x >= -274 && x <= -10 && z >= 30 && z <= 154) {
+        airportW = 1.0;
+      } else {
+        for (let i = 0; i < LEONIDA_PLACES.length; i++) {
+          const pl = LEONIDA_PLACES[i];
+          if (pl.kind !== 'airport') continue;
+          if (Math.hypot(x - pl.x, z - pl.z) <= pl.radius * 0.72) {
+            airportW = 1.0;
+            break;
+          }
+        }
+      }
+    }
+
+    // Fade ground ambience smoothly when flying high above the treetops/city in an aircraft
+    if (isPlane && y > 32) {
+      const airFade = THREE.MathUtils.clamp(1 - (y - 32) / 55, 0, 1);
+      malibuW *= airFade;
+      carnivalW *= airFade;
+      forestW *= airFade;
+    }
+
+    // Prioritize Malibu, Carnival, Airport & Mall over forest if overlapping near borders
+    forestW *= Math.max(0, 1 - Math.max(malibuW, carnivalW, airportW, mallW));
+
+    w.malibu = malibuW;
+    w.carnival = carnivalW;
+    w.forest = forestW;
+    w.airport = airportW;
+    w.mall = mallW;
+    this.audio.setAmbientZones(w, dt);
+    if (typeof this.audio.updatePlaneAudio === 'function') {
+      const fixedWing = isPlane && this.activePlane && !this.activePlane.isHeli;
+      this.audio.updatePlaneAudio(fixedWing, dt);
+    }
+    // Dynamic Ocean Surf + Downtown City Hum Procedural Soundscape!
+    if (typeof this.audio.setAtmosphereLevels === 'function') {
+      const nearOcean = this.mode === 'boat' ? 1.0 : THREE.MathUtils.clamp((x - 10) / 36, 0, 1);
+      const inCity = (!isPlane && x < 12 && x > -220 && z < 20 && z > -940) ? 0.72 : 0.08;
+      this.audio.setAtmosphereLevels(nearOcean * (1 - mallW), inCity * (1 - malibuW) * (1 - mallW));
+    }
+  }
+
+  /* =========================================================================
+     ALL 12 ENHANCEMENTS: SAVE/LOAD, GRAPHICS PRESET, MODS & DAMAGE,
+     BOATS, SIDE MISSIONS, SKY-RINGS, SCAVENGER HUNT & VICEFRUIT SMARTPHONE
+     ========================================================================= */
+
+  loadPersistentSave() {
+    try {
+      const raw = localStorage.getItem('vice3d_save_v2');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (typeof d.cash === 'number' && Number.isFinite(d.cash)) this.cash = Math.max(0, d.cash);
+      if (Array.isArray(d.visited)) d.visited.forEach((id) => this.visited.add(id));
+      if (typeof d.paintIdx === 'number') this.paintIdx = ((d.paintIdx % PAINTS.length) + PAINTS.length) % PAINTS.length;
+      if (d.carMods && typeof d.carMods === 'object') this.carMods = { ...this.carMods, ...d.carMods };
+      if (d.graphicsPreset && ['low', 'med', 'high'].includes(d.graphicsPreset)) this.graphicsPreset = d.graphicsPreset;
+      if (typeof d.missionsCompleted === 'number') this.missionsCompleted = d.missionsCompleted;
+      if (typeof d.stuntJumpsDone === 'number') this.stuntJumpsDone = d.stuntJumpsDone;
+    } catch (_) {}
+  }
+
+  savePersistentSave() {
+    try {
+      localStorage.setItem('vice3d_save_v2', JSON.stringify({
+        cash: this.cash,
+        visited: Array.from(this.visited),
+        paintIdx: this.paintIdx,
+        carMods: this.carMods,
+        graphicsPreset: this.graphicsPreset,
+        missionsCompleted: this.missionsCompleted || 0,
+        stuntJumpsDone: this.stuntJumpsDone || 0
+      }));
+    } catch (_) {}
+  }
+
+  resetPersistentSave() {
+    try {
+      localStorage.removeItem('vice3d_save_v2');
+      localStorage.removeItem('vice3d_style_v1');
+    } catch (_) {}
+    this.cash = 1000;
+    this.visited.clear();
+    this.carMods = { underglow: 'none', spoiler: false, goldChrome: false };
+    this.carHealth = 100;
+    this.missionsCompleted = 0;
+    this.stuntJumpsDone = 0;
+    this.applyCarMods();
+    this.updateCarHealthHUD();
+    if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+    if (this.el.progress) this.el.progress.textContent = `0 / 5 Projects · ${this.tokensCollected} / ${this.tokens.length} Cash Piles`;
+    this.el.combo.innerHTML = `SAVE DATA RESET <span>FRESH START</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.4;
+  }
+
+  applyGraphicsPreset(preset = 'high', save = true) {
+    this.graphicsPreset = ['low', 'med', 'high'].includes(preset) ? preset : 'high';
+    const dpr = Math.min(window.devicePixelRatio || 1, this.graphicsPreset === 'high' ? 1.5 : (this.graphicsPreset === 'med' ? 1.15 : 0.85));
+    if (this.renderer) {
+      this.renderer.setPixelRatio(dpr);
+      this.renderer.shadowMap.enabled = this.graphicsPreset !== 'low';
+    }
+    if (this.bloomPass) {
+      this.bloomPass.enabled = this.graphicsPreset === 'high';
+    }
+    if (this.camera) {
+      this.camera.far = this.graphicsPreset === 'low' ? 1800 : (this.graphicsPreset === 'med' ? 2600 : 3600);
+      this.camera.updateProjectionMatrix();
+      if (this.skyDome) {
+        const safeSkyScale = Math.min(1.65, (this.camera.far * 0.78) / 1750);
+        this.skyDome.scale.setScalar(safeSkyScale);
+      }
+    }
+    this.trafficCullSq = this.graphicsPreset === 'low' ? 16900 : (this.graphicsPreset === 'med' ? 32400 : 48400);
+    if (this.el && this.el.gfxBtn) {
+      const lbl = this.graphicsPreset === 'high' ? 'High' : (this.graphicsPreset === 'med' ? 'Med' : 'Low');
+      this.el.gfxBtn.textContent = `GFX: ${lbl}`;
+      this.el.gfxBtn.classList.toggle('on', this.graphicsPreset === 'high');
+    }
+    if (save) {
+      this.savePersistentSave();
+      this.el.combo.innerHTML = `GRAPHICS PRESET · ${this.graphicsPreset.toUpperCase()} <span>LIVE</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.0;
+    }
+  }
+
+  setupCarModMeshes() {
+    if (!this.car || !this.car.root || this._carModMeshesReady) return;
+    this._carModMeshesReady = true;
+    // Neon Underglow plane under chassis
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff2e88, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide });
+    const glowPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 4.75), glowMat);
+    glowPlane.rotation.x = -Math.PI / 2;
+    glowPlane.position.set(0, 0.09, 0);
+    glowPlane.visible = false;
+    this.car.root.add(glowPlane);
+    this._carUnderglow = glowPlane;
+    this._carUnderglowMat = glowMat;
+
+    // Carbon GT Rear Wing Spoiler
+    const spGroup = new THREE.Group();
+    const carbMat = new THREE.MeshStandardMaterial({ color: 0x12151e, roughness: 0.25, metalness: 0.72 });
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.08, 0.42), carbMat);
+    wing.position.set(0, 1.18, 2.02);
+    const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.24), carbMat);
+    strutL.position.set(-0.62, 0.99, 1.98);
+    const strutR = strutL.clone(); strutR.position.x = 0.62;
+    const endL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.22, 0.48), new THREE.MeshStandardMaterial({ color: 0xff2e88, emissive: 0xff2e88, emissiveIntensity: 0.5 }));
+    endL.position.set(-0.97, 1.18, 2.02);
+    const endR = endL.clone(); endR.position.x = 0.97;
+    spGroup.add(wing, strutL, strutR, endL, endR);
+    spGroup.visible = false;
+    (this.car.bodyGroup || this.car.root).add(spGroup);
+    this._carSpoiler = spGroup;
+  }
+
+  applyCarMods() {
+    if (this._carUnderglow && this._carUnderglowMat) {
+      const ug = this.carMods.underglow || 'none';
+      this._carUnderglow.visible = ug !== 'none';
+      if (ug === 'pink') this._carUnderglowMat.color.setHex(0xff2e88);
+      else if (ug === 'cyan') this._carUnderglowMat.color.setHex(0x21e6d1);
+      else if (ug === 'gold') this._carUnderglowMat.color.setHex(0xffd36b);
+    }
+    if (this._carSpoiler) {
+      this._carSpoiler.visible = Boolean(this.carMods.spoiler);
+    }
+    if (this.car && this.car.paintMat) {
+      if (this.carMods.goldChrome) {
+        this.car.paintMat.color.setHex(0xffd24c);
+        this.car.paintMat.metalness = 0.98;
+        this.car.paintMat.roughness = 0.08;
+      } else {
+        this.car.applyPaint(this.paintIdx);
+      }
+    }
+  }
+
+  damageCar(amount) {
+    if (this.mode !== 'car') return;
+    this.carHealth = Math.max(8, this.carHealth - amount);
+    this.updateCarHealthHUD();
+  }
+
+  updateCarHealthHUD() {
+    if (!this.el || !this.el.vehHpFill) return;
+    const pct = Math.round(THREE.MathUtils.clamp(this.carHealth, 0, 100));
+    this.el.vehHpFill.style.width = `${pct}%`;
+    this.el.vehHpFill.classList.toggle('warn', pct < 50 && pct >= 25);
+    this.el.vehHpFill.classList.toggle('crit', pct < 25);
+  }
+
+  checkScavengerUnlocks() {
+    const cnt = this.visited.size;
+    for (let i = 0; i < SCAVENGER_UNLOCKS.length; i++) {
+      const u = SCAVENGER_UNLOCKS[i];
+      if (cnt === u.count) {
+        if (u.id === 'vip-chopper' || u.id === 'vip_chopper') {
+          this.cash += 2500;
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        }
+        if (this.audio) this.audio.phoneChime();
+        this.el.combo.innerHTML = `SCAVENGER UNLOCK (${cnt}/5): ${u.title.toUpperCase()} <span>CHECK PHONE [I]</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 4.5;
+      }
+    }
+  }
+
+  togglePhone(forceState) {
+    const next = typeof forceState === 'boolean' ? forceState : !this.phoneOpen;
+    this.phoneOpen = next;
+    if (this.el && this.el.phone) this.el.phone.hidden = !next;
+    if (next) {
+      this.releasePointerLock();
+      this.fireHeld = false;
+      if (this.audio) this.audio.phoneChime();
+      this.renderPhoneScreen('home');
+      if (this.el && this.el.uiCursor) {
+        const cx = typeof this.lastClientX === 'number' ? this.lastClientX : Math.max(120, window.innerWidth - 160);
+        const cy = typeof this.lastClientY === 'number' ? this.lastClientY : Math.max(120, window.innerHeight - 280);
+        this.el.uiCursor.style.transform = `translate3d(${(cx - 3).toFixed(1)}px, ${(cy - 2).toFixed(1)}px, 0)`;
+        this.el.uiCursor.classList.add('on');
+      }
+    }
+    this.syncReticleVisibility();
+  }
+
+  renderPhoneScreen(app = 'home') {
+    this.phoneApp = app;
+    if (!this.el || !this.el.phoneScreen) return;
+    if (this.el.phoneClock) {
+      const totalMins = Math.floor((((this.dayTime % 24) + 24) % 24) * 60);
+      this.el.phoneClock.textContent = `${String(Math.floor(totalMins / 60) % 24).padStart(2, '0')}:${String(totalMins % 60).padStart(2, '0')}`;
+    }
+    if (this.el.phoneCash) {
+      this.el.phoneCash.textContent = `$${this.cash.toLocaleString()}`;
+    }
+    const scr = this.el.phoneScreen;
+    scr.innerHTML = '';
+
+    if (app === 'home') {
+      const grid = document.createElement('div');
+      grid.className = 'v3-phone-grid';
+      const apps = [
+        { id: 'mechanic', ico: '🔧', lbl: 'Mechanic' },
+        { id: 'missions', ico: '🏁', lbl: 'Jobs' },
+        { id: 'portfolio', ico: '💼', lbl: 'Portfolio' },
+        { id: 'taxi', ico: '🚕', lbl: 'Cab Co.' },
+        { id: 'camera', ico: '📸', lbl: 'Snapmatic' },
+        { id: 'settings', ico: '⚙️', lbl: 'Settings' }
+      ];
+      apps.forEach((a) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'v3-phone-app';
+        b.innerHTML = `<span class="v3-phone-app-ic">${a.ico}</span><span>${a.lbl}</span>`;
+        b.addEventListener('click', () => {
+          if (a.id === 'camera') this.takeSnapmaticPhoto();
+          else this.renderPhoneScreen(a.id);
+        });
+        grid.appendChild(b);
+      });
+      scr.appendChild(grid);
+      const stat = document.createElement('div');
+      stat.style.cssText = 'margin:8px 6px 4px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:11px;color:#b8b4cc;line-height:1.5';
+      stat.innerHTML = `<b style="color:#ffd36b">$${this.cash.toLocaleString()}</b> · Showrooms: <b style="color:#21e6d1">${this.visited.size}/5</b><br>Jobs Done: ${this.missionsCompleted} · Stunts: ${this.stuntJumpsDone}`;
+      scr.appendChild(stat);
+      return;
+    }
+
+    const head = document.createElement('div');
+    head.className = 'v3-phone-subhead';
+    head.innerHTML = `<strong>${app.toUpperCase()}</strong><button type="button" class="v3-phone-back">← Back</button>`;
+    head.querySelector('.v3-phone-back').addEventListener('click', () => this.renderPhoneScreen('home'));
+    scr.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'v3-phone-list';
+    scr.appendChild(list);
+
+    const addRow = (title, sub, pillTxt, onClick, disabled = false) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'v3-phone-row' + (disabled ? ' locked' : '');
+      btn.disabled = disabled;
+      btn.innerHTML = `<div><div class="v3-phone-row-title">${title}</div><div class="v3-phone-row-sub">${sub}</div></div><span class="v3-phone-pill">${pillTxt}</span>`;
+      if (!disabled && onClick) btn.addEventListener('click', onClick);
+      list.appendChild(btn);
+    };
+
+    if (app === 'mechanic') {
+      addRow('Personal Vice Supercar', 'Instant roadside delivery + full repair', 'CALL', () => this.summonMechanicVehicle('hero'));
+      addRow('PCJ-600 Streetbike', 'Fast two-wheeler right beside you', 'CALL', () => this.summonMechanicVehicle('bike'));
+      const hyperOk = this.visited.size >= 3;
+      addRow('Infernus Apex V12 Hypercar', hyperOk ? 'Unlocked! 230 MPH tuned hypercar' : `Discover 3/5 showrooms (${this.visited.size}/3)`, hyperOk ? 'DELIVER' : 'LOCKED', () => this.summonMechanicVehicle('hyper'), !hyperOk);
+      const heliOk = this.visited.size >= 5;
+      addRow('VIP Maverick Chopper', heliOk ? 'Unlocked! Summon VTOL helicopter' : `Discover 5/5 showrooms (${this.visited.size}/5)`, heliOk ? 'SUMMON' : 'LOCKED', () => this.summonMechanicVehicle('heli'), !heliOk);
+      addRow("GPS → Pay 'n' Spray Garage", 'Repair, Neon Underglow & Spoilers', 'GPS', () => {
+        this.togglePhone(false);
+        this.planAutopilotTo({ id: 'pns', label: "Pay 'n' Spray", x: -64, z: -182, yaw: 0 });
+      });
+    } else if (app === 'missions') {
+      addRow('Taxi Fare Driver Job', 'Pick up & drop off passengers ($350+)', 'START', () => { this.togglePhone(false); this.startTaxiJob(); });
+      addRow('Leonida Street Race', '10-gate Vice Beach circuit ($1,800 prize)', 'RACE', () => { this.togglePhone(false); this.startStreetRace(); });
+      addRow('Ammu-Nation Shooting Range', 'Hit 10 moving indoor targets ($400)', 'PLAY', () => { this.togglePhone(false); this.startIndoorRange(); });
+      addRow('Aerial Sky-Rings Flight', 'Fly to marina chopper & clear golden rings', 'WARP', () => {
+        this.togglePhone(false);
+        const h = this.flyablePlanes.find((p) => p.isHeli);
+        if (h) this.enterPlane(h);
+      });
+      if (this.activeSideMission) {
+        addRow('Cancel Active Job', 'Abort current side mission', 'ABORT', () => { this.abortSideMission(); this.renderPhoneScreen('missions'); });
+      }
+    } else if (app === 'taxi') {
+      addRow('Hail Kaufman Cab Ride', 'Fast-travel anywhere in Vice City', 'BOOK', () => { this.togglePhone(false); this.openTaxiModal(); });
+      addRow('Drive Taxi Fare Shift', 'Earn cash picking up local fares', 'DRIVE', () => { this.togglePhone(false); this.startTaxiJob(); });
+    } else if (app === 'portfolio') {
+      SHOWROOMS.forEach((sr) => {
+        const vis = this.visited.has(sr.id);
+        addRow(`${vis ? '✓ ' : ''}${sr.title}`, `${sr.district} · ${sr.stat}`, vis ? 'OPEN' : 'GPS', () => {
+          this.togglePhone(false);
+          if (vis) this.openShowroomModal(sr);
+          else {
+            const wp = WAYPOINTS.find((w) => w.id === sr.id);
+            if (wp) this.planAutopilotTo(wp);
+          }
+        });
+      });
+      SCAVENGER_UNLOCKS.forEach((u) => {
+        const ok = this.visited.size >= u.count;
+        addRow(`${ok ? '★ ' : '🔒 '}${u.title}`, `${u.count}/5 Showrooms · ${u.desc}`, ok ? 'UNLOCKED' : `${this.visited.size}/${u.count}`, null, !ok);
+      });
+    } else if (app === 'settings') {
+      addRow(`Graphics: ${this.graphicsPreset.toUpperCase()}`, 'Tap to switch Low / Med / High', 'CYCLE', () => {
+        const order = ['high', 'med', 'low'];
+        this.applyGraphicsPreset(order[(order.indexOf(this.graphicsPreset) + 1) % order.length], true);
+        this.renderPhoneScreen('settings');
+      });
+      addRow(`Master Audio: ${this.audio.enabled ? 'ON' : 'OFF'}`, 'Toggle soundtrack & ambient SFX', 'TOGGLE', () => {
+        this.el.audioBtn.click();
+        this.renderPhoneScreen('settings');
+      });
+      addRow('Reset Saved Progress', 'Clear cash, unlocks & garage mods', 'RESET', () => {
+        this.resetPersistentSave();
+        this.renderPhoneScreen('settings');
+      });
+    }
+  }
+
+  summonMechanicVehicle(kind) {
+    this.togglePhone(false);
+    const act = this.mode === 'foot' ? this.playerState : this.carState;
+    const sx = act.x + 4.5, sz = act.z + 2.5;
+    if (kind === 'heli') {
+      const h = this.flyablePlanes.find((p) => p.isHeli);
+      if (h) {
+        h.x = act.x + 8.0; h.z = act.z; h.y = Math.max(0.05, this.getSurfaceY(h.x, h.z, false));
+        h.speed = 0; h.pitch = 0; h.roll = 0;
+        this.syncPlaneTransform(h, 0.016, this.clock.getElapsedTime());
+        this.enterPlane(h);
+      }
+      return;
+    }
+    if (kind === 'bike') {
+      const bikeIdx = this.parkedVehicles.findIndex((pv) => pv.rig && pv.rig.isBike);
+      if (bikeIdx >= 0) {
+        const b = this.parkedVehicles[bikeIdx];
+        b.x = sx; b.z = sz; b.y = this.getSurfaceY(sx, sz, false) + 0.04;
+        b.mesh.position.set(b.x, b.y, b.z);
+        this.enterParkedVehicle(b, bikeIdx);
+      }
+      return;
+    }
+    // Deliver Personal Supercar (or tuned Infernus Apex V12 Hypercar!)
+    const cs = this.carState;
+    this.activeVehicle = this.heroVehicle;
+    this.heroVehicle.topSpeed = kind === 'hyper' ? 68 : 54;
+    this.heroVehicle.nitroSpeed = kind === 'hyper' ? 92 : 74;
+    this.heroVehicle.label = kind === 'hyper' ? 'INFERNUS APEX V12 HYPERCAR' : 'VICE SUPERCAR';
+    this.carHealth = 100;
+    this.updateCarHealthHUD();
+    cs.x = sx; cs.z = sz; cs.y = this.getSurfaceY(sx, sz, false) + 0.05;
+    cs.speed = 0; cs.vy = 0; cs.airborne = false;
+    this.setMode('car');
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `MECHANIC DELIVERED · ${this.heroVehicle.label} <span>100% HP</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.8;
+  }
+
+  takeSnapmaticPhoto() {
+    this.togglePhone(false);
+    if (this.audio) this.audio.cameraShutter();
+    if (this.el && this.el.shutter) {
+      this.el.shutter.classList.add('flash');
+      setTimeout(() => this.el.shutter && this.el.shutter.classList.remove('flash'), 190);
+    }
+    try {
+      this.renderer.render(this.scene, this.camera);
+      const dataUrl = this.renderer.domElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `vice-city-snapmatic-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (_) {}
+    this.el.combo.innerHTML = `SNAPMATIC PHOTO SAVED! <span>PNG DOWNLOADED</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.6;
+  }
+
+  startTaxiJob() {
+    if (this.mode !== 'car') this.setMode('car');
+    const pickup = TAXI_FARE_SPOTS[Math.floor(Math.random() * TAXI_FARE_SPOTS.length)];
+    this.activeSideMission = {
+      kind: 'taxi',
+      phase: 'pickup',
+      faresDone: 0,
+      timer: 65,
+      target: pickup
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `TAXI SHIFT STARTED! <span>PICK UP FARE AT ${pickup.name.toUpperCase()}</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.2;
+  }
+
+  startStreetRace() {
+    if (this.mode !== 'car') this.setMode('car');
+    const cs = this.carState;
+    cs.x = 0; cs.z = -38; cs.yaw = 0; cs.speed = 0;
+    cs.y = this.getSurfaceY(cs.x, cs.z, false) + 0.05;
+    this.snapCameraNext = true;
+    this.activeSideMission = {
+      kind: 'race',
+      gateIdx: 0,
+      timer: 85,
+      target: { x: STREET_RACE_GATES[0].x, z: STREET_RACE_GATES[0].z, name: 'Checkpoint 1/10' }
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `LEONIDA STREET RACE · GO! <span>10 GATES · $1,800 PRIZE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.2;
+  }
+
+  startIndoorRange() {
+    const ps = this.playerState;
+    this.setMode('foot');
+    ps.x = -67.5; ps.z = -102; ps.y = 0.22; ps.yaw = Math.PI / 2;
+    this.orbitYawOffset = Math.PI / 2;
+    this.player.root.position.set(ps.x, ps.y, ps.z);
+    this.setWeapon('rifle');
+    this.snapCameraNext = true;
+    this.activeSideMission = {
+      kind: 'indoorRange',
+      hits: 0,
+      goal: 10,
+      timer: 45,
+      target: null
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    this.el.combo.innerHTML = `AMMU-NATION RANGE! <span>HIT 10 MOVING TARGETS · $400 PRIZE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.2;
+  }
+
+  abortSideMission() {
+    this.activeSideMission = null;
+    if (this.el.missionBar) this.el.missionBar.hidden = true;
+    if (this.missionBeacon) this.missionBeacon.group.visible = false;
+  }
+
+  updateSideMissions(dt, elapsed, act) {
+    const m = this.activeSideMission;
+    if (!m) {
+      if (this.missionBeacon && this.missionBeacon.group.visible) this.missionBeacon.group.visible = false;
+      return;
+    }
+    m.timer -= dt;
+    if (m.timer <= 0) {
+      this.abortSideMission();
+      this.el.combo.innerHTML = `TIME UP · MISSION ENDED <span>TRY AGAIN VIA PHONE [I]</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.8;
+      return;
+    }
+    if (this.el.missionTimer) this.el.missionTimer.textContent = `${Math.ceil(m.timer)}s`;
+
+    if (m.kind === 'indoorRange') {
+      if (this.el.missionObj) this.el.missionObj.textContent = `AMMU-NATION RANGE · ${m.hits}/${m.goal} BULLSEYES`;
+      if (m.hits >= m.goal) {
+        this.cash += 400;
+        this.missionsCompleted += 1;
+        if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        this.abortSideMission();
+        this.savePersistentSave();
+        this.audio.pickup();
+        this.el.combo.innerHTML = `SHARPSHOOTER COMPLETE! <span>+$400</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 3.6;
+      }
+      return;
+    }
+
+    if (m.target && this.missionBeacon) {
+      const by = this.getSurfaceY(m.target.x, m.target.z, false);
+      this.missionBeacon.group.visible = true;
+      this.missionBeacon.group.position.set(m.target.x, by, m.target.z);
+      this.missionBeacon.ring.scale.setScalar(1 + Math.sin(elapsed * 5.0) * 0.14);
+      const col = m.kind === 'race' ? 0x21e6d1 : (m.phase === 'pickup' ? 0xffd36b : 0x34e89e);
+      this.missionBeacon.cylMat.color.setHex(col);
+      this.missionBeacon.ringMat.color.setHex(col);
+
+      const d = Math.hypot(act.x - m.target.x, act.z - m.target.z);
+      if (m.kind === 'taxi') {
+        if (this.el.missionObj) this.el.missionObj.textContent = `${m.phase === 'pickup' ? 'PICKUP' : 'DROPOFF'} · ${m.target.name} (${Math.round(d)}m)`;
+        if (d < 9.5) {
+          this.audio.pickup();
+          if (m.phase === 'pickup') {
+            const others = TAXI_FARE_SPOTS.filter((s) => s.name !== m.target.name);
+            m.target = others[Math.floor(Math.random() * others.length)];
+            m.phase = 'dropoff';
+            m.timer = Math.min(90, m.timer + 38);
+            this.el.combo.innerHTML = `PASSENGER BOARDED! <span>DRIVE TO ${m.target.name.toUpperCase()}</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 2.8;
+          } else {
+            m.faresDone += 1;
+            const pay = 350 + m.faresDone * 75;
+            this.cash += pay;
+            this.missionsCompleted += 1;
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            this.savePersistentSave();
+            const nextP = TAXI_FARE_SPOTS.filter((s) => s.name !== m.target.name);
+            m.target = nextP[Math.floor(Math.random() * nextP.length)];
+            m.phase = 'pickup';
+            m.timer = 65;
+            this.el.combo.innerHTML = `FARE #${m.faresDone} COMPLETE! <span>+$${pay} · NEXT: ${m.target.name.toUpperCase()}</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 3.2;
+          }
+        }
+      } else if (m.kind === 'race') {
+        if (this.el.missionObj) this.el.missionObj.textContent = `STREET RACE · GATE ${m.gateIdx + 1}/${STREET_RACE_GATES.length} (${Math.round(d)}m)`;
+        if (d < 11.5) {
+          this.audio.pickup();
+          m.gateIdx += 1;
+          if (m.gateIdx >= STREET_RACE_GATES.length) {
+            this.cash += 1800;
+            this.missionsCompleted += 1;
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            this.abortSideMission();
+            this.savePersistentSave();
+            this.el.combo.innerHTML = `LEONIDA STREET RACE WINNER! <span>+$1,800</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 4.2;
+          } else {
+            const g = STREET_RACE_GATES[m.gateIdx];
+            m.target = { x: g.x, z: g.z, name: `Gate ${m.gateIdx + 1}` };
+          }
+        }
+      }
+    }
+  }
+
+  updateSkyRings(dt, elapsed, act) {
+    if (!this.skyRings) return;
+    for (let i = 0; i < this.skyRings.length; i++) {
+      const r = this.skyRings[i];
+      if (r.collected) {
+        r.respawnTimer -= dt;
+        if (r.respawnTimer <= 0) { r.collected = false; r.mesh.visible = true; }
+        continue;
+      }
+      r.mesh.rotation.y += dt * 1.1;
+      r.mesh.position.y = r.y + Math.sin(elapsed * 2.2 + i) * 1.2;
+      if (this.mode === 'plane' && Math.hypot(act.x - r.x, act.z - r.z) < 11.5 && Math.abs((act.y || 0) - r.y) < 10.5) {
+        r.collected = true;
+        r.respawnTimer = 45;
+        r.mesh.visible = false;
+        this.cash += 250;
+        if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        this.audio.pickup();
+        this.el.combo.innerHTML = `SKY-RING CLEARED! <span>+$250</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 2.4;
+        this.savePersistentSave();
+      }
+    }
+  }
+
+  updateBoats(dt, elapsed) {
+    if (!this.boats) return;
+    const isBoat = this.mode === 'boat' && Boolean(this.activeBoat);
+    const canDrive = isBoat && this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.phoneOpen;
+    for (let i = 0; i < this.boats.length; i++) {
+      const b = this.boats[i];
+      const ph = b.phase || 0;
+      const waveY = -0.34 + Math.sin(elapsed * 2.4 + ph) * 0.14;
+      if (isBoat && this.activeBoat === b) {
+        let thr = 0, str = 0;
+        if (canDrive && this.keys.up) thr += 1;
+        if (canDrive && this.keys.down) thr -= 0.55;
+        if (canDrive && this.keys.left) str += 1;
+        if (canDrive && this.keys.right) str -= 1;
+        const maxS = (canDrive && this.keys.nitro) ? b.topSpeed * 1.32 : b.topSpeed;
+        b.speed = THREE.MathUtils.damp(b.speed, thr * maxS, thr !== 0 ? 1.8 : 1.1, dt);
+        b.yaw += str * (1.25 + Math.min(0.9, Math.abs(b.speed) * 0.03)) * dt;
+        const fx = -Math.sin(b.yaw), fz = -Math.cos(b.yaw);
+        const nx = b.x + fx * b.speed * dt;
+        const nz = b.z + fz * b.speed * dt;
+        // Keep boats in navigable Atlantic ocean waters off Vice Beach & Starfish Island
+        b.x = THREE.MathUtils.clamp(nx, 28.5, 420);
+        b.z = THREE.MathUtils.clamp(nz, -1120, 320);
+        b.y = waveY + Math.min(0.28, Math.abs(b.speed) * 0.008);
+        b.root.rotation.order = 'YXZ';
+        b.root.rotation.set(Math.min(0.18, b.speed * 0.004) + Math.sin(elapsed * 2.6 + ph) * 0.04, b.yaw, -str * 0.24 * Math.min(1, Math.abs(b.speed) / 14));
+        if (Math.abs(b.speed) > 4 && Math.random() < 0.72) {
+          this.spawnParticle(b.x - fx * 3.0 + (Math.random() - 0.5) * 1.2, -0.1, b.z - fz * 3.0 + (Math.random() - 0.5) * 1.2, -fx * 2.2 + (Math.random() - 0.5) * 1.8, 1.4, -fz * 2.2 + (Math.random() - 0.5) * 1.8, 0xdcf7ff, 0.72, 0.55, 1.9, 4.5);
+        }
+      } else {
+        b.y = waveY;
+        b.root.rotation.set(Math.sin(elapsed * 2.0 + ph) * 0.04, b.yaw, Math.cos(elapsed * 1.7 + ph) * 0.04);
+      }
+      b.root.position.set(b.x, b.y, b.z);
     }
   }
 }

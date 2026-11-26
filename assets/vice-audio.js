@@ -23,6 +23,25 @@ export const RADIO_RJ_CLIPS = [
   { id: 'radio5', host: 'J. Jonah Jameson',           short: 'ON AIR · J. JONAH JAMESON',src: '/assets/aistudio/radio-5_85ff9f43.mp3' }
 ];
 
+export const AMBIENT_ZONE_TRACKS = {
+  forest:   { src: '/assets/aistudio/freesound_community-bush-bird-noises-61883_89d7d571.mp3', maxVol: 0.62 },
+  carnival: { src: '/assets/aistudio/capaholiczsfx-carnival-atmosphere-402695_78236de9.mp3', maxVol: 0.56 },
+  malibu:   { src: '/assets/aistudio/freesound_community-club-bar-talking-yelling-band-warming-up-rock-guitar-05-25995_1a8119a9.mp3', maxVol: 0.66 },
+  airport:  { src: '/assets/aistudio/freesound_community-airport-ambiance-1-34146_cde61f1c.mp3', maxVol: 0.60 },
+  mall:     { src: '/assets/aistudio/mall_f2f11b84.mp3', maxVol: 0.62 }
+};
+
+export const PLANE_AUDIO_TRACKS = {
+  preTakeoff: {
+    src: '/assets/aistudio/freesound_community-180221-airplane-pre-take-off-announcement-small-plane-pineapple-air-bahamas-26095_8bc836bd.mp3',
+    maxVol: 0.76
+  },
+  flightBg: {
+    src: '/assets/aistudio/freesound_community-plane-takeoff-22499_8021059c.mp3',
+    maxVol: 0.68
+  }
+};
+
 const STATION_PATTERNS = {
   wave: {
     bass:  [49, 49, 98, 49, 55, 55, 110, 55, 65.41, 65.41, 130.81, 65.41, 58.27, 58.27, 116.54, 58.27],
@@ -91,6 +110,10 @@ export class ViceAudioEngine {
     this.windGain = null;
     this.windFilter = null;
     this.rainGain = null;
+    this.surfGain = null;
+    this.cityGain = null;
+    this.heliGain = null;
+    this.heliLfo = null;
     this.radioGain = null;
     this.radioBus = null;
 
@@ -109,6 +132,7 @@ export class ViceAudioEngine {
     this.rjAudio = null;
     this.rjActive = false;
     this.rjPausedByExit = false;
+    this.rjNeedsUnlock = false;
     this.rjClip = null;
     this.rjTimer = null;
     this.rjDeadline = 0;
@@ -116,6 +140,43 @@ export class ViceAudioEngine {
     this.rjBag = [];
     this.rjLastId = null;
     this.onRadioChange = null;
+
+    // Looping Location-Aware Background Ambience (Forest/Mountains, Carnival Pier, Malibu Club, Airport, North Point Mall)
+    this.ambientZones = {};
+    for (const key of Object.keys(AMBIENT_ZONE_TRACKS)) {
+      const cfg = AMBIENT_ZONE_TRACKS[key];
+      this.ambientZones[key] = {
+        src: cfg.src,
+        maxVol: cfg.maxVol,
+        audio: null,
+        vol: 0,
+        target: 0,
+        pendingPlay: false,
+        needsUnlock: false
+      };
+    }
+
+    // Two-Stage In-Plane Audio: Pre-Take-Off Announcement -> Plane Take-Off / Flight Background Loop
+    this.planeAudio = {
+      active: false,
+      phase: 'off', // 'off' | 'pre' | 'flight'
+      pre: {
+        src: PLANE_AUDIO_TRACKS.preTakeoff.src,
+        maxVol: PLANE_AUDIO_TRACKS.preTakeoff.maxVol,
+        audio: null,
+        vol: 0,
+        pendingPlay: false,
+        needsUnlock: false
+      },
+      flight: {
+        src: PLANE_AUDIO_TRACKS.flightBg.src,
+        maxVol: PLANE_AUDIO_TRACKS.flightBg.maxVol,
+        audio: null,
+        vol: 0,
+        pendingPlay: false,
+        needsUnlock: false
+      }
+    };
   }
 
   init() {
@@ -272,6 +333,68 @@ export class ViceAudioEngine {
     radioShelf.connect(this.radioGain);
     this.radioGain.connect(master);
     this.radioBus = radioLP;
+
+    // 6. OCEAN WAVES SURF BED (LFO-modulated Atlantic surf near beaches, piers & boats)
+    const surfNoise = this.ctx.createBufferSource();
+    surfNoise.buffer = buf;
+    surfNoise.loop = true;
+    const surfLP = this.ctx.createBiquadFilter();
+    surfLP.type = 'lowpass';
+    surfLP.frequency.value = 520;
+    const surfLfo = this.ctx.createOscillator();
+    surfLfo.type = 'sine';
+    surfLfo.frequency.value = 0.14;
+    const surfLfoGain = this.ctx.createGain();
+    surfLfoGain.gain.value = 210;
+    surfLfo.connect(surfLfoGain);
+    surfLfoGain.connect(surfLP.frequency);
+    this.surfGain = this.ctx.createGain();
+    this.surfGain.gain.value = 0;
+    surfNoise.connect(surfLP);
+    surfLP.connect(this.surfGain);
+    this.surfGain.connect(master);
+    surfNoise.start();
+    surfLfo.start();
+
+    // 7. DOWNTOWN CITY AMBIENT BED (Soft distant urban street hum)
+    const cityNoise = this.ctx.createBufferSource();
+    cityNoise.buffer = buf;
+    cityNoise.loop = true;
+    const cityLP = this.ctx.createBiquadFilter();
+    cityLP.type = 'bandpass';
+    cityLP.frequency.value = 185;
+    cityLP.Q.value = 0.7;
+    this.cityGain = this.ctx.createGain();
+    this.cityGain.gain.value = 0;
+    cityNoise.connect(cityLP);
+    cityLP.connect(this.cityGain);
+    this.cityGain.connect(master);
+    cityNoise.start();
+
+    // 8. HELICOPTER ROTOR BLADE SLAP SYNTH
+    const heliNoise = this.ctx.createBufferSource();
+    heliNoise.buffer = buf;
+    heliNoise.loop = true;
+    const heliLP = this.ctx.createBiquadFilter();
+    heliLP.type = 'lowpass';
+    heliLP.frequency.value = 260;
+    const heliMod = this.ctx.createGain();
+    heliMod.gain.value = 0.55;
+    this.heliLfo = this.ctx.createOscillator();
+    this.heliLfo.type = 'sine';
+    this.heliLfo.frequency.value = 13.5;
+    const heliLfoAmp = this.ctx.createGain();
+    heliLfoAmp.gain.value = 0.45;
+    this.heliLfo.connect(heliLfoAmp);
+    heliLfoAmp.connect(heliMod.gain);
+    this.heliGain = this.ctx.createGain();
+    this.heliGain.gain.value = 0;
+    heliNoise.connect(heliLP);
+    heliLP.connect(heliMod);
+    heliMod.connect(this.heliGain);
+    this.heliGain.connect(master);
+    heliNoise.start();
+    this.heliLfo.start();
   }
 
   canPlayRadio() {
@@ -294,19 +417,312 @@ export class ViceAudioEngine {
       this.init();
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
       this.resumeRadioInPlace();
+      this.resumeUnlockedAmbient();
     } else {
       this.stopRadioLoop();
       this.stopRJ(false);
+      this.pauseAllAmbientZones();
       if (this.ctx) {
         const now = this.ctx.currentTime;
         if (this.engineGain) this.engineGain.gain.setTargetAtTime(0, now, 0.08);
         if (this.driftGain)  this.driftGain.gain.setTargetAtTime(0, now, 0.05);
         if (this.windGain)   this.windGain.gain.setTargetAtTime(0, now, 0.12);
         if (this.rainGain)   this.rainGain.gain.setTargetAtTime(0, now, 0.08);
+        if (this.surfGain)   this.surfGain.gain.setTargetAtTime(0, now, 0.10);
+        if (this.cityGain)   this.cityGain.gain.setTargetAtTime(0, now, 0.10);
+        if (this.heliGain)   this.heliGain.gain.setTargetAtTime(0, now, 0.08);
         if (this.radioGain)  this.radioGain.gain.setTargetAtTime(0, now, 0.05);
       }
     }
     this.notifyRadioChange();
+  }
+
+  ensureAmbientAudio(key) {
+    const z = this.ambientZones[key];
+    if (!z) return null;
+    if (!z.audio) {
+      const el = new Audio(z.src);
+      el.loop = true;
+      el.preload = 'auto';
+      el.volume = 0;
+      z.audio = el;
+    }
+    return z.audio;
+  }
+
+  pauseAllAmbientZones() {
+    for (const key of Object.keys(this.ambientZones)) {
+      const z = this.ambientZones[key];
+      z.vol = 0;
+      z.target = 0;
+      z.pendingPlay = false;
+      z.needsUnlock = false;
+      if (z.audio) {
+        try {
+          z.audio.volume = 0;
+          z.audio.pause();
+        } catch (_) {}
+      }
+    }
+    this.pausePlaneAudioInPlace();
+  }
+
+  ensurePlaneAudio(which) {
+    const slot = this.planeAudio && this.planeAudio[which];
+    if (!slot) return null;
+    if (!slot.audio) {
+      const el = new Audio(slot.src);
+      el.loop = which === 'flight';
+      el.preload = 'auto';
+      el.volume = 0;
+      if (which === 'pre') {
+        const onPreFinished = () => {
+          if (!this.planeAudio.active || this.planeAudio.phase !== 'pre') return;
+          this.planeAudio.phase = 'flight';
+          slot.vol = 0;
+          try { el.volume = 0; el.pause(); } catch (_) {}
+          this._playPlaneSlot('flight', true);
+        };
+        el.onended = onPreFinished;
+        el.onerror = onPreFinished;
+      }
+      slot.audio = el;
+    }
+    return slot.audio;
+  }
+
+  _playPlaneSlot(which, resetTime = false) {
+    const slot = this.planeAudio && this.planeAudio[which];
+    if (!slot || !this.enabled) return;
+    const el = this.ensurePlaneAudio(which);
+    if (!el) return;
+    if (resetTime) {
+      try { el.currentTime = 0; } catch (_) {}
+    }
+    slot.needsUnlock = false;
+    slot.vol = Math.max(slot.vol, slot.maxVol * 0.65);
+    try { el.volume = Math.max(0, Math.min(1, slot.vol)); } catch (_) {}
+    if (!el.paused || slot.pendingPlay) return;
+    slot.pendingPlay = true;
+    try {
+      const p = el.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => { slot.pendingPlay = false; }).catch(() => { slot.pendingPlay = false; slot.needsUnlock = true; });
+      } else {
+        slot.pendingPlay = false;
+      }
+    } catch (_) {
+      slot.pendingPlay = false;
+      slot.needsUnlock = true;
+    }
+  }
+
+  startPlaneSequence() {
+    this.stopPlaneSequence();
+    this.planeAudio.active = true;
+    this.planeAudio.phase = 'pre';
+    // Preload both tracks so the handoff from pre-take-off announcement to plane flight BG is seamless
+    this.ensurePlaneAudio('pre');
+    this.ensurePlaneAudio('flight');
+    if (this.enabled) {
+      this._playPlaneSlot('pre', true);
+    }
+  }
+
+  pausePlaneAudioInPlace() {
+    if (!this.planeAudio) return;
+    for (const which of ['pre', 'flight']) {
+      const slot = this.planeAudio[which];
+      if (!slot) continue;
+      slot.vol = 0;
+      slot.pendingPlay = false;
+      slot.needsUnlock = false;
+      if (slot.audio) {
+        try {
+          slot.audio.volume = 0;
+          slot.audio.pause();
+        } catch (_) {}
+      }
+    }
+  }
+
+  stopPlaneSequence() {
+    if (!this.planeAudio) return;
+    this.planeAudio.active = false;
+    this.planeAudio.phase = 'off';
+    for (const which of ['pre', 'flight']) {
+      const slot = this.planeAudio[which];
+      if (!slot) continue;
+      slot.vol = 0;
+      slot.pendingPlay = false;
+      slot.needsUnlock = false;
+      if (slot.audio) {
+        try {
+          slot.audio.volume = 0;
+          slot.audio.pause();
+          slot.audio.currentTime = 0;
+        } catch (_) {}
+      }
+    }
+  }
+
+  updatePlaneAudio(inPlane, dt = 0.05) {
+    if (!inPlane) {
+      if (this.planeAudio.active || this.planeAudio.phase !== 'off') {
+        this.stopPlaneSequence();
+      }
+      return;
+    }
+    if (!this.planeAudio.active) {
+      this.startPlaneSequence();
+    }
+    if (!this.enabled) {
+      this.pausePlaneAudioInPlace();
+      return;
+    }
+
+    const smooth = 1 - Math.exp(-Math.min(0.25, Math.max(0.005, dt)) * 4.2);
+    const pre = this.planeAudio.pre;
+    const flt = this.planeAudio.flight;
+
+    if (this.planeAudio.phase === 'pre') {
+      const preEl = this.ensurePlaneAudio('pre');
+      if (preEl && preEl.ended) {
+        this.planeAudio.phase = 'flight';
+        pre.vol = 0;
+        try { preEl.volume = 0; preEl.pause(); } catch (_) {}
+        this._playPlaneSlot('flight', true);
+      } else if (preEl) {
+        pre.vol += (pre.maxVol - pre.vol) * smooth;
+        try { preEl.volume = Math.max(0, Math.min(1, pre.vol)); } catch (_) {}
+        if (preEl.paused && !pre.pendingPlay && !pre.needsUnlock) {
+          this._playPlaneSlot('pre', false);
+        }
+      }
+      if (flt.audio && !flt.audio.paused) {
+        flt.vol = 0;
+        try { flt.audio.volume = 0; flt.audio.pause(); } catch (_) {}
+      }
+    } else if (this.planeAudio.phase === 'flight') {
+      if (pre.audio && !pre.audio.paused) {
+        pre.vol = 0;
+        try { pre.audio.volume = 0; pre.audio.pause(); } catch (_) {}
+      }
+      const fltEl = this.ensurePlaneAudio('flight');
+      if (fltEl) {
+        flt.vol += (flt.maxVol - flt.vol) * smooth;
+        try { fltEl.volume = Math.max(0, Math.min(1, flt.vol)); } catch (_) {}
+        if (fltEl.paused && !flt.pendingPlay && !flt.needsUnlock) {
+          this._playPlaneSlot('flight', false);
+        }
+      }
+    }
+  }
+
+  resumeUnlockedAmbient() {
+    if (!this.enabled) return;
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch (_) {}
+    }
+    for (const key of Object.keys(this.ambientZones)) {
+      const z = this.ambientZones[key];
+      if ((z.needsUnlock || z.vol > 0.008) && z.audio && z.audio.paused && !z.pendingPlay) {
+        z.needsUnlock = false;
+        z.pendingPlay = true;
+        try {
+          const p = z.audio.play();
+          if (p && typeof p.then === 'function') {
+            p.then(() => { z.pendingPlay = false; }).catch(() => { z.pendingPlay = false; z.needsUnlock = true; });
+          } else {
+            z.pendingPlay = false;
+          }
+        } catch (_) {
+          z.pendingPlay = false;
+          z.needsUnlock = true;
+        }
+      }
+    }
+    if (this.canPlayRadio() && this.rjActive && this.rjAudio && (this.rjNeedsUnlock || (this.rjAudio.paused && !this.rjPausedByExit))) {
+      this.rjNeedsUnlock = false;
+      this.rjAudio.volume = Math.max(0, Math.min(1, (this.radioVolume / 100) * 0.92));
+      try {
+        const p = this.rjAudio.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => { this.rjNeedsUnlock = true; });
+        }
+      } catch (_) {
+        this.rjNeedsUnlock = true;
+      }
+      this.notifyRadioChange();
+    }
+    if (this.planeAudio && this.planeAudio.active) {
+      const activeWhich = this.planeAudio.phase === 'pre' ? 'pre' : (this.planeAudio.phase === 'flight' ? 'flight' : null);
+      if (activeWhich) {
+        const slot = this.planeAudio[activeWhich];
+        if (slot && (slot.needsUnlock || !slot.audio || slot.audio.paused) && !slot.pendingPlay) {
+          this._playPlaneSlot(activeWhich, false);
+        }
+      }
+    }
+  }
+
+  setAmbientZones(weights, dt = 0.05) {
+    const smooth = 1 - Math.exp(-Math.min(0.25, Math.max(0.005, dt)) * 3.0);
+    const duck = this.canPlayRadio() ? 0.56 : 1.0;
+    for (const key of Object.keys(this.ambientZones)) {
+      const z = this.ambientZones[key];
+      const w = (this.enabled && weights && weights[key] > 0) ? Math.min(1, weights[key]) : 0;
+      z.target = w * z.maxVol * duck;
+      z.vol += (z.target - z.vol) * smooth;
+      if (z.vol < 0.005 && z.target <= 0.001) {
+        z.vol = 0;
+        if (z.audio && !z.audio.paused) {
+          try {
+            z.audio.volume = 0;
+            z.audio.pause();
+          } catch (_) {}
+        }
+        continue;
+      }
+      if (!this.enabled) continue;
+      const el = this.ensureAmbientAudio(key);
+      if (!el) continue;
+      try { el.volume = Math.max(0, Math.min(1, z.vol)); } catch (_) {}
+      if (el.paused && !z.pendingPlay && !z.needsUnlock && z.vol > 0.008) {
+        z.pendingPlay = true;
+        try {
+          const p = el.play();
+          if (p && typeof p.then === 'function') {
+            p.then(() => { z.pendingPlay = false; }).catch(() => { z.pendingPlay = false; z.needsUnlock = true; });
+          } else {
+            z.pendingPlay = false;
+          }
+        } catch (_) {
+          z.pendingPlay = false;
+          z.needsUnlock = true;
+        }
+      }
+    }
+  }
+
+  getAmbientLevels() {
+    const out = {};
+    for (const key of Object.keys(this.ambientZones)) {
+      const z = this.ambientZones[key];
+      out[key] = {
+        vol: Number(z.vol.toFixed(3)),
+        target: Number(z.target.toFixed(3)),
+        playing: Boolean(z.audio && !z.audio.paused),
+        src: z.src
+      };
+    }
+    out.plane = {
+      active: Boolean(this.planeAudio && this.planeAudio.active),
+      phase: this.planeAudio ? this.planeAudio.phase : 'off',
+      prePlaying: Boolean(this.planeAudio && this.planeAudio.pre.audio && !this.planeAudio.pre.audio.paused),
+      flightPlaying: Boolean(this.planeAudio && this.planeAudio.flight.audio && !this.planeAudio.flight.audio.paused)
+    };
+    return out;
   }
 
   setRainLevel(level) {
@@ -332,6 +748,7 @@ export class ViceAudioEngine {
   pauseRadioInPlace() {
     // Pause music sequencer step & RJ audio at exact currentTime so re-entering resumes right where it left off
     this.stopRadioLoop();
+    this.rjNeedsUnlock = false;
     if (this.rjActive && this.rjAudio) {
       try { this.rjAudio.pause(); } catch (_) {}
       this.rjPausedByExit = true;
@@ -349,13 +766,18 @@ export class ViceAudioEngine {
       return;
     }
     if (!this.radioTimer) this.startRadioLoop();
-    if (this.rjActive && this.rjAudio && this.rjPausedByExit) {
+    if (this.rjActive && this.rjAudio && (this.rjPausedByExit || this.rjNeedsUnlock)) {
       this.rjPausedByExit = false;
+      this.rjNeedsUnlock = false;
       this.rjAudio.volume = Math.max(0, Math.min(1, (this.radioVolume / 100) * 0.92));
       try {
         const p = this.rjAudio.play();
-        if (p && typeof p.catch === 'function') p.catch(() => {});
-      } catch (_) {}
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => { this.rjNeedsUnlock = true; });
+        }
+      } catch (_) {
+        this.rjNeedsUnlock = true;
+      }
     } else if (!this.rjActive && !this.rjTimer) {
       const rem = this.rjRemainingMs;
       this.rjRemainingMs = null;
@@ -466,6 +888,7 @@ export class ViceAudioEngine {
     this.clearRJTimer();
     this.rjRemainingMs = null;
     this.rjPausedByExit = false;
+    this.rjNeedsUnlock = false;
     const hadRJ = this.rjActive || Boolean(this.rjAudio);
     if (this.rjAudio) {
       try {
@@ -484,18 +907,46 @@ export class ViceAudioEngine {
     }
   }
 
-  triggerRandomRJ(explicitIdx = null) {
+  playSpecialIntroRJ() {
+    this.radioInCar = true;
+    this.radioPower = true;
+    if (!this.enabled) return null;
+    this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch (_) {}
+    }
+    const introIdx = RADIO_RJ_CLIPS.findIndex((c) => c.id === 'intro');
+    const prewarmed = (typeof window !== 'undefined' && window.__VICE_INTRO_RJ_AUDIO__) ? window.__VICE_INTRO_RJ_AUDIO__ : null;
+    if (prewarmed && typeof window !== 'undefined') {
+      prewarmed.__claimed = true;
+      window.__VICE_INTRO_RJ_AUDIO__ = null;
+    }
+    const clip = this.triggerRandomRJ(introIdx >= 0 ? introIdx : 0, prewarmed);
+    if (!this.radioTimer) this.startRadioLoop();
+    return clip;
+  }
+
+  triggerRandomRJ(explicitIdx = null, existingAudioEl = null) {
     if (!this.canPlayRadio()) return null;
     this.stopRJ(false);
     const clip = this.pickRandomRJClip(explicitIdx);
     if (!clip) return null;
 
-    const audioEl = new Audio(clip.src);
-    audioEl.preload = 'auto';
+    let audioEl = null;
+    if (existingAudioEl && typeof existingAudioEl.play === 'function') {
+      audioEl = existingAudioEl;
+      if (audioEl.paused) {
+        try { audioEl.currentTime = 0; } catch (_) {}
+      }
+    } else {
+      audioEl = new Audio(clip.src);
+      audioEl.preload = 'auto';
+    }
     audioEl.volume = Math.max(0, Math.min(1, (this.radioVolume / 100) * 0.92));
     this.rjAudio = audioEl;
     this.rjClip = clip;
     this.rjActive = true;
+    this.rjNeedsUnlock = false;
     this.updateRadioGain();
     this.notifyRadioChange();
 
@@ -503,6 +954,7 @@ export class ViceAudioEngine {
       if (this.rjAudio !== audioEl) return;
       this.rjAudio = null;
       this.rjActive = false;
+      this.rjNeedsUnlock = false;
       this.rjClip = null;
       this.updateRadioGain();
       this.notifyRadioChange();
@@ -517,9 +969,14 @@ export class ViceAudioEngine {
     try {
       const p = audioEl.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(() => {
-          // If autoplay is temporarily blocked before gesture, gracefully return to synth music
-          if (this.rjAudio === audioEl) {
+        p.catch((err) => {
+          if (this.rjAudio !== audioEl) return;
+          const isAutoplayBlock = !audioEl.error && (!err || err.name === 'NotAllowedError' || err.name === 'AbortError');
+          if (isAutoplayBlock) {
+            // Keep the RJ clip armed so the very next pointer/key gesture starts it immediately
+            this.rjNeedsUnlock = true;
+            this.notifyRadioChange();
+          } else {
             finishBreak();
           }
         });
@@ -1160,5 +1617,101 @@ export class ViceAudioEngine {
       o.connect(g); g.connect(this.master);
       o.start(t0); o.stop(t0 + 0.09);
     });
+  }
+
+  setAtmosphereLevels(surf = 0, city = 0) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const duck = this.canPlayRadio() ? 0.45 : 1.0;
+    if (this.surfGain) {
+      const sTarget = this.enabled ? Math.min(0.24, Math.max(0, surf) * 0.20 * duck) : 0;
+      this.surfGain.gain.setTargetAtTime(sTarget, now, 0.35);
+    }
+    if (this.cityGain) {
+      const cTarget = this.enabled ? Math.min(0.14, Math.max(0, city) * 0.11 * duck) : 0;
+      this.cityGain.gain.setTargetAtTime(cTarget, now, 0.4);
+    }
+  }
+
+  setHeliRotor(active, throttle = 0.5) {
+    if (!this.ctx || !this.heliGain) return;
+    const now = this.ctx.currentTime;
+    const target = (this.enabled && active) ? (0.20 + Math.min(1, Math.max(0, throttle)) * 0.14) : 0;
+    this.heliGain.gain.setTargetAtTime(target, now, 0.14);
+    if (this.heliLfo && active) {
+      this.heliLfo.frequency.setTargetAtTime(11.5 + Math.min(1, Math.max(0, throttle)) * 6.5, now, 0.18);
+    }
+  }
+
+  footstep(indoor = false) {
+    if (!this.enabled || !this.ctx || !this.noiseBuf) return;
+    const now = this.ctx.currentTime;
+    const playTap = (offset, amp, freq) => {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const bp = this.ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = freq;
+      bp.Q.value = indoor ? 3.4 : 1.8;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(amp, now + offset);
+      g.gain.exponentialRampToValueAtTime(0.001, now + offset + (indoor ? 0.085 : 0.055));
+      src.connect(bp); bp.connect(g); g.connect(this.master);
+      src.start(now + offset); src.stop(now + offset + 0.095);
+    };
+    playTap(0, indoor ? 0.085 : 0.06, indoor ? 980 : 420);
+    if (indoor) {
+      // Subtle hall slapback echo inside North Point Mall, Ocean View Hotel & Airport Terminal
+      playTap(0.095, 0.036, 860);
+      playTap(0.195, 0.016, 720);
+    }
+  }
+
+  phoneChime() {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    [880, 1174.66].forEach((f, idx) => {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = 'sine';
+      const t0 = now + idx * 0.055;
+      o.frequency.setValueAtTime(f, t0);
+      g.gain.setValueAtTime(0.001, t0);
+      g.gain.linearRampToValueAtTime(0.09, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
+      o.connect(g); g.connect(this.master);
+      o.start(t0); o.stop(t0 + 0.16);
+    });
+  }
+
+  cameraShutter() {
+    if (!this.enabled || !this.ctx || !this.noiseBuf) return;
+    const now = this.ctx.currentTime;
+    [0, 0.075].forEach((off, idx) => {
+      const s = this.ctx.createBufferSource();
+      s.buffer = this.noiseBuf;
+      const hp = this.ctx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = idx === 0 ? 2200 : 1600;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.18, now + off);
+      g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.045);
+      s.connect(hp); hp.connect(g); g.connect(this.master);
+      s.start(now + off); s.stop(now + off + 0.05);
+    });
+  }
+
+  sprayHiss() {
+    if (!this.enabled || !this.ctx || !this.noiseBuf) return;
+    const now = this.ctx.currentTime;
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.noiseBuf;
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 3400; bp.Q.value = 1.2;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+    s.connect(bp); bp.connect(g); g.connect(this.master);
+    s.start(now); s.stop(now + 0.7);
   }
 }

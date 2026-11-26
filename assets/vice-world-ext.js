@@ -1614,60 +1614,118 @@ export function createMalibuClubBuilding(maxAniso = 4) {
     root.add(pN, pS);
   }
 
-  // 7. ANIMATED 5-MAN STAGE BAND + CLUB DANCERS + BARTENDER!
+  // 7. ANIMATED 5-MAN STAGE BAND + 18 LIVELY CLUB DANCERS (RGB FLOOR & VIP BALCONIES) + BARTENDER!
   const dancers = [];
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xdca47e, roughness: 0.6 });
-  const buildClubPerson = (x, y, z, yaw, shirtHex, pantsHex, hatHex, isStage) => {
+  const skinTones = [0xdca47e, 0xc6865c, 0x8d5524, 0xf1c27d, 0xe0ac69, 0x6f4325];
+  const hairCols = [0x1a1412, 0x3b2416, 0xd8a848, 0x8c2a1e, 0x16121a, 0xff2e88];
+  const buildClubPerson = (x, y, z, yaw, shirtHex, pantsHex, hatHex, isStage, style = 0, skinIdx = 0) => {
     const g = new THREE.Group();
     g.position.set(x, y, z);
     g.rotation.y = yaw;
+    const pSkin = new THREE.MeshStandardMaterial({ color: skinTones[skinIdx % skinTones.length], roughness: 0.58 });
     const pantsMat = new THREE.MeshStandardMaterial({ color: pantsHex, roughness: 0.72 });
-    const shirtMat = new THREE.MeshStandardMaterial({ color: shirtHex, roughness: 0.56 });
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.5 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x221814, roughness: 0.7 });
-    for (const sx of [-0.10, 0.10]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.058, 0.78, 8), pantsMat);
-      leg.position.set(sx, 0.42, 0);
-      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.22), shoeMat);
-      shoe.position.set(sx, 0.04, 0.04);
-      g.add(leg, shoe);
-    }
+    const shirtMat = new THREE.MeshStandardMaterial({ color: shirtHex, roughness: 0.52 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.45 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: hairCols[(skinIdx + style) % hairCols.length], roughness: 0.66 });
+
+    const legL = new THREE.Group();
+    legL.position.set(-0.10, 0.80, 0);
+    const legLM = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.056, 0.76, 8), pantsMat);
+    legLM.position.y = -0.38;
+    const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.22), shoeMat);
+    shoeL.position.set(0, -0.76, 0.04);
+    legL.add(legLM, shoeL);
+
+    const legR = new THREE.Group();
+    legR.position.set(0.10, 0.80, 0);
+    const legRM = legLM.clone();
+    const shoeR = shoeL.clone();
+    legR.add(legRM, shoeR);
+
+    const upper = new THREE.Group();
+    upper.position.y = 0.84;
     const hips = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.20), pantsMat);
-    hips.position.y = 0.84;
     const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.16, 0.54, 10), shirtMat);
     torso.scale.set(1.12, 1.0, 0.72);
-    torso.position.y = 1.18;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), skinMat);
-    head.position.y = 1.60;
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.138, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
-    hair.position.set(0, 1.63, -0.01);
-    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.52, 8), skinMat);
-    armL.position.set(-0.26, 1.24, 0);
-    const armR = armL.clone(); armR.position.x = 0.26;
-    g.add(hips, torso, head, hair, armL, armR);
+    torso.position.y = 0.34;
+    const head = new THREE.Group();
+    head.position.y = 0.76;
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), pSkin);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.142, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.62), hairMat);
+    hair.position.set(0, 0.03, -0.01);
+    head.add(skull, hair);
     if (hatHex) {
       const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, 0.14, 10), new THREE.MeshStandardMaterial({ color: hatHex, roughness: 0.48 }));
-      hat.position.y = 1.74;
-      g.add(hat);
+      hat.position.y = 0.14;
+      head.add(hat);
     }
+
+    const armL = new THREE.Group();
+    armL.position.set(-0.25, 0.54, 0);
+    const armLM = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.040, 0.52, 8), pSkin);
+    armLM.position.y = -0.24;
+    armL.add(armLM);
+
+    const armR = new THREE.Group();
+    armR.position.set(0.25, 0.54, 0);
+    const armRM = armLM.clone();
+    armR.add(armRM);
+
+    upper.add(hips, torso, head, armL, armR);
+    g.add(legL, legR, upper);
     root.add(g);
-    dancers.push({ group: g, armL, armR, baseY: y, phase: dancers.length * 1.15, isDJ: isStage });
+    dancers.push({
+      group: g, upper, head, armL, armR, legL, legR,
+      baseX: x, baseY: y, baseZ: z, baseYaw: yaw,
+      phase: dancers.length * 1.13, isDJ: isStage, style
+    });
   };
 
   // Iconic 5-Piece Stage Band (Cowboy, Biker, Construction Hardhat, Sailor, Officer — facing +X dancefloor!)
-  buildClubPerson(-hw + 4.4, 1.25, -4.0, Math.PI / 2, 0xc87432, 0x243b68, 0x6b3a1e, true);  // Cowboy
-  buildClubPerson(-hw + 4.7, 1.25, -2.0, Math.PI / 2, 0x1a1a22, 0x16161c, 0x18181f, true);  // Biker
-  buildClubPerson(-hw + 5.0, 1.25,  0.0, Math.PI / 2, 0xe87b22, 0x264478, 0xffd228, true);  // Construction
-  buildClubPerson(-hw + 4.7, 1.25,  2.0, Math.PI / 2, 0xf2f4f8, 0xf0f2f6, 0xffffff, true);  // Sailor
-  buildClubPerson(-hw + 4.4, 1.25,  4.0, Math.PI / 2, 0x1d3b72, 0x14264a, 0x112040, true);  // Officer
+  buildClubPerson(-hw + 4.4, 1.25, -4.0, Math.PI / 2, 0xc87432, 0x243b68, 0x6b3a1e, true, 0, 0);
+  buildClubPerson(-hw + 4.7, 1.25, -2.0, Math.PI / 2, 0x1a1a22, 0x16161c, 0x18181f, true, 1, 1);
+  buildClubPerson(-hw + 5.0, 1.25,  0.0, Math.PI / 2, 0xe87b22, 0x264478, 0xffd228, true, 2, 2);
+  buildClubPerson(-hw + 4.7, 1.25,  2.0, Math.PI / 2, 0xf2f4f8, 0xf0f2f6, 0xffffff, true, 0, 3);
+  buildClubPerson(-hw + 4.4, 1.25,  4.0, Math.PI / 2, 0x1d3b72, 0x14264a, 0x112040, true, 1, 4);
 
-  // Animated Club Dancers on the RGB Dancefloor + Bartender behind the Cocktail Bar
-  buildClubPerson(0.6,  0.16, -2.6, -1.2, 0xff2e88, 0xf4f4f8, null, false);
-  buildClubPerson(3.4,  0.16, -1.8, -2.2, 0x21e6d1, 0x202430, null, false);
-  buildClubPerson(1.8,  0.16,  1.6,  0.9, 0xffd36b, 0x1d3557, null, false);
-  buildClubPerson(4.6,  0.16,  2.2,  2.5, 0x9b5de5, 0xf2e8dc, null, false);
-  buildClubPerson(-0.8, 0.16,  0.2,  1.5, 0xff6b35, 0x1e202c, null, false);
-  buildClubPerson(2.2,  0.16, hd - 2.3, Math.PI, 0xf4f6fa, 0x141620, null, true); // Bartender
+  // 14 Energetic Animated Club Dancers across the Illuminated RGB Dancefloor!
+  const floorCrowd = [
+    [-1.4, -3.4, -0.8, 0xff2e88, 0xf4f4f8, 0, 0],
+    [ 0.6, -2.6, -1.2, 0x21e6d1, 0x1c2030, 1, 1],
+    [ 3.4, -3.2, -2.1, 0xffd36b, 0x26324d, 2, 2],
+    [ 5.6, -2.4, -2.4, 0xf460a8, 0xf4efe8, 3, 3],
+    [-1.8, -0.6,  0.6, 0xff6b35, 0x1e202c, 1, 4],
+    [ 0.2,  0.8, -1.5, 0x9b5de5, 0xf2e8dc, 0, 5],
+    [ 4.2, -0.4,  2.8, 0x34e89e, 0x1b2434, 2, 0],
+    [ 6.0,  0.6, -2.8, 0xff2e88, 0x202230, 3, 2],
+    [-1.2,  2.8,  1.2, 0x21e6d1, 0xf5f0ea, 2, 3],
+    [ 1.4,  3.4,  0.5, 0xffb84d, 0x1d3557, 0, 1],
+    [ 3.8,  2.6,  2.4, 0xff4fa0, 0x181c2c, 1, 4],
+    [ 5.8,  3.2,  2.9, 0x6ce5ff, 0x242038, 3, 5],
+    [ 0.8, -4.4, -0.4, 0xe85dff, 0xf4f2ec, 1, 2],
+    [ 4.4,  4.2,  2.1, 0xffd36b, 0x18263e, 2, 0]
+  ];
+  floorCrowd.forEach(([dx, dz, dyaw, sh, pa, st, sk]) => {
+    buildClubPerson(dx, 0.16, dz, dyaw, sh, pa, null, false, st, sk);
+  });
+
+  // 4 VIP Balcony Dancers grooving along North & South Neon Mezzanines
+  buildClubPerson(-1.2, 5.41, -hd + 3.8, 0,       0xff2e88, 0xf4f4f8, null, false, 1, 1);
+  buildClubPerson( 3.6, 5.41, -hd + 3.8, 0.2,     0x21e6d1, 0x1a1e2c, null, false, 2, 4);
+  buildClubPerson(-0.8, 5.41,  hd - 3.8, Math.PI, 0xffd36b, 0x22283a, null, false, 0, 2);
+  buildClubPerson( 4.2, 5.41,  hd - 3.8, Math.PI, 0x9b5de5, 0xf2ece4, null, false, 3, 5);
+
+  // Bartender behind the Cocktail Bar
+  buildClubPerson(2.2, 0.16, hd - 2.3, Math.PI, 0xf4f6fa, 0x141620, null, true, 0, 0);
+
+  // Glowing Center Dancefloor Ring showing player where to press [E] to Dance
+  const danceSpotRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.05, 1.38, 28),
+    new THREE.MeshBasicMaterial({ color: 0xff2e88, transparent: true, opacity: 0.78, side: THREE.DoubleSide, depthWrite: false })
+  );
+  danceSpotRing.rotation.x = -Math.PI / 2;
+  danceSpotRing.position.set(2.3, 0.19, 0.0);
+  root.add(danceSpotRing);
 
   // Hollow perimeter colliders in local building space (leaving wide 6.8m East entrance completely open!)
   const localColliders = [
@@ -1679,7 +1737,7 @@ export function createMalibuClubBuilding(maxAniso = 4) {
     { minX: -3.8, maxX: 8.2, minZ: hd - 4.3, maxZ: hd - 2.9 }   // Cocktail bar counter (solid!)
   ];
 
-  return { root, discoPivot, tiles, dancers, palette, localColliders, W, D };
+  return { root, discoPivot, tiles, dancers, danceSpotRing, palette, localColliders, W, D };
 }
 
 /* ==========================================================================
@@ -2036,6 +2094,613 @@ export function createNorthPointMall(maxAniso = 4) {
 
 export function createMalibuClubExtras(maxAniso = 4) {
   return createMalibuClubBuilding(maxAniso);
+}
+
+/* ==========================================================================
+   10. OCEAN VIEW HOTEL — TRUE 2-STORY WALKABLE SAFEHOUSE (GROUND LOBBY +
+       WALKABLE GRAND STAIRCASE + 1ST FLOOR PRIVATE SUITE: BED, TV, FOOD, WARDROBE!)
+   ========================================================================== */
+export function createOceanViewSafehouse(maxAniso = 4) {
+  const root = new THREE.Group();
+  const pbr = getWorldPBRTextures(maxAniso);
+
+  // Footprint: D=16 (X: -8..+8), W=24 (Z: -12..+12), H=16.5 (2 playable floors + Art Deco roof crown)
+  const D = 16, W = 24, H = 16.5, t = 0.7;
+  const hd = D * 0.5, hw = W * 0.5;
+  const floor1Y = 4.44; // Local 1st floor height (+0.16 world = 4.60m!)
+  const ceilY = 9.15;
+
+  const extMat = new THREE.MeshStandardMaterial({
+    map: pbr.concrete.map, normalMap: pbr.concrete.normalMap, normalScale: new THREE.Vector2(0.5, 0.5),
+    color: 0xf4e4d6, roughness: 0.62
+  });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xfaf6f0, roughness: 0.42 });
+  const suiteWallMat = new THREE.MeshStandardMaterial({
+    color: 0xf6dcd4, roughness: 0.68, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+  });
+  const lobbyWallMat = new THREE.MeshStandardMaterial({
+    color: 0xefe6da, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+  });
+  const ceilPlasterMat = new THREE.MeshStandardMaterial({ color: 0xf7f2ea, roughness: 0.58 });
+  const neonPink = new THREE.MeshBasicMaterial({ color: 0xff2e88 });
+  const neonCyan = new THREE.MeshBasicMaterial({ color: 0x21e6d1 });
+  const neonGold = new THREE.MeshBasicMaterial({ color: 0xffd36b });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x704022, roughness: 0.44 });
+  const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x442412, roughness: 0.46 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xeec052, metalness: 0.9, roughness: 0.2, envMapIntensity: 1.7 });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe6eef6, metalness: 0.92, roughness: 0.14 });
+  const velvetTeal = new THREE.MeshStandardMaterial({ color: 0x169e98, roughness: 0.76 });
+  const velvetPink = new THREE.MeshStandardMaterial({ color: 0xe63b82, roughness: 0.74 });
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x86d8f0, transparent: true, opacity: 0.28, roughness: 0.08, metalness: 0.15, depthWrite: false });
+
+  // Ground Lobby Checkered Marble Floor (raised slightly + polygonOffset so it NEVER Z-fights with sidewalk!)
+  const lc = document.createElement('canvas'); lc.width = 256; lc.height = 256;
+  const lctx = lc.getContext('2d');
+  for (let gx = 0; gx < 8; gx++) {
+    for (let gy = 0; gy < 8; gy++) {
+      lctx.fillStyle = (gx + gy) % 2 === 0 ? '#f3ebe0' : '#1b9496';
+      lctx.fillRect(gx * 32, gy * 32, 32, 32);
+    }
+  }
+  const lobbyTex = new THREE.CanvasTexture(lc);
+  lobbyTex.colorSpace = THREE.SRGBColorSpace;
+  lobbyTex.wrapS = lobbyTex.wrapT = THREE.RepeatWrapping;
+  lobbyTex.repeat.set(3, 4);
+  const lobbyFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(D - 1.2, W - 1.2),
+    new THREE.MeshStandardMaterial({
+      map: lobbyTex, roughness: 0.26, metalness: 0.12,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    })
+  );
+  lobbyFloor.rotation.x = -Math.PI / 2;
+  lobbyFloor.position.y = 0.055;
+  root.add(lobbyFloor);
+
+  // Exterior Perimeter Shell Walls (West, North, South, East with Open Lobby Door & 1st-Floor Ocean Panorama Window)
+  const backW = new THREE.Mesh(new THREE.BoxGeometry(t, H, W), extMat);
+  backW.position.set(-hd + t * 0.5, H * 0.5, 0);
+  const northW = new THREE.Mesh(new THREE.BoxGeometry(D - t * 2, H, t), extMat);
+  northW.position.set(0, H * 0.5, -hw + t * 0.5);
+  const southW = new THREE.Mesh(new THREE.BoxGeometry(D - t * 2, H, t), extMat);
+  southW.position.set(0, H * 0.5, hw - t * 0.5);
+  // East Wall Wings (Ground floor doorway open z: -3.2..+3.2, y: 0..4.05; 1st floor panoramic ocean window z: -3.2..+3.2, y: 5.50..8.45)
+  const eastN = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 3.2), extMat);
+  eastN.position.set(hd - t * 0.5, H * 0.5, -hw + (hw - 3.2) * 0.5);
+  const eastS = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 3.2), extMat);
+  eastS.position.set(hd - t * 0.5, H * 0.5, hw - (hw - 3.2) * 0.5);
+  const eastLintel = new THREE.Mesh(new THREE.BoxGeometry(t, 1.45, 6.4), extMat);
+  eastLintel.position.set(hd - t * 0.5, 4.775, 0);
+  const eastTop = new THREE.Mesh(new THREE.BoxGeometry(t, H - 8.45, 6.4), extMat);
+  eastTop.position.set(hd - t * 0.5, 8.45 + (H - 8.45) * 0.5, 0);
+  const suiteWindow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.95, 6.32), glassMat);
+  suiteWindow.position.set(hd - 0.35, 6.975, 0);
+  // Crisp Art Deco doorway & window frame trim
+  const doorFrameTop = new THREE.Mesh(new THREE.BoxGeometry(t + 0.14, 0.18, 6.6), trimMat);
+  doorFrameTop.position.set(hd - t * 0.5, 4.02, 0);
+  const winFrameSill = new THREE.Mesh(new THREE.BoxGeometry(t + 0.16, 0.14, 6.6), trimMat);
+  winFrameSill.position.set(hd - t * 0.5, 5.50, 0);
+  const winFrameHead = new THREE.Mesh(new THREE.BoxGeometry(t + 0.16, 0.14, 6.6), trimMat);
+  winFrameHead.position.set(hd - t * 0.5, 8.45, 0);
+  root.add(backW, northW, southW, eastN, eastS, eastLintel, eastTop, suiteWindow, doorFrameTop, winFrameSill, winFrameHead);
+
+  // Interior Warm Pastel Wallpaper Liners (cleanly offset 0.12m inside shell with polygonOffset -> ZERO Z-fighting!)
+  const innerBack = new THREE.Mesh(new THREE.PlaneGeometry(W - t * 2 - 0.12, ceilY), suiteWallMat);
+  innerBack.rotation.y = Math.PI / 2;
+  innerBack.position.set(-hd + t + 0.12, ceilY * 0.5, 0);
+  const innerSouth = new THREE.Mesh(new THREE.PlaneGeometry(D - t * 2 - 0.12, ceilY), lobbyWallMat);
+  innerSouth.rotation.y = Math.PI;
+  innerSouth.position.set(0, ceilY * 0.5, hw - t - 0.12);
+  const innerNorth = new THREE.Mesh(new THREE.PlaneGeometry(D - t * 2 - 0.12, ceilY), lobbyWallMat);
+  innerNorth.position.set(0, ceilY * 0.5, -hw + t + 0.12);
+  const innerEastN = new THREE.Mesh(new THREE.PlaneGeometry(hw - 3.2 - t - 0.08, ceilY), lobbyWallMat);
+  innerEastN.rotation.y = -Math.PI / 2;
+  innerEastN.position.set(hd - t - 0.12, ceilY * 0.5, -hw + t + (hw - 3.2 - t) * 0.5);
+  const innerEastS = new THREE.Mesh(new THREE.PlaneGeometry(hw - 3.2 - t - 0.08, ceilY), lobbyWallMat);
+  innerEastS.rotation.y = -Math.PI / 2;
+  innerEastS.position.set(hd - t - 0.12, ceilY * 0.5, hw - t - (hw - 3.2 - t) * 0.5);
+  const suiteCeil = new THREE.Mesh(new THREE.BoxGeometry(D - t * 1.4, 0.42, W - t * 1.4), ceilPlasterMat);
+  suiteCeil.position.set(0, ceilY + 0.21, 0);
+  const roofSlab = new THREE.Mesh(new THREE.BoxGeometry(D + 0.8, 0.8, W + 0.8), trimMat);
+  roofSlab.position.set(0, H + 0.3, 0);
+  root.add(innerBack, innerSouth, innerNorth, innerEastN, innerEastS, suiteCeil, roofSlab);
+
+  // Iconic Art Deco Ocean View Facade Canopy, Separated Juliet Balcony, Neon Stripes & Glowing Marquee (ZERO overlap!)
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.26, 9.2), trimMat);
+  canopy.position.set(hd + 1.7, 3.96, 0);
+  const canopyNeon = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 9.35), neonPink);
+  canopyNeon.position.set(hd + 3.44, 3.96, 0);
+  const parapet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.8, 12.6), trimMat);
+  parapet.position.set(hd - 0.2, H + 1.4, 0);
+  const ovMarqueeTex = makeNeonSignTexture('OCEAN VIEW HOTEL', 'SAFEHOUSE · ROOM 101 UPSTAIRS', '#FF2E88', maxAniso, false);
+  const ovMarquee = new THREE.Mesh(
+    new THREE.PlaneGeometry(13.8, 2.6),
+    new THREE.MeshStandardMaterial({ map: ovMarqueeTex, emissive: 0xffffff, emissiveMap: ovMarqueeTex, emissiveIntensity: 1.35 })
+  );
+  ovMarquee.rotation.y = Math.PI / 2;
+  ovMarquee.position.set(hd + 0.22, 11.4, 0);
+  // Exterior 1st-floor Juliet Balcony cleanly elevated at y = 5.34 (well above canopy at y = 3.96!)
+  const balconySlab = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.22, 7.2), trimMat);
+  balconySlab.position.set(hd + 0.82, 5.34, 0);
+  const balconyRail = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 7.2), neonCyan);
+  balconyRail.position.set(hd + 1.58, 6.26, 0);
+  const balconyGlass = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.78, 7.1), glassMat);
+  balconyGlass.position.set(hd + 1.58, 5.82, 0);
+  for (const ry of [H + 0.2, 9.55]) {
+    const nLine = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, W + 0.4), ry > 12 ? neonPink : neonCyan);
+    nLine.position.set(hd + 0.16, ry, 0);
+    root.add(nLine);
+  }
+  root.add(canopy, canopyNeon, parapet, ovMarquee, balconySlab, balconyRail, balconyGlass);
+
+  // --- GROUND FLOOR LOBBY: Reception Desk, Lounge Sofas, Ceiling Soffit & TRUE WALKABLE GRAND STAIRCASE ---
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.15, 6.4), woodMat);
+  desk.position.set(-hd + 2.8, 0.58, 2.2);
+  const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.12, 6.6), trimMat);
+  deskTop.position.set(-hd + 2.8, 1.18, 2.2);
+  const lobbySignTex = makeNeonSignTexture('OCEAN VIEW', 'SAFEHOUSE SUITE · STAIRS ↑', '#21E6D1', maxAniso, false);
+  const lobbySign = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.35), new THREE.MeshBasicMaterial({ map: lobbySignTex }));
+  lobbySign.rotation.y = Math.PI / 2;
+  lobbySign.position.set(-hd + 0.96, 2.85, 2.2);
+  root.add(desk, deskTop, lobbySign);
+
+  const sofaL = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.72, 4.2), velvetTeal);
+  sofaL.position.set(1.2, 0.36, 7.6);
+  const sofaBackL = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.05, 0.35), velvetTeal);
+  sofaBackL.position.set(1.2, 0.72, 9.5);
+  const tblL = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.42, 1.1), goldMat);
+  tblL.position.set(1.2, 0.21, 5.8);
+  root.add(sofaL, sofaBackL, tblL);
+
+  // Walkable Grand Staircase along North wall (z: -10.8..-7.6, rising East x=+4.2 -> West x=-4.6, y: 0..4.44)
+  // Built with SOLID architectural risers underneath so players cannot walk under & clip through the stairs!
+  const stairCarpet = new THREE.MeshStandardMaterial({ color: 0xb82458, roughness: 0.84 });
+  const numSteps = 16;
+  for (let s = 0; s < numSteps; s++) {
+    const f = (s + 0.5) / numSteps;
+    const sx = 4.2 - f * 8.8;
+    const sy = ((s + 1) / numSteps) * floor1Y;
+    const step = new THREE.Mesh(new THREE.BoxGeometry(0.62, sy, 3.2), trimMat);
+    step.position.set(sx, sy * 0.5, -9.2);
+    const run = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.04, 2.2), stairCarpet);
+    run.position.set(sx, sy + 0.02, -9.2);
+    root.add(step, run);
+  }
+  // Solid stair landing support pillar under the West upper landing (x: -7.1..-4.4, z: -11.1..-7.4)
+  const underLanding = new THREE.Mesh(new THREE.BoxGeometry(2.75, floor1Y - 0.14, 3.65), lobbyWallMat);
+  underLanding.position.set(-5.78, (floor1Y - 0.14) * 0.5, -9.25);
+  root.add(underLanding);
+
+  // Angled Brass Stair Handrail + Vertical Newel Posts
+  const stairRail = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 10.1, 10), goldMat);
+  stairRail.rotation.z = Math.atan2(floor1Y, 8.8) + Math.PI / 2;
+  stairRail.position.set(-0.2, floor1Y * 0.5 + 0.92, -7.52);
+  root.add(stairRail);
+  for (let p = 0; p <= 4; p++) {
+    const pf = p / 4;
+    const px = 4.2 - pf * 8.8;
+    const py = pf * floor1Y;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.95, 8), goldMat);
+    post.position.set(px, py + 0.48, -7.52);
+    root.add(post);
+  }
+
+  // --- 1ST FLOOR PRIVATE SAFEHOUSE SUITE (y = 4.44 local / 4.60 world) ---
+  const wc = document.createElement('canvas'); wc.width = 256; wc.height = 256;
+  const wctx = wc.getContext('2d');
+  wctx.fillStyle = '#8b5a34'; wctx.fillRect(0, 0, 256, 256);
+  for (let py = 0; py < 256; py += 16) {
+    wctx.fillStyle = py % 32 === 0 ? '#9c683e' : '#7b4e2c';
+    wctx.fillRect(0, py, 256, 14);
+    wctx.fillStyle = 'rgba(35,18,8,0.35)';
+    wctx.fillRect(0, py + 14, 256, 2);
+  }
+  const woodFloorTex = new THREE.CanvasTexture(wc);
+  woodFloorTex.colorSpace = THREE.SRGBColorSpace;
+  woodFloorTex.wrapS = woodFloorTex.wrapT = THREE.RepeatWrapping;
+  woodFloorTex.repeat.set(4, 5);
+  const suiteFloorMat = new THREE.MeshStandardMaterial({ map: woodFloorTex, roughness: 0.42 });
+
+  // Main Suite Deck (z: -7.2..+11.2, x: -7.2..+7.2) + West Stair Landing (x: -7.2..-4.4, z: -11.2..-7.2)
+  const deckMain = new THREE.Mesh(new THREE.BoxGeometry(14.4, 0.24, 18.4), suiteFloorMat);
+  deckMain.position.set(0, floor1Y - 0.12, 2.0);
+  // Crisp white lobby ceiling soffit underneath deckMain so downstairs lobby looks bright & finished!
+  const lobbyCeil = new THREE.Mesh(new THREE.BoxGeometry(14.3, 0.08, 18.3), ceilPlasterMat);
+  lobbyCeil.position.set(0, floor1Y - 0.28, 2.0);
+  const deckLand = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.24, 4.1), suiteFloorMat);
+  deckLand.position.set(-5.78, floor1Y - 0.12, -9.2);
+  // Full-Width Stairwell Brass & Glass Safety Railing along z = -7.25 from landing (-4.3) all the way to East wall (+7.2)!
+  const railLen = 11.5;
+  const railCx = -4.3 + railLen * 0.5;
+  const wellRail = new THREE.Mesh(new THREE.BoxGeometry(railLen, 0.08, 0.08), goldMat);
+  wellRail.position.set(railCx, floor1Y + 0.96, -7.25);
+  const wellGlass = new THREE.Mesh(new THREE.BoxGeometry(railLen, 0.88, 0.06), glassMat);
+  wellGlass.position.set(railCx, floor1Y + 0.48, -7.25);
+  root.add(deckMain, lobbyCeil, deckLand, wellRail, wellGlass);
+  for (let rx = -4.2; rx <= 7.0; rx += 2.2) {
+    const rPost = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.96, 8), goldMat);
+    rPost.position.set(rx, floor1Y + 0.48, -7.25);
+    root.add(rPost);
+  }
+
+  // Suite Welcome Plaque facing top of stairs
+  const suiteTitleTex = makeNeonSignTexture('ROOM 101 · SAFEHOUSE', 'SLEEP · WATCH TV · EAT · WARDROBE', '#FF2E88', maxAniso, false);
+  const suiteTitle = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 1.25), new THREE.MeshBasicMaterial({ map: suiteTitleTex }));
+  suiteTitle.position.set(-1.2, floor1Y + 3.0, -hw + 0.96);
+  root.add(suiteTitle);
+
+  // 1) KING-SIZED BED (West-South corner: local (-5.0, floor1Y, +6.6))
+  const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.45, 3.2), darkWoodMat);
+  bedFrame.position.set(-5.0, floor1Y + 0.22, 6.6);
+  const mattress = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.36, 3.0), new THREE.MeshStandardMaterial({ color: 0xf8f4ee, roughness: 0.78 }));
+  mattress.position.set(-5.0, floor1Y + 0.58, 6.6);
+  const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.39, 3.06), velvetTeal);
+  blanket.position.set(-4.42, floor1Y + 0.60, 6.6);
+  const blanketTrim = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.40, 3.08), velvetPink);
+  blanketTrim.position.set(-5.65, floor1Y + 0.60, 6.6);
+  const headboard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.55, 3.4), darkWoodMat);
+  headboard.position.set(-6.92, floor1Y + 0.82, 6.6);
+  for (const pz of [5.85, 7.35]) {
+    const pil = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.24, 1.05), new THREE.MeshStandardMaterial({ color: 0xfff8f2, roughness: 0.85 }));
+    pil.position.set(-6.32, floor1Y + 0.86, pz);
+    root.add(pil);
+  }
+  for (const nz of [4.3, 8.9]) {
+    const ns = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.72, 0.85), woodMat);
+    ns.position.set(-6.45, floor1Y + 0.36, nz);
+    const lBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.32, 10), goldMat);
+    lBase.position.set(-6.45, floor1Y + 0.88, nz);
+    const lShade = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.26, 0.28, 12), new THREE.MeshBasicMaterial({ color: 0xffe4a8 }));
+    lShade.position.set(-6.45, floor1Y + 1.12, nz);
+    root.add(ns, lBase, lShade);
+  }
+  root.add(bedFrame, mattress, blanket, blanketTrim, headboard);
+
+  // 2) 1986 RETRO CRT TV + MEDIA CONSOLE + PLUSH LOUNGE SOFA (South-East area)
+  const tvConsole = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.78, 3.2), darkWoodMat);
+  tvConsole.position.set(5.9, floor1Y + 0.39, 7.6);
+  const tvBody = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.08, 1.48), new THREE.MeshStandardMaterial({ color: 0x222028, roughness: 0.42 }));
+  tvBody.position.set(5.9, floor1Y + 1.32, 7.6);
+  const tvScreenMat = new THREE.MeshStandardMaterial({
+    color: 0x123842, emissive: 0x21e6d1, emissiveIntensity: 0.85, roughness: 0.22
+  });
+  const tvScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.18, 0.82), tvScreenMat);
+  tvScreen.rotation.y = -Math.PI / 2;
+  tvScreen.position.set(5.38, floor1Y + 1.34, 7.6);
+  const vcr = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.14, 0.95), new THREE.MeshStandardMaterial({ color: 0x161820, metalness: 0.4, roughness: 0.35 }));
+  vcr.position.set(5.85, floor1Y + 0.86, 6.25);
+  // Plush Lounge Sofa facing TV + Coffee Table cleanly positioned so TV ring has wide open floor space!
+  const loungeSofa = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.62, 3.5), velvetPink);
+  loungeSofa.position.set(1.25, floor1Y + 0.31, 7.8);
+  const loungeBack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.02, 3.5), velvetPink);
+  loungeBack.position.set(0.74, floor1Y + 0.72, 7.8);
+  const coffeeTbl = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.42, 2.0), woodMat);
+  coffeeTbl.position.set(4.15, floor1Y + 0.21, 7.8);
+  const rug = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.2, 4.6),
+    new THREE.MeshStandardMaterial({
+      color: 0x1c7a86, roughness: 0.88, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    })
+  );
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(3.2, floor1Y + 0.025, 7.6);
+  root.add(tvConsole, tvBody, tvScreen, vcr, loungeSofa, loungeBack, coffeeTbl, rug);
+
+  // 3) KITCHENETTE & DINING TABLE LOADED WITH FOOD (Pizza, Burger, Sprunk Cans, Fridge!)
+  const kitchenCounter = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.02, 4.6), trimMat);
+  kitchenCounter.position.set(6.2, floor1Y + 0.51, -1.2);
+  const fridge = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.15, 1.25), chromeMat);
+  fridge.position.set(6.2, floor1Y + 1.08, -4.3);
+  const dineTable = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.12, 2.7), woodMat);
+  dineTable.position.set(3.8, floor1Y + 0.84, -0.4);
+  for (const [lx, lz] of [[3.0, -1.45], [4.6, -1.45], [3.0, 0.65], [4.6, 0.65]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.84, 8), darkWoodMat);
+    leg.position.set(lx, floor1Y + 0.42, lz);
+    root.add(leg);
+  }
+  const pizzaBox = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.07, 0.68), new THREE.MeshStandardMaterial({ color: 0xe6d4b6, roughness: 0.7 }));
+  pizzaBox.position.set(3.75, floor1Y + 0.94, -0.95);
+  const pizzaPie = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 14), new THREE.MeshStandardMaterial({ color: 0xe89c34, roughness: 0.55 }));
+  pizzaPie.position.set(3.75, floor1Y + 0.99, -0.95);
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.03, 14), trimMat);
+  plate.position.set(3.85, floor1Y + 0.92, 0.15);
+  const burger = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xc87834, roughness: 0.62 }));
+  burger.position.set(3.85, floor1Y + 0.99, 0.15);
+  const sprunkA = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.16, 10), new THREE.MeshStandardMaterial({ color: 0x22d864, metalness: 0.5, roughness: 0.25 }));
+  sprunkA.position.set(3.35, floor1Y + 0.98, -0.15);
+  const sprunkB = sprunkA.clone(); sprunkB.position.set(3.52, floor1Y + 0.98, 0.42);
+  root.add(kitchenCounter, fridge, dineTable, pizzaBox, pizzaPie, plate, burger, sprunkA, sprunkB);
+
+  // 4) WALK-IN SAFEHOUSE WARDROBE CLOSET (West Wall: local (-6.6, floor1Y, -1.8))
+  const wardFrame = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.55, 3.2), darkWoodMat);
+  wardFrame.position.set(-6.65, floor1Y + 1.28, -1.8);
+  const wardMirror = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.1), new THREE.MeshStandardMaterial({ color: 0xcceeff, metalness: 0.95, roughness: 0.06 }));
+  wardMirror.rotation.y = Math.PI / 2;
+  wardMirror.position.set(-6.04, floor1Y + 1.32, -1.8);
+  const wardSignTex = makeNeonSignTexture('WARDROBE', 'CHANGE OUTFITS [E]', '#FFD36B', maxAniso, false);
+  const wardSign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.68), new THREE.MeshBasicMaterial({ map: wardSignTex }));
+  wardSign.rotation.y = Math.PI / 2;
+  wardSign.position.set(-6.04, floor1Y + 2.95, -1.8);
+  root.add(wardFrame, wardMirror, wardSign);
+
+  // Glowing Interactive Floor Rings for all 4 Upstairs Suite Activities (100% Unobstructed Open Floor!)
+  const stationDefs = [
+    { id: 'sleep',    label: 'Sleep in Bed (+6h · Full HP)',     lx: -2.0, lz:  6.6, col: 0x21e6d1 },
+    { id: 'tv',       label: 'Watch Vice-O-Vision TV',           lx:  2.7, lz:  7.8, col: 0xff2e88 },
+    { id: 'food',     label: 'Eat Meal (+45 HP · +25 Armor)',    lx:  1.7, lz: -0.4, col: 0xffd36b },
+    { id: 'wardrobe', label: 'Open Safehouse Wardrobe',          lx: -4.5, lz: -1.8, col: 0x9b5de5 }
+  ];
+  const stationRings = [];
+  stationDefs.forEach((st) => {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.68, 0.94, 24),
+      new THREE.MeshBasicMaterial({
+        color: st.col, transparent: true, opacity: 0.86, side: THREE.DoubleSide,
+        depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+      })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(st.lx, floor1Y + 0.06, st.lz);
+    root.add(ring);
+    stationRings.push(ring);
+  });
+
+  // Warm Interior Lighting (Ground Lobby + 1st Floor Private Suite)
+  const lobbyLight = new THREE.PointLight(0xffeed4, 14, 20, 1.35);
+  lobbyLight.position.set(0, 3.55, 1.5);
+  const suiteLight = new THREE.PointLight(0xffdfc4, 18, 24, 1.25);
+  suiteLight.position.set(0, floor1Y + 3.7, 2.2);
+  root.add(lobbyLight, suiteLight);
+
+  // Hollow perimeter colliders leaving wide 6.4m East doorway completely open!
+  const localColliders = [
+    { minX: -hd, maxX: -hd + t + 0.12, minZ: -hw, maxZ: hw },
+    { minX: -hd, maxX: hd, minZ: -hw, maxZ: -hw + t + 0.12 },
+    { minX: -hd, maxX: hd, minZ: hw - t - 0.12, maxZ: hw },
+    { minX: hd - t - 0.12, maxX: hd, minZ: -hw, maxZ: -3.2 },
+    { minX: hd - t - 0.12, maxX: hd, minZ:  3.2, maxZ: hw }
+  ];
+
+  return { root, floor1Y, tvScreenMat, stationDefs, stationRings, localColliders, W, D };
+}
+
+/* ==========================================================================
+   11. WALK-IN BARBER SHOP (SPINNING HELICAL BARBER POLES + 3 HYDRAULIC CHAIRS + MIRRORS!)
+   ========================================================================== */
+export function createBarberShopBuilding(maxAniso = 4, title = 'VICE CUTS BARBER', accentHex = '#21E6D1') {
+  const root = new THREE.Group();
+  const pbr = getWorldPBRTextures(maxAniso);
+  const D = 14, W = 17, H = 7.6, t = 0.65;
+  const hd = D * 0.5, hw = W * 0.5;
+  const accentNum = parseInt(accentHex.replace('#', ''), 16) || 0x21e6d1;
+
+  const wallMat = new THREE.MeshStandardMaterial({ map: pbr.concrete.map, color: 0xf4eee8, roughness: 0.64 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0x16243a, roughness: 0.36, metalness: 0.25 });
+  const neonMat = new THREE.MeshBasicMaterial({ color: accentNum });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xeef5fc, metalness: 0.94, roughness: 0.12, envMapIntensity: 1.8 });
+  const leatherRed = new THREE.MeshStandardMaterial({ color: 0xb81e36, roughness: 0.42 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x5c341d, roughness: 0.46 });
+  const mirrorMat = new THREE.MeshStandardMaterial({ color: 0xd0eeff, metalness: 0.96, roughness: 0.05 });
+
+  // Black & White Classic Barber Checkerboard Floor
+  const fc = document.createElement('canvas'); fc.width = 256; fc.height = 256;
+  const fctx = fc.getContext('2d');
+  for (let gx = 0; gx < 8; gx++) {
+    for (let gy = 0; gy < 8; gy++) {
+      fctx.fillStyle = (gx + gy) % 2 === 0 ? '#f4f2ee' : '#181a24';
+      fctx.fillRect(gx * 32, gy * 32, 32, 32);
+    }
+  }
+  const fTex = new THREE.CanvasTexture(fc);
+  fTex.colorSpace = THREE.SRGBColorSpace;
+  fTex.wrapS = fTex.wrapT = THREE.RepeatWrapping;
+  fTex.repeat.set(3, 3);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(D - 0.6, W - 0.6), new THREE.MeshStandardMaterial({ map: fTex, roughness: 0.25 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.04;
+  root.add(floor);
+
+  // Hollow Walls + Roof (Wide 5.8m East entrance facing Ocean Drive!)
+  const backW = new THREE.Mesh(new THREE.BoxGeometry(t, H, W), wallMat); backW.position.set(-hd + t * 0.5, H * 0.5, 0);
+  const northW = new THREE.Mesh(new THREE.BoxGeometry(D, H, t), wallMat); northW.position.set(0, H * 0.5, -hw + t * 0.5);
+  const southW = new THREE.Mesh(new THREE.BoxGeometry(D, H, t), wallMat); southW.position.set(0, H * 0.5, hw - t * 0.5);
+  const eastN = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 2.9), wallMat); eastN.position.set(hd - t * 0.5, H * 0.5, -hw + (hw - 2.9) * 0.5);
+  const eastS = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 2.9), wallMat); eastS.position.set(hd - t * 0.5, H * 0.5, hw - (hw - 2.9) * 0.5);
+  const eastTop = new THREE.Mesh(new THREE.BoxGeometry(t, H - 4.0, 5.8), wallMat); eastTop.position.set(hd - t * 0.5, 4.0 + (H - 4.0) * 0.5, 0);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(D + 0.6, 0.55, W + 0.6), trimMat); roof.position.set(0, H + 0.26, 0);
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.32, W - 0.8), trimMat); awning.position.set(hd + 1.15, 4.15, 0);
+  const awningNeon = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.14, W - 0.6), neonMat); awningNeon.position.set(hd + 1.15, 4.36, 0);
+  root.add(backW, northW, southW, eastN, eastS, eastTop, roof, awning, awningNeon);
+
+  // Neon Marquee Sign
+  const signTex = makeNeonSignTexture(title, 'HAIRCUTS · FADES · STYLING [E]', accentHex, maxAniso, false);
+  const signMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(12.2, 2.2),
+    new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 1.35 })
+  );
+  signMesh.rotation.y = Math.PI / 2;
+  signMesh.position.set(hd + 0.2, 6.0, 0);
+  root.add(signMesh);
+
+  // Twin Spinning Helical Red-White-Blue Barber Poles flanking the Entrance!
+  const pc = document.createElement('canvas'); pc.width = 128; pc.height = 128;
+  const pctx = pc.getContext('2d');
+  pctx.fillStyle = '#ffffff'; pctx.fillRect(0, 0, 128, 128);
+  for (let i = -2; i < 6; i++) {
+    pctx.fillStyle = i % 2 === 0 ? '#e6243a' : '#1858d6';
+    pctx.beginPath();
+    pctx.moveTo(i * 44, 0); pctx.lineTo(i * 44 + 18, 0);
+    pctx.lineTo(i * 44 + 146, 128); pctx.lineTo(i * 44 + 128, 128);
+    pctx.closePath(); pctx.fill();
+  }
+  const poleTex = new THREE.CanvasTexture(pc);
+  poleTex.colorSpace = THREE.SRGBColorSpace;
+  poleTex.wrapS = poleTex.wrapT = THREE.RepeatWrapping;
+  const poleMat = new THREE.MeshStandardMaterial({ map: poleTex, roughness: 0.2, metalness: 0.1 });
+  const barberPoles = [];
+  for (const pz of [-3.5, 3.5]) {
+    const capT = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), chromeMat);
+    capT.position.set(hd + 0.42, 3.25, pz);
+    const capB = capT.clone(); capB.position.y = 1.65;
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 1.55, 16), poleMat);
+    cyl.position.set(hd + 0.42, 2.45, pz);
+    root.add(capT, capB, cyl);
+    barberPoles.push(cyl);
+  }
+
+  // Interior: Grooming Counter + 3 Backlit Mirrors + 3 Hydraulic Chrome/Red Leather Barber Chairs!
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.92, 12.6), woodMat);
+  counter.position.set(-hd + 1.25, 0.46, 0);
+  root.add(counter);
+  for (const cz of [-4.0, 0.0, 4.0]) {
+    const mFrame = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.2, 2.6), chromeMat);
+    mFrame.position.set(-hd + 0.78, 2.35, cz);
+    const mGlass = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 1.95), mirrorMat);
+    mGlass.rotation.y = Math.PI / 2;
+    mGlass.position.set(-hd + 0.87, 2.35, cz);
+    // Hydraulic Barber Chair
+    const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.10, 14), chromeMat);
+    cBase.position.set(-hd + 3.4, 0.08, cz);
+    const cStem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.56, 10), chromeMat);
+    cStem.position.set(-hd + 3.4, 0.36, cz);
+    const cSeat = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.18, 0.82), leatherRed);
+    cSeat.position.set(-hd + 3.4, 0.68, cz);
+    const cBack = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.95, 0.82), leatherRed);
+    cBack.position.set(-hd + 3.78, 1.15, cz);
+    const cFoot = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.65), chromeMat);
+    cFoot.position.set(-hd + 2.86, 0.34, cz);
+    root.add(mFrame, mGlass, cBase, cStem, cSeat, cBack, cFoot);
+  }
+  // Glowing Haircut Interaction Ring
+  const shopRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.95, 1.32, 24),
+    new THREE.MeshBasicMaterial({ color: accentNum, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false })
+  );
+  shopRing.rotation.x = -Math.PI / 2;
+  shopRing.position.set(0.2, 0.08, 0);
+  const intLight = new THREE.PointLight(0xfff0dc, 14, 18, 1.3);
+  intLight.position.set(0, 5.2, 0);
+  root.add(shopRing, intLight);
+
+  const localColliders = [
+    { minX: -hd, maxX: -hd + t + 0.1, minZ: -hw, maxZ: hw },
+    { minX: -hd, maxX: hd, minZ: -hw, maxZ: -hw + t + 0.1 },
+    { minX: -hd, maxX: hd, minZ: hw - t - 0.1, maxZ: hw },
+    { minX: hd - t - 0.1, maxX: hd, minZ: -hw, maxZ: -2.9 },
+    { minX: hd - t - 0.1, maxX: hd, minZ:  2.9, maxZ: hw }
+  ];
+  return { root, barberPoles, shopRing, localColliders, W, D };
+}
+
+/* ==========================================================================
+   12. WALK-IN CLOTHES STORE (MANNEQUIN DISPLAY WINDOWS + NEON APPAREL RACKS + MIRROR!)
+   ========================================================================== */
+export function createClothesStoreBuilding(maxAniso = 4, title = 'VICE COUTURE', accentHex = '#FF2E88') {
+  const root = new THREE.Group();
+  const pbr = getWorldPBRTextures(maxAniso);
+  const D = 14.5, W = 18.5, H = 8.2, t = 0.65;
+  const hd = D * 0.5, hw = W * 0.5;
+  const accentNum = parseInt(accentHex.replace('#', ''), 16) || 0xff2e88;
+
+  const wallMat = new THREE.MeshStandardMaterial({ map: pbr.concrete.map, color: 0xf6ece4, roughness: 0.6 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0x241432, roughness: 0.34, metalness: 0.25 });
+  const neonMat = new THREE.MeshBasicMaterial({ color: accentNum });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf0f6fc, metalness: 0.94, roughness: 0.12, envMapIntensity: 1.8 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xf4c44e, metalness: 0.92, roughness: 0.18 });
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x9de6ff, transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false });
+  const mirrorMat = new THREE.MeshStandardMaterial({ color: 0xd8f0ff, metalness: 0.96, roughness: 0.05 });
+
+  // Warm Terrazzo Boutique Floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(D - 0.6, W - 0.6),
+    new THREE.MeshStandardMaterial({ color: 0xf2e6da, roughness: 0.26, metalness: 0.1 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.04;
+  root.add(floor);
+
+  // Hollow Walls + Storefront Showcase Windows + Roof
+  const backW = new THREE.Mesh(new THREE.BoxGeometry(t, H, W), wallMat); backW.position.set(-hd + t * 0.5, H * 0.5, 0);
+  const northW = new THREE.Mesh(new THREE.BoxGeometry(D, H, t), wallMat); northW.position.set(0, H * 0.5, -hw + t * 0.5);
+  const southW = new THREE.Mesh(new THREE.BoxGeometry(D, H, t), wallMat); southW.position.set(0, H * 0.5, hw - t * 0.5);
+  const eastN = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 3.2), wallMat); eastN.position.set(hd - t * 0.5, H * 0.5, -hw + (hw - 3.2) * 0.5);
+  const eastS = new THREE.Mesh(new THREE.BoxGeometry(t, H, hw - 3.2), wallMat); eastS.position.set(hd - t * 0.5, H * 0.5, hw - (hw - 3.2) * 0.5);
+  const eastTop = new THREE.Mesh(new THREE.BoxGeometry(t, H - 4.2, 6.4), wallMat); eastTop.position.set(hd - t * 0.5, 4.2 + (H - 4.2) * 0.5, 0);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(D + 0.6, 0.55, W + 0.6), trimMat); roof.position.set(0, H + 0.26, 0);
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.34, W - 0.6), trimMat); canopy.position.set(hd + 1.2, 4.35, 0);
+  const canopyNeon = new THREE.Mesh(new THREE.BoxGeometry(2.92, 0.14, W - 0.4), neonMat); canopyNeon.position.set(hd + 1.2, 4.56, 0);
+  root.add(backW, northW, southW, eastN, eastS, eastTop, roof, canopy, canopyNeon);
+
+  // Glowing Neon Boutique Marquee
+  const signTex = makeNeonSignTexture(title, 'DESIGNER OUTFITS · SUITS & SHADES [E]', accentHex, maxAniso, false);
+  const signMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(13.2, 2.3),
+    new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 1.38 })
+  );
+  signMesh.rotation.y = Math.PI / 2;
+  signMesh.position.set(hd + 0.2, 6.3, 0);
+  root.add(signMesh);
+
+  // Exterior Illuminated Storefront Mannequins on Pedestals
+  const manColors = [0xff2e88, 0x21e6d1, 0xfaf7f2, 0xffd36b];
+  for (let m = 0; m < 2; m++) {
+    const mz = m === 0 ? -5.8 : 5.8;
+    const boxGlass = new THREE.Mesh(new THREE.BoxGeometry(1.4, 3.2, 3.8), glassMat);
+    boxGlass.position.set(hd + 0.65, 1.8, mz);
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.72, 0.45, 14), trimMat);
+    ped.position.set(hd + 0.55, 0.24, mz);
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.72, 12), new THREE.MeshStandardMaterial({ color: manColors[m], roughness: 0.45 }));
+    torso.position.set(hd + 0.55, 1.38, mz);
+    const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.68, 10), new THREE.MeshStandardMaterial({ color: 0xf2eee8, roughness: 0.55 }));
+    legs.position.set(hd + 0.55, 0.78, mz);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), goldMat);
+    head.position.set(hd + 0.55, 1.88, mz);
+    root.add(boxGlass, ped, torso, legs, head);
+  }
+
+  // Interior Chrome Clothing Racks with Hanging Colorful Apparel + Dressing Mirror + Cashier Counter
+  const rackCols = [0xff2e88, 0x21e6d1, 0xffd36b, 0x9b5de5, 0x16a89c, 0xf4f2ee, 0xff6e48];
+  for (const rz of [-6.2, 6.2]) {
+    const rPoleA = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.85, 8), chromeMat); rPoleA.position.set(-3.6, 0.94, rz);
+    const rPoleB = rPoleA.clone(); rPoleB.position.x = 2.4;
+    const rBar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 6.0, 8), chromeMat);
+    rBar.rotation.z = Math.PI / 2; rBar.position.set(-0.6, 1.82, rz);
+    root.add(rPoleA, rPoleB, rBar);
+    for (let h = 0; h < 7; h++) {
+      const shirt = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28, 0.88, 0.62),
+        new THREE.MeshStandardMaterial({ color: rackCols[(h + (rz > 0 ? 3 : 0)) % rackCols.length], roughness: 0.6 })
+      );
+      shirt.position.set(-3.0 + h * 0.8, 1.32, rz);
+      root.add(shirt);
+    }
+  }
+  // Full-length Back-Wall Dressing Mirror & Boutique Counter
+  const dMirror = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 3.2), mirrorMat);
+  dMirror.rotation.y = Math.PI / 2;
+  dMirror.position.set(-hd + 0.8, 2.0, 0);
+  const dFrame = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.45, 4.1), neonMat);
+  dFrame.position.set(-hd + 0.72, 2.0, 0);
+  const cashier = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.05, 3.6), trimMat);
+  cashier.position.set(-hd + 2.2, 0.54, -5.2);
+  const shopRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.95, 1.32, 24),
+    new THREE.MeshBasicMaterial({ color: accentNum, transparent: true, opacity: 0.84, side: THREE.DoubleSide, depthWrite: false })
+  );
+  shopRing.rotation.x = -Math.PI / 2;
+  shopRing.position.set(0.2, 0.08, 0);
+  const intLight = new THREE.PointLight(0xfff0f6, 14, 18, 1.3);
+  intLight.position.set(0, 5.4, 0);
+  root.add(dMirror, dFrame, cashier, shopRing, intLight);
+
+  const localColliders = [
+    { minX: -hd, maxX: -hd + t + 0.1, minZ: -hw, maxZ: hw },
+    { minX: -hd, maxX: hd, minZ: -hw, maxZ: -hw + t + 0.1 },
+    { minX: -hd, maxX: hd, minZ: hw - t - 0.1, maxZ: hw },
+    { minX: hd - t - 0.1, maxX: hd, minZ: -hw, maxZ: -3.2 },
+    { minX: hd - t - 0.1, maxX: hd, minZ:  3.2, maxZ: hw }
+  ];
+  return { root, shopRing, localColliders, W, D };
 }
 
 /* ==========================================================================
