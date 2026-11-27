@@ -16,7 +16,7 @@
        Leonida State Prison & 3 Regional Airfields!
    ========================================================================== */
 import * as THREE from 'https://esm.sh/three@0.187.0';
-import { createLeonidaPBRMaterials, buildLeonidaRealWorld } from './leonida-props.js?v=6';
+import { createLeonidaPBRMaterials, buildLeonidaRealWorld } from './leonida-props.js?v=7';
 
 // Continuous playable open-world bounds (~2.82 km x 4.40 km = ~12.4 km²)
 export const LEONIDA_PROJ = {

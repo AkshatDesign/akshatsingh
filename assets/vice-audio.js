@@ -15,29 +15,37 @@ export const RADIO_STATIONS = [
   { id: 'vrock',   name: 'V-Rock',       freq: '94.8',  genre: '80s Arena Rock',    bpm: 138, col: '#FF7B2E' }
 ];
 
+const resolveMediaUrl = (file) => {
+  try {
+    return new URL(`./aistudio/${file}`, import.meta.url).href;
+  } catch (_) {
+    return `/assets/aistudio/${file}`;
+  }
+};
+
 export const RADIO_RJ_CLIPS = [
-  { id: 'intro',  host: 'Special Broadcast · Akshat', short: 'ON AIR · SPECIAL RJ',      src: '/assets/aistudio/Intro-RJ_902dec53.mp3' },
-  { id: 'radio1', host: 'Tommy "The Hair" Valentino', short: 'ON AIR · TOMMY VALENTINO', src: '/assets/aistudio/Radio-1_d9abebea.mp3' },
-  { id: 'radio3', host: 'Arthur Pendleton',           short: 'ON AIR · ARTHUR PENDLETON',src: '/assets/aistudio/radio-3_4cd654ef.mp3' },
-  { id: 'radio4', host: 'Mad Dog Miller',             short: 'ON AIR · MAD DOG MILLER',  src: '/assets/aistudio/radio-4_8caf3f4c.mp3' },
-  { id: 'radio5', host: 'J. Jonah Jameson',           short: 'ON AIR · J. JONAH JAMESON',src: '/assets/aistudio/radio-5_85ff9f43.mp3' }
+  { id: 'intro',  host: 'Special Broadcast · Akshat', short: 'ON AIR · SPECIAL RJ',      src: resolveMediaUrl('Intro-RJ_902dec53.mp3') },
+  { id: 'radio1', host: 'Tommy "The Hair" Valentino', short: 'ON AIR · TOMMY VALENTINO', src: resolveMediaUrl('Radio-1_d9abebea.mp3') },
+  { id: 'radio3', host: 'Arthur Pendleton',           short: 'ON AIR · ARTHUR PENDLETON',src: resolveMediaUrl('radio-3_4cd654ef.mp3') },
+  { id: 'radio4', host: 'Mad Dog Miller',             short: 'ON AIR · MAD DOG MILLER',  src: resolveMediaUrl('radio-4_8caf3f4c.mp3') },
+  { id: 'radio5', host: 'J. Jonah Jameson',           short: 'ON AIR · J. JONAH JAMESON',src: resolveMediaUrl('radio-5_85ff9f43.mp3') }
 ];
 
 export const AMBIENT_ZONE_TRACKS = {
-  forest:   { src: '/assets/aistudio/freesound_community-bush-bird-noises-61883_89d7d571.mp3', maxVol: 0.62 },
-  carnival: { src: '/assets/aistudio/capaholiczsfx-carnival-atmosphere-402695_78236de9.mp3', maxVol: 0.56 },
-  malibu:   { src: '/assets/aistudio/freesound_community-club-bar-talking-yelling-band-warming-up-rock-guitar-05-25995_1a8119a9.mp3', maxVol: 0.66 },
-  airport:  { src: '/assets/aistudio/freesound_community-airport-ambiance-1-34146_cde61f1c.mp3', maxVol: 0.60 },
-  mall:     { src: '/assets/aistudio/mall_f2f11b84.mp3', maxVol: 0.62 }
+  forest:   { src: resolveMediaUrl('freesound_community-bush-bird-noises-61883_89d7d571.mp3'), maxVol: 0.62 },
+  carnival: { src: resolveMediaUrl('capaholiczsfx-carnival-atmosphere-402695_78236de9.mp3'), maxVol: 0.56 },
+  malibu:   { src: resolveMediaUrl('freesound_community-club-bar-talking-yelling-band-warming-up-rock-guitar-05-25995_1a8119a9.mp3'), maxVol: 0.66 },
+  airport:  { src: resolveMediaUrl('freesound_community-airport-ambiance-1-34146_cde61f1c.mp3'), maxVol: 0.60 },
+  mall:     { src: resolveMediaUrl('mall_f2f11b84.mp3'), maxVol: 0.62 }
 };
 
 export const PLANE_AUDIO_TRACKS = {
   preTakeoff: {
-    src: '/assets/aistudio/freesound_community-180221-airplane-pre-take-off-announcement-small-plane-pineapple-air-bahamas-26095_8bc836bd.mp3',
+    src: resolveMediaUrl('freesound_community-180221-airplane-pre-take-off-announcement-small-plane-pineapple-air-bahamas-26095_8bc836bd.mp3'),
     maxVol: 0.76
   },
   flightBg: {
-    src: '/assets/aistudio/freesound_community-plane-takeoff-22499_8021059c.mp3',
+    src: resolveMediaUrl('freesound_community-plane-takeoff-22499_8021059c.mp3'),
     maxVol: 0.68
   }
 };

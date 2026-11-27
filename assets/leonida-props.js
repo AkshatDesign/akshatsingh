@@ -77,42 +77,50 @@ function finalizeLinearTex(canvas, rx = 1, ry = 1, maxAniso = 4) {
 // ============================================================================
 // 1b. SHARED 34 SATIRICAL GTA-STYLE 16:9 BILLBOARD IMAGES & REALISTIC BUILDER
 // ============================================================================
+const resolveBillboardUrl = (file) => {
+  try {
+    return new URL(`./aistudio/${file}`, import.meta.url).href;
+  } catch (_) {
+    return `/assets/aistudio/${file}`;
+  }
+};
+
 export const BILLBOARD_IMAGE_URLS = [
-  '/assets/aistudio/01_deadbull_4d55fd8f.webp',
-  '/assets/aistudio/02_rotflix_watching_008214ce.webp',
-  '/assets/aistudio/03_rotflix_binge_1539a056.webp',
-  '/assets/aistudio/04_sugar_shock_391589cd.webp',
-  '/assets/aistudio/05_amaze_con_3bd12881.webp',
-  '/assets/aistudio/06_just_gourd_it_ed88b09f.webp',
-  '/assets/aistudio/07_drip_kart_334fce90.webp',
-  '/assets/aistudio/08_insta_brag_07e1f55c.webp',
-  '/assets/aistudio/09_gainz_gym_f0422090.webp',
-  '/assets/aistudio/10_edison_motors_42b55d45.webp',
-  '/assets/aistudio/11_edison_drives_itself_0876ad7b.webp',
-  '/assets/aistudio/12_chai_bros_ed68d5db.webp',
-  '/assets/aistudio/13_swiggity_82aec5dc.webp',
-  '/assets/aistudio/14_nomato_b380a32f.webp',
-  '/assets/aistudio/15_zapto_45ab4da5.webp',
-  '/assets/aistudio/16_cluck_bucket_e3b0b6c8.webp',
-  '/assets/aistudio/17_pay_dayum_9ba708a6.webp',
-  '/assets/aistudio/18_loot_bouton_e514c98e.webp',
-  '/assets/aistudio/19_els_pawn_4eb48f54.webp',
-  '/assets/aistudio/20_slacker_1d772427.webp',
-  '/assets/aistudio/21_kred_bab25d64.webp',
-  '/assets/aistudio/22_crazy_cals_cars_22a34d57.webp',
-  '/assets/aistudio/23_strawberry_15_pro_sweet_00da151b.webp',
-  '/assets/aistudio/24_strawberry_15_pro_seeds_d0b301bb.webp',
-  '/assets/aistudio/25_clownkings_burger_ec41fce5.webp',
-  '/assets/aistudio/26_strawberry_iberry_duo_oct23_69e2efcd.webp',
-  '/assets/aistudio/27_strawberry_iberry_duo_harvest_a79bd4a8.webp',
-  '/assets/aistudio/28_numb_zac_3d90021f.webp',
-  '/assets/aistudio/38_shinjuku_future_pod_53523216.webp',
-  '/assets/aistudio/41_capsule_hotel_mirai_1837d6d7.webp',
-  '/assets/aistudio/42_ryujin_whisky_ab2729b1.webp',
-  '/assets/aistudio/46_valraise_the_movie_deedf71e.webp',
-  '/assets/aistudio/49_lumiere_seoul_dewy_glow_ab82ce0d.webp',
-  '/assets/aistudio/56_rouge_obsession_seoul_876a903c.webp'
-];
+  '01_deadbull_4d55fd8f.webp',
+  '02_rotflix_watching_008214ce.webp',
+  '03_rotflix_binge_1539a056.webp',
+  '04_sugar_shock_391589cd.webp',
+  '05_amaze_con_3bd12881.webp',
+  '06_just_gourd_it_ed88b09f.webp',
+  '07_drip_kart_334fce90.webp',
+  '08_insta_brag_07e1f55c.webp',
+  '09_gainz_gym_f0422090.webp',
+  '10_edison_motors_42b55d45.webp',
+  '11_edison_drives_itself_0876ad7b.webp',
+  '12_chai_bros_ed68d5db.webp',
+  '13_swiggity_82aec5dc.webp',
+  '14_nomato_b380a32f.webp',
+  '15_zapto_45ab4da5.webp',
+  '16_cluck_bucket_e3b0b6c8.webp',
+  '17_pay_dayum_9ba708a6.webp',
+  '18_loot_bouton_e514c98e.webp',
+  '19_els_pawn_4eb48f54.webp',
+  '20_slacker_1d772427.webp',
+  '21_kred_bab25d64.webp',
+  '22_crazy_cals_cars_22a34d57.webp',
+  '23_strawberry_15_pro_sweet_00da151b.webp',
+  '24_strawberry_15_pro_seeds_d0b301bb.webp',
+  '25_clownkings_burger_ec41fce5.webp',
+  '26_strawberry_iberry_duo_oct23_69e2efcd.webp',
+  '27_strawberry_iberry_duo_harvest_a79bd4a8.webp',
+  '28_numb_zac_3d90021f.webp',
+  '38_shinjuku_future_pod_53523216.webp',
+  '41_capsule_hotel_mirai_1837d6d7.webp',
+  '42_ryujin_whisky_ab2729b1.webp',
+  '46_valraise_the_movie_deedf71e.webp',
+  '49_lumiere_seoul_dewy_glow_ab82ce0d.webp',
+  '56_rouge_obsession_seoul_876a903c.webp'
+].map(resolveBillboardUrl);
 
 let _cachedBillboardMats = null;
 let _sharedBbSteelMat = null;

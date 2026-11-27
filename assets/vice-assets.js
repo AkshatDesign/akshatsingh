@@ -5665,32 +5665,32 @@ export function createAirportGatehouse(maxAniso = 4) {
   const fencePostMat = new THREE.MeshStandardMaterial({ color: 0x6c7585, roughness: 0.5, metalness: 0.7 });
   const fenceMeshMat = new THREE.MeshStandardMaterial({ color: 0x9aa4b4, roughness: 0.6, metalness: 0.6, transparent: true, opacity: 0.42, side: THREE.DoubleSide });
 
-  // Security Booth + Canopy + Raised Striped Barrier Arm (Open for Vehicle Access!)
+  // Security Booth + Wide Clear-Span Canopy + Raised Striped Barrier Arm (Wide Open Drive-In Entry!)
   const booth = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.8, 2.8), wallMat);
   booth.position.set(0, 1.4, 0);
   const win = new THREE.Mesh(new THREE.BoxGeometry(3.26, 1.1, 2.86), glassMat);
   win.position.set(0, 1.8, 0);
-  const canopy = new THREE.Mesh(new THREE.BoxGeometry(14.0, 0.45, 5.0), roofMat);
-  canopy.position.set(5.2, 4.3, 0);
-  const farPost = new THREE.Mesh(new THREE.BoxGeometry(0.45, 4.3, 0.45), roofMat);
-  farPost.position.set(11.6, 2.15, 0);
-  const signTex = makeNeonSignTexture("ESCOBAR INT'L", 'AUTHORIZED APRON ACCESS', '#FF2E88', maxAniso, false);
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(18.6, 0.52, 5.4), roofMat);
+  canopy.position.set(8.0, 5.6, 0);
+  const farPost = new THREE.Mesh(new THREE.BoxGeometry(0.52, 5.6, 0.52), roofMat);
+  farPost.position.set(16.8, 2.8, 0);
+  const signTex = makeNeonSignTexture("ESCOBAR INT'L AIRPORT", 'OPEN ENTRY GATE · APRON ACCESS', '#21E6D1', maxAniso, false);
   const sign = new THREE.Mesh(
-    new THREE.PlaneGeometry(11.5, 1.25),
-    new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 0.95, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(14.8, 1.45),
+    new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 1.0, side: THREE.DoubleSide })
   );
-  sign.position.set(5.2, 5.2, -2.55);
+  sign.position.set(8.0, 6.65, -2.75);
   sign.rotation.y = Math.PI;
   const signFront = sign.clone();
-  signFront.position.z = 2.55;
+  signFront.position.z = 2.75;
   signFront.rotation.y = 0;
 
-  // Raised Red/White Barrier Arm (70 deg open so cars pass right under!)
+  // Raised Red/White Barrier Arm (82 deg vertical open so cars & SUVs pass freely!)
   const armBase = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.42), new THREE.MeshStandardMaterial({ color: 0xffc428, roughness: 0.4 }));
-  armBase.position.set(2.0, 0.52, 0);
+  armBase.position.set(2.1, 0.52, 0);
   const armPivot = new THREE.Group();
-  armPivot.position.set(2.0, 0.96, 0);
-  armPivot.rotation.z = 1.18;
+  armPivot.position.set(2.1, 0.98, 0);
+  armPivot.rotation.z = 1.44;
   for (let s = 0; s < 5; s++) {
     const seg = new THREE.Mesh(
       new THREE.BoxGeometry(1.15, 0.14, 0.08),
@@ -5699,24 +5699,12 @@ export function createAirportGatehouse(maxAniso = 4) {
     seg.position.set(0.6 + s * 1.15, 0, 0);
     armPivot.add(seg);
   }
-  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffaa28 }));
-  beacon.position.set(0, 3.05, 0);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0x34e89e }));
+  beacon.position.set(0, 3.1, 0);
+  const farBeacon = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0x34e89e }));
+  farBeacon.position.set(16.8, 5.95, 0);
 
-  // Flanking Perimeter Security Fence Wings (West & East)
-  for (const seg of [{ x: -34, len: 64 }, { x: 26, len: 28 }]) {
-    const panel = new THREE.Mesh(new THREE.PlaneGeometry(seg.len, 3.2), fenceMeshMat);
-    panel.position.set(seg.x, 1.6, 0);
-    const topRail = new THREE.Mesh(new THREE.BoxGeometry(seg.len, 0.1, 0.1), fencePostMat);
-    topRail.position.set(seg.x, 3.2, 0);
-    g.add(panel, topRail);
-    for (let px = seg.x - seg.len * 0.5; px <= seg.x + seg.len * 0.5; px += 8) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.4, 6), fencePostMat);
-      p.position.set(px, 1.7, 0);
-      g.add(p);
-    }
-  }
-
-  g.add(booth, win, canopy, farPost, sign, signFront, armBase, armPivot, beacon);
+  g.add(booth, win, canopy, farPost, sign, signFront, armBase, armPivot, beacon, farBeacon);
   return g;
 }
 

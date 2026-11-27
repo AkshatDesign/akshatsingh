@@ -9,12 +9,17 @@
   if (window.__VICE_GAME_LOADER_INIT__) return;
   window.__VICE_GAME_LOADER_INIT__ = true;
 
-  const INTRO_VIDEO_SRC = '/assets/aistudio/video-output-48E6302F-A817-4C11-AA9E-976B53580E70-1_23a49bf0.MP4';
-
   const scriptEl = document.currentScript;
-  const moduleUrl = scriptEl && scriptEl.src
-    ? new URL('./vice-game-3d.js?v=49', scriptEl.src).href
-    : '/assets/vice-game-3d.js?v=49';
+  const resolveAsset = (relPath) => (
+    scriptEl && scriptEl.src
+      ? new URL(relPath, scriptEl.src).href
+      : `/assets/${relPath.replace(/^\.\//, '')}`
+  );
+
+  const INTRO_VIDEO_SRC = resolveAsset('./aistudio/vice-intro-loading.mp4');
+  const INTRO_VIDEO_FALLBACK_SRC = resolveAsset('./aistudio/video-output-48E6302F-A817-4C11-AA9E-976B53580E70-1_23a49bf0.MP4');
+  const INTRO_RJ_SRC = resolveAsset('./aistudio/Intro-RJ_902dec53.mp3');
+  const moduleUrl = resolveAsset('./vice-game-3d.js?v=52');
 
   function isMobileViewport() {
     try {
@@ -22,6 +27,25 @@
     } catch (_) {
       return window.innerWidth <= 900;
     }
+  }
+
+  const INTRO_SEEN_KEY = 'vice_intro_video_seen_v1';
+  let introSeenMemory = false;
+
+  function hasSeenIntroVideo() {
+    if (introSeenMemory) return true;
+    try {
+      return window.localStorage && window.localStorage.getItem(INTRO_SEEN_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function markIntroVideoSeen() {
+    introSeenMemory = true;
+    try {
+      if (window.localStorage) window.localStorage.setItem(INTRO_SEEN_KEY, '1');
+    } catch (_) {}
   }
 
   let modulePromise = null;
@@ -162,7 +186,7 @@
 
     // Pre-warm Special Intro RJ synchronously inside the user click gesture so autoplay never blocks after the intro video finishes
     try {
-      const introAudio = new Audio('/assets/aistudio/Intro-RJ_902dec53.mp3');
+      const introAudio = new Audio(INTRO_RJ_SRC);
       introAudio.preload = 'auto';
       introAudio.volume = 0.001;
       introAudio.__claimed = false;
@@ -176,6 +200,28 @@
         }).catch(() => {});
       }
     } catch (_) {}
+
+    // Only play the fullscreen intro video the very first time the user opens the game
+    if (hasSeenIntroVideo()) {
+      try {
+        if (!modulePromise) {
+          modulePromise = import(moduleUrl);
+        }
+        const mod = await modulePromise;
+        if (typeof mod.openViceCity3D === 'function') {
+          mod.openViceCity3D();
+        }
+        isLaunching = false;
+        focusGameStage();
+      } catch (err) {
+        modulePromise = null;
+        showLoadError(err);
+      }
+      return;
+    }
+
+    // Mark intro as seen so subsequent opens skip directly into the 3D world
+    markIntroVideoSeen();
 
     // Mount and play the fullscreen loading video immediately inside the click gesture
     const ui = createVideoLoadingScreen();
@@ -209,7 +255,16 @@
       }
     };
 
+    let triedFallbackVideo = false;
+    const clearSafetyTimer = () => {
+      if (safetyTimer) {
+        window.clearTimeout(safetyTimer);
+        safetyTimer = 0;
+      }
+    };
+
     const onTimeUpdate = () => {
+      if (video.currentTime > 0.08) clearSafetyTimer();
       if (!barFill) return;
       const dur = video.duration;
       if (dur && isFinite(dur) && dur > 0) {
@@ -218,35 +273,59 @@
       }
     };
 
+    const onVideoPlaying = () => {
+      clearSafetyTimer();
+    };
+
     const onVideoEnded = () => {
+      clearSafetyTimer();
       videoDone = true;
       if (barFill) barFill.style.width = '100%';
       enterGameIfReady();
     };
 
     const onVideoError = () => {
+      if (!triedFallbackVideo && INTRO_VIDEO_FALLBACK_SRC && video.src !== INTRO_VIDEO_FALLBACK_SRC) {
+        triedFallbackVideo = true;
+        video.src = INTRO_VIDEO_FALLBACK_SRC;
+        video.load();
+        const fp = video.play();
+        if (fp && typeof fp.catch === 'function') {
+          fp.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {
+              videoDone = true;
+              enterGameIfReady();
+            });
+          });
+        }
+        return;
+      }
+      clearSafetyTimer();
       videoDone = true;
       enterGameIfReady();
     };
 
     video.addEventListener('timeupdate', onTimeUpdate);
+    video.addEventListener('playing', onVideoPlaying);
     video.addEventListener('ended', onVideoEnded);
     video.addEventListener('error', onVideoError);
 
-    // Fallback safety timer in case the browser stalls video playback indefinitely
+    // Fallback safety timer in case the browser stalls video playback indefinitely on slow connections
     safetyTimer = window.setTimeout(() => {
-      if (!finished && !videoDone && video.currentTime < 0.25) {
+      if (!finished && !videoDone && video.currentTime < 0.15) {
         videoDone = true;
         enterGameIfReady();
       }
-    }, 6500);
+    }, 15000);
 
     activeLaunchCleanup = () => {
       video.removeEventListener('timeupdate', onTimeUpdate);
+      video.removeEventListener('playing', onVideoPlaying);
       video.removeEventListener('ended', onVideoEnded);
       video.removeEventListener('error', onVideoError);
       if (preloadTimer) window.clearTimeout(preloadTimer);
-      if (safetyTimer) window.clearTimeout(safetyTimer);
+      clearSafetyTimer();
     };
 
     // Start playing with sound first; gracefully fallback to muted if autoplay policy blocks unmuted playback

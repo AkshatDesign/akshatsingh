@@ -6,3 +6,5 @@ bun.lock
 .git
 .env
 .env.*
+public
+vice-city-standalone-game.zip

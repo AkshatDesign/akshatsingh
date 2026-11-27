@@ -70,9 +70,9 @@ import {
   createBoardingAirstairs,
   createMountViceRange,
   createSierraWestRange
-} from './vice-assets.js?v=29';
+} from './vice-assets.js?v=30';
 
-import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=24';
+import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=25';
 import {
   createMotorcycle,
   createPoliceCruiser,
@@ -100,12 +100,12 @@ import {
   getLeonidaZone,
   createLeonidaVectorMapCanvas,
   buildLeonidaWorld
-} from './leonida-world.js?v=9';
+} from './leonida-world.js?v=10';
 import {
   getImageBillboardMaterials,
   buildImageBillboardMesh,
   buildMountainRopeway
-} from './leonida-props.js?v=6';
+} from './leonida-props.js?v=7';
 import {
   createSpeedboat,
   createJetSki,
@@ -920,6 +920,7 @@ class ViceCity3DApp {
     this.activeShowroom = null;
     this.showroomAnims = [];
     this.projectsHubOpen = false;
+    this.projectsHubSelectedId = SHOWROOMS[0].id;
     this.modalProjectIdx = 0;
     this.radioTuneRot = 0;
     this.autopilotQueue = [];
@@ -1704,12 +1705,30 @@ class ViceCity3DApp {
         </div>
         <div class="v3-top-r">
           <div class="v3-top-tools">
-            <button class="v3-env-chip" type="button" data-phone-btn title="Open ViceFruit Smartphone (I)">📱 <span>Phone [I]</span></button>
-            <button class="v3-env-chip mini" type="button" data-mg-btn title="Play GTA 5 Style Mini-Games (B)">🎮 <span>Mini-Games [B]</span></button>
-            <button class="v3-env-chip proj" type="button" data-proj-btn title="Browse All 5 Projects & GPS Warp (P)">★ <span>Projects [P]</span></button>
-            <button class="v3-env-chip" type="button" data-time-btn title="Cycle Time of Day (T)">☀ <span>Sunset</span></button>
-            <button class="v3-env-chip" type="button" data-weather-btn title="Cycle Weather (Y)">☀ <span>Clear</span></button>
-            <button class="v3-exit" type="button" data-close>Exit · ESC</button>
+            <button class="v3-env-chip" type="button" data-phone-btn title="Open ViceFruit Smartphone (I)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="1.5" width="8" height="13" rx="1.6"/><line x1="7" y1="12" x2="9" y2="12"/></svg>
+              <span>Phone</span><kbd>I</kbd>
+            </button>
+            <button class="v3-env-chip mini" type="button" data-mg-btn title="Play Carnival Pier & Street Activities (B)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 10.5L4 5.5A2 2 0 0 1 5.9 4h4.2a2 2 0 0 1 1.9 1.5l1.5 5a1.6 1.6 0 0 1-2.5 1.7L9.7 11H6.3l-1.3 1.2a1.6 1.6 0 0 1-2.5-1.7Z"/><line x1="5.6" y1="7.5" x2="7.4" y2="7.5"/><line x1="6.5" y1="6.6" x2="6.5" y2="8.4"/><circle cx="10.4" cy="7.2" r=".5" fill="currentColor"/><circle cx="11.4" cy="8.2" r=".5" fill="currentColor"/></svg>
+              <span>Activities</span><kbd>B</kbd>
+            </button>
+            <button class="v3-env-chip proj" type="button" data-proj-btn title="Browse All 5 Projects & GPS Warp (P)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l1.8 3.6 4 .6-2.9 2.8.7 4L8 11.1 4.4 13l.7-4-2.9-2.8 4-.6L8 2z"/></svg>
+              <span>Projects</span><kbd>P</kbd>
+            </button>
+            <button class="v3-env-chip" type="button" data-time-btn title="Cycle Time of Day (T)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 2v1.4M8 12.6V14M2 8h1.4M12.6 8H14M3.8 3.8l1 1M11.2 11.2l1 1M12.2 3.8l-1 1M4.8 11.2l-1 1"/></svg>
+              <span data-time-lbl>Sunset</span><kbd>T</kbd>
+            </button>
+            <button class="v3-env-chip" type="button" data-weather-btn title="Cycle Weather (Y)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12h7.2a2.8 2.8 0 0 0 .3-5.6A4 4 0 0 0 4.3 5.5 2.7 2.7 0 0 0 4.5 12Z"/></svg>
+              <span data-weather-lbl>Clear</span><kbd>Y</kbd>
+            </button>
+            <button class="v3-exit" type="button" data-close>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              <span>Exit</span>
+            </button>
           </div>
           <!-- Authentic Unboxed GTA V / Vice City Top-Right Floating Status HUD -->
           <div class="v3-gta-hud" aria-label="Vice City HUD Status">
@@ -1856,12 +1875,12 @@ class ViceCity3DApp {
         </div>
       </div>
 
-      <div class="v3-dock-wrap" data-dock-wrap>
+      <div class="v3-dock-wrap collapsed" data-dock-wrap>
         <div class="v3-auto-bar" data-auto-bar>
           <span data-auto-text>GPS Auto-Driving...</span>
           <button class="v3-auto-cancel" type="button" data-auto-cancel>Cancel</button>
         </div>
-        <button class="v3-dock-toggle" type="button" data-dock-toggle>▾ Hide Controls</button>
+        <button class="v3-dock-toggle" type="button" data-dock-toggle>▴ Controls</button>
         <div class="v3-dock">
           <div class="v3-route-row" data-waypoints>
             ${DOCK_WAYPOINTS.map((w, i) => `<button class="v3-wp${i === 0 ? ' active' : ''}" type="button" data-wp="${w.id}">${w.label}</button>`).join('')}
@@ -2050,36 +2069,63 @@ class ViceCity3DApp {
         </div>
       </div>
 
-      <!-- Interactive Vice City Projects Mission Hub Modal ([P] Button) -->
+      <!-- Redesigned Split-Stage Architectural Projects Dossier ([P] Button) -->
       <div class="v3-ov" data-proj-hub-ov hidden>
-        <div class="v3-proj-hub">
+        <div class="v3-proj-hub" role="dialog" aria-modal="true" aria-label="Featured Projects">
           <div class="v3-ph-head">
-            <div>
-              <div class="v3-card-k">Vice City Showcase Cinemas · 5 Featured Projects</div>
-              <h3>Projects Mission Hub</h3>
+            <div class="v3-ph-head-left">
+              <div class="v3-card-k">Vice City Showcase · Interactive Portfolio</div>
+              <h3>Featured Projects</h3>
             </div>
-            <button class="v3-card-close" type="button" data-proj-hub-close>Close [P]</button>
+            <div class="v3-ph-head-right">
+              <div class="v3-ph-prog-wrap">
+                <div class="v3-ph-prog-label"><span data-ph-progress-text>0 / 5</span> EXPLORED</div>
+                <div class="v3-ph-prog-track"><div class="v3-ph-prog-fill" data-ph-progress-fill style="width:0%"></div></div>
+              </div>
+              <button class="v3-card-close" type="button" data-proj-hub-close>Close [P]</button>
+            </div>
           </div>
-          <div class="v3-ph-grid">
-            ${[...SHOWROOMS, CONTACT_SHOWROOM].map((sr) => `
-              <div class="v3-ph-card" style="--card-col:${sr.accentHex}">
-                <div class="v3-ph-img">
-                  <img src="${sr.img}" alt="${sr.title}" referrerpolicy="no-referrer">
-                  <span class="v3-ph-badge" data-ph-badge="${sr.id}">${sr.id === 'contact' ? '★ CONTACT' : `PROJECT ${sr.num}`}</span>
-                  <span class="v3-ph-dist" data-ph-dist="${sr.id}">--m</span>
-                </div>
-                <div class="v3-ph-body">
-                  <div class="v3-ph-dist-name">${sr.district}</div>
-                  <div class="v3-ph-title">${sr.title}</div>
-                  <div class="v3-ph-stat">${sr.stat}</div>
-                  <div class="v3-ph-acts">
-                    <button class="v3-ph-btn" type="button" data-ph-drive="${sr.id}">Auto-Drive</button>
-                    <button class="v3-ph-btn go" type="button" data-ph-tp="${sr.id}">Warp</button>
-                    <button class="v3-ph-btn open" type="button" data-ph-inspect="${sr.id}">Inspect</button>
-                  </div>
+
+          <div class="v3-ph-split">
+            <div class="v3-ph-rail" role="listbox" aria-label="Project list">
+              ${[...SHOWROOMS, CONTACT_SHOWROOM].map((sr, idx) => `
+                <button class="v3-ph-row${idx === 0 ? ' active' : ''}" type="button" role="option" aria-selected="${idx === 0 ? 'true' : 'false'}" data-ph-select="${sr.id}" style="--item-col:${sr.accentHex}">
+                  <span class="v3-ph-row-num">${sr.num}</span>
+                  <span class="v3-ph-row-meta">
+                    <span class="v3-ph-row-title">${sr.title}</span>
+                    <span class="v3-ph-row-sub">${sr.district}</span>
+                  </span>
+                  <span class="v3-ph-row-right">
+                    <span class="v3-ph-row-dist" data-ph-dist="${sr.id}">--m</span>
+                    <span class="v3-ph-row-state" data-ph-badge="${sr.id}">${sr.id === 'contact' ? 'DIRECT' : 'UNSEEN'}</span>
+                  </span>
+                </button>
+              `).join('')}
+            </div>
+
+            <div class="v3-ph-stage" data-ph-stage style="--stage-col:${SHOWROOMS[0].accentHex}">
+              <div class="v3-ph-hero-media">
+                <img src="${SHOWROOMS[0].img}" alt="${SHOWROOMS[0].title}" referrerpolicy="no-referrer" data-ph-hero-img>
+                <div class="v3-ph-hero-scrim"></div>
+                <div class="v3-ph-hero-hud">
+                  <span class="v3-ph-hero-tag" data-ph-hero-badge>PROJECT 01</span>
+                  <span class="v3-ph-hero-dist" data-ph-hero-dist>--m AWAY</span>
                 </div>
               </div>
-            `).join('')}
+
+              <div class="v3-ph-hero-body">
+                <div class="v3-ph-hero-eyebrow" data-ph-hero-district>${SHOWROOMS[0].district}</div>
+                <h4 class="v3-ph-hero-title" data-ph-hero-title>${SHOWROOMS[0].title}</h4>
+                <div class="v3-ph-hero-stat" data-ph-hero-stat>${SHOWROOMS[0].stat}</div>
+                <p class="v3-ph-hero-desc" data-ph-hero-desc>${SHOWROOMS[0].desc}</p>
+              </div>
+
+              <div class="v3-ph-hero-acts">
+                <button class="v3-ph-act primary" type="button" data-ph-tp="${SHOWROOMS[0].id}">Warp to Showroom</button>
+                <button class="v3-ph-act" type="button" data-ph-drive="${SHOWROOMS[0].id}">GPS Auto-Drive</button>
+                <a class="v3-ph-act accent" href="${SHOWROOMS[0].url}" target="_blank" rel="noopener" data-ph-hero-open>Open Case Study ↗</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2333,6 +2379,18 @@ class ViceCity3DApp {
       fmDists: Array.from(stage.querySelectorAll('[data-fm-dist]')),
       projHubOv: stage.querySelector('[data-proj-hub-ov]'),
       projHubClose: stage.querySelector('[data-proj-hub-close]'),
+      phSelectBtns: Array.from(stage.querySelectorAll('[data-ph-select]')),
+      phStage: stage.querySelector('[data-ph-stage]'),
+      phHeroImg: stage.querySelector('[data-ph-hero-img]'),
+      phHeroBadge: stage.querySelector('[data-ph-hero-badge]'),
+      phHeroDist: stage.querySelector('[data-ph-hero-dist]'),
+      phHeroDistrict: stage.querySelector('[data-ph-hero-district]'),
+      phHeroTitle: stage.querySelector('[data-ph-hero-title]'),
+      phHeroStat: stage.querySelector('[data-ph-hero-stat]'),
+      phHeroDesc: stage.querySelector('[data-ph-hero-desc]'),
+      phHeroOpen: stage.querySelector('[data-ph-hero-open]'),
+      phProgressText: stage.querySelector('[data-ph-progress-text]'),
+      phProgressFill: stage.querySelector('[data-ph-progress-fill]'),
       phDriveBtns: Array.from(stage.querySelectorAll('[data-ph-drive]')),
       phTpBtns: Array.from(stage.querySelectorAll('[data-ph-tp]')),
       phInspectBtns: Array.from(stage.querySelectorAll('[data-ph-inspect]')),
@@ -3218,10 +3276,47 @@ class ViceCity3DApp {
     this.scene.add(fuelFarm);
     this.addBoxCollider(-174.5, -153.5, 41.5, 54.5);
 
+    // North Open Airport Entry Gatehouse (16.6m clear drive-in opening at X = -56..-39.4, Z = 29)
     const gatehouse = createAirportGatehouse(maxAniso);
     gatehouse.position.set(-58, 0, 29);
     this.scene.add(gatehouse);
     this.addBoxCollider(-60, -56, 27.2, 30.8);
+
+    // East Main Boulevard Open Airport Entry Gatehouse directly off Ocean Drive (17m clear opening at Z = 79..95!)
+    const eastGatehouse = createAirportGatehouse(maxAniso);
+    eastGatehouse.position.set(-10, 0, 77);
+    eastGatehouse.rotation.y = -Math.PI / 2;
+    this.scene.add(eastGatehouse);
+    this.addBoxCollider(-11.8, -8.2, 75.2, 78.8);
+
+    // Smooth Asphalt Entry Driveways & Lane Stripes leading directly through BOTH open Airport Gates!
+    const gateApronMat = new THREE.MeshStandardMaterial({ color: 0x262932, roughness: 0.86, metalness: 0.06 });
+    const eastEntryDrive = new THREE.Mesh(new THREE.BoxGeometry(22, 0.09, 17.5), gateApronMat);
+    eastEntryDrive.position.set(-12.5, 0.015, 86.8);
+    eastEntryDrive.receiveShadow = true;
+    const northEntryDrive = new THREE.Mesh(new THREE.BoxGeometry(16.5, 0.09, 24), gateApronMat);
+    northEntryDrive.position.set(-47.5, 0.015, 25.0);
+    northEntryDrive.receiveShadow = true;
+    this.scene.add(eastEntryDrive, northEntryDrive);
+
+    const gateStripeMat = new THREE.MeshBasicMaterial({ color: 0x34e89e });
+    const gateDashMat = new THREE.MeshBasicMaterial({ color: 0xffd36b });
+    for (let s = 0; s < 3; s++) {
+      const eDash = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.36), gateDashMat);
+      eDash.rotation.x = -Math.PI / 2;
+      eDash.position.set(-5.5 - s * 6.0, 0.068, 86.8);
+      this.scene.add(eDash);
+      const nDash = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 3.2), gateDashMat);
+      nDash.rotation.x = -Math.PI / 2;
+      nDash.position.set(-47.5, 0.068, 17.5 + s * 6.5);
+      this.scene.add(nDash);
+    }
+    for (const ez of [79.4, 94.2]) {
+      const eEdge = new THREE.Mesh(new THREE.PlaneGeometry(20, 0.28), gateStripeMat);
+      eEdge.rotation.x = -Math.PI / 2;
+      eEdge.position.set(-12.5, 0.068, ez);
+      this.scene.add(eEdge);
+    }
 
     const hangar2 = createAirportHangarTwo(maxAniso);
     hangar2.position.set(-24, 0, 52);
@@ -3243,13 +3338,14 @@ class ViceCity3DApp {
     this.addCircleCollider(-55, 74, 2.2);
 
     // SOLID ESCOBAR INT'L AIRPORT SECURITY BARRICADES & CHAIN-LINK PERIMETER FENCING
-    // (Leaves clean drive-in security gates open at Gatehouse X=-46 & Terminal X=-108!)
+    // Leaves TWO wide-open drive-in entry gates: East Ocean Drive Gate (Z=74..96) & North Gatehouse (X=-56..-39), plus Terminal Concourse (X=-108)!
     const airportBarricades = [
       [-272, 30, -144, 30],   // North-West tarmac fence
       [-74,  30, -61,  30],   // North-Center fence up to Gatehouse
-      [-36,  30, -12,  30],   // North-East Hangar #2 fence
+      [-38.5, 30, -12, 30],   // North-East Hangar #2 fence
       [-274, 30, -274, 154],  // West Runway 09 threshold barricade
-      [-10,  30, -10,  154],  // East Runway 27 threshold barricade
+      [-10,  30, -10,  74],   // East North perimeter fence (stops cleanly before East Open Entry Gate!)
+      [-10,  96, -10,  154],  // East South perimeter fence (resumes cleanly after East Open Entry Gate!)
       [-274, 154, -10, 154]   // South Runway perimeter barricade
     ];
     airportBarricades.forEach(([x1, z1, x2, z2]) => {
@@ -4650,8 +4746,33 @@ class ViceCity3DApp {
       { x: -476.4, z: -890, speed: -14, color: 0xd93060, type: 'suv' }
     ];
     trafficSpecs.forEach((ts) => {
+      // Avenues intersecting Escobar Int'l Airport (X in -305..-8) stay strictly north of the airport fence (Z <= 14)
+      const hitsAirport = ts.x > -305 && ts.x < -8;
+      const zMax = hitsAirport ? 14 : 300;
+      const zMin = -1050;
+      let spawnZ = ts.z;
+      if (spawnZ > zMax - 4) spawnZ = zMin + ((Math.abs(spawnZ) * 3.7) % (zMax - zMin - 40));
+      if (spawnZ < zMin + 4) spawnZ = zMin + 24;
+      // Nudge initial spawn out of any building/barricade box collider
+      for (let tries = 0; tries < 10; tries++) {
+        const boxes = this.colliderGrid.queryBoxes(ts.x, spawnZ, 3.2);
+        let overlap = false;
+        for (let bIdx = 0; bIdx < boxes.length; bIdx++) {
+          const b = boxes[bIdx];
+          if (ts.x + 1.25 > b.minX && ts.x - 1.25 < b.maxX && spawnZ + 2.4 > b.minZ && spawnZ - 2.4 < b.maxZ) {
+            overlap = true;
+            break;
+          }
+        }
+        if (!overlap) break;
+        spawnZ -= 22;
+        if (spawnZ < zMin + 8) spawnZ = zMax - 18;
+      }
+      // Compute opposite-direction parallel lane X (lanes are ±3.6m around avenue centerlines 0, -96, -192, -288, -384, -480)
+      const aveCenter = Math.round(ts.x / 96) * 96;
+      const pairX = aveCenter - (ts.x - aveCenter);
       const tc = createTrafficCar(ts.color, ts.type);
-      tc.position.set(ts.x, 0, ts.z);
+      tc.position.set(ts.x, 0, spawnZ);
       const origYaw = ts.speed > 0 ? Math.PI : 0;
       tc.rotation.y = origYaw;
       const maxHp = ts.type === 'suv' ? 135 : 100;
@@ -4661,7 +4782,7 @@ class ViceCity3DApp {
         spinX: 0, spinZ: 0, wheelSpin: 0,
         carType: ts.type, colorHex: ts.color,
         hp: maxHp, maxHp, vehState: 'ok', burnTimer: 0, wreckTimer: 0, fireTick: 0,
-        origX: ts.x, origZ: ts.z, origYaw
+        origX: ts.x, pairX, origZ: spawnZ, origYaw, zMin, zMax
       };
       this.scene.add(tc);
       this.traffic.push(tc);
@@ -7564,7 +7685,9 @@ class ViceCity3DApp {
     const tp = TIME_PRESETS[this.timeIdx];
     this.dayTime = tp.hour;
     if (this.el.timeBtn) {
-      this.el.timeBtn.textContent = `${tp.icon} ${tp.label} [T]`;
+      const lbl = this.el.timeBtn.querySelector('[data-time-lbl]');
+      if (lbl) lbl.textContent = tp.label;
+      else this.el.timeBtn.textContent = `${tp.label} [T]`;
       this.el.timeBtn.classList.toggle('on', this.timeIdx === 2);
     }
     if (this.timeIdx === 2 && !this.lightsOn) this.toggleLights();
@@ -7580,7 +7703,9 @@ class ViceCity3DApp {
     const wp = WEATHER_PRESETS[this.weatherIdx];
     this.autoWeatherTimer = 50 + Math.random() * 22;
     if (this.el.weatherBtn) {
-      this.el.weatherBtn.textContent = `${wp.icon} ${wp.label} [Y]`;
+      const lbl = this.el.weatherBtn.querySelector('[data-weather-lbl]');
+      if (lbl) lbl.textContent = wp.label;
+      else this.el.weatherBtn.textContent = `${wp.label} [Y]`;
       this.el.weatherBtn.classList.toggle('on', this.weatherIdx > 0);
     }
     this.audio.setRainLevel(wp.rain);
@@ -9508,7 +9633,7 @@ class ViceCity3DApp {
     this.el.srPreview.addEventListener('click', () => { if (this.activeShowroom) this.openShowroomModal(this.activeShowroom); });
     this.el.dockToggle.addEventListener('click', () => {
       const collapsed = this.el.dockWrap.classList.toggle('collapsed');
-      this.el.dockToggle.textContent = collapsed ? '▴ Show Controls' : '▾ Hide Controls';
+      this.el.dockToggle.textContent = collapsed ? '▴ Controls' : '▾ Hide Controls';
     });
 
     this.el.wpBtns.forEach((btn) => {
@@ -9657,6 +9782,9 @@ class ViceCity3DApp {
     this.el.fullMapClose.addEventListener('click', () => this.closeFullMap());
     this.el.projBtn.addEventListener('click', () => this.projectsHubOpen ? this.closeProjectsHub() : this.openProjectsHub());
     this.el.projHubClose.addEventListener('click', () => this.closeProjectsHub());
+    this.el.projHubOv.addEventListener('click', (e) => {
+      if (e.target === this.el.projHubOv) this.closeProjectsHub();
+    });
 
     // Floating 3D Project Pins: Click to Inspect if nearby, else GPS Auto-Drive directly there!
     this.el.projPinBtns.forEach((btn) => {
@@ -9675,7 +9803,12 @@ class ViceCity3DApp {
       });
     });
 
-    // Projects Mission Hub Actions (Auto-Drive / Warp / Inspect)
+    // Projects Split-Stage Dossier Selection & Actions (Select / Auto-Drive / Warp / Inspect)
+    this.el.phSelectBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.selectProjectHubItem(btn.dataset.phSelect);
+      });
+    });
     this.el.phDriveBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         const wp = WAYPOINTS.find((w) => w.id === btn.dataset.phDrive);
@@ -10041,6 +10174,14 @@ class ViceCity3DApp {
         if (this.projectsHubOpen) this.closeProjectsHub(); else this.openProjectsHub();
         return;
       }
+      if (this.projectsHubOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        const allProjects = [...SHOWROOMS, CONTACT_SHOWROOM];
+        const curIdx = Math.max(0, allProjects.findIndex((p) => p.id === this.projectsHubSelectedId));
+        const nextIdx = (curIdx + (e.key === 'ArrowDown' ? 1 : -1) + allProjects.length) % allProjects.length;
+        this.selectProjectHubItem(allProjects[nextIdx].id);
+        return;
+      }
       if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
         if (this.fullMapOpen) this.closeFullMap(); else this.openFullMap();
@@ -10303,6 +10444,8 @@ class ViceCity3DApp {
     this.projectsHubOpen = true;
     this.el.projHubOv.hidden = false;
     this.releasePointerLock();
+    if (!this.projectsHubSelectedId) this.projectsHubSelectedId = SHOWROOMS[0].id;
+    this.selectProjectHubItem(this.projectsHubSelectedId);
     this.updateProjectsHub();
   }
 
@@ -10312,9 +10455,57 @@ class ViceCity3DApp {
     this.syncReticleVisibility();
   }
 
+  selectProjectHubItem(id) {
+    const allProjects = [...SHOWROOMS, CONTACT_SHOWROOM];
+    const sr = allProjects.find((s) => s.id === id) || SHOWROOMS[0];
+    this.projectsHubSelectedId = sr.id;
+
+    this.el.phSelectBtns.forEach((btn) => {
+      const isAct = btn.dataset.phSelect === sr.id;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-selected', isAct ? 'true' : 'false');
+    });
+
+    const act = this.mode === 'foot' ? this.playerState : this.carState;
+    const distM = Math.round(Math.hypot(sr.parkX - act.x, sr.parkZ - act.z));
+    const isVisited = this.visited.has(sr.id);
+
+    if (this.el.phStage) this.el.phStage.style.setProperty('--stage-col', sr.accentHex);
+    if (this.el.phHeroImg) {
+      this.el.phHeroImg.src = sr.img;
+      this.el.phHeroImg.alt = sr.title;
+    }
+    if (this.el.phHeroBadge) {
+      this.el.phHeroBadge.textContent = sr.id === 'contact'
+        ? 'CREATOR PROFILE'
+        : (isVisited ? `EXPLORED · PROJECT ${sr.num}` : `PROJECT ${sr.num}`);
+      this.el.phHeroBadge.classList.toggle('visited', isVisited);
+    }
+    if (this.el.phHeroDist) this.el.phHeroDist.textContent = `${distM}m AWAY`;
+    if (this.el.phHeroDistrict) this.el.phHeroDistrict.textContent = sr.district;
+    if (this.el.phHeroTitle) this.el.phHeroTitle.textContent = sr.title;
+    if (this.el.phHeroStat) this.el.phHeroStat.textContent = sr.stat;
+    if (this.el.phHeroDesc) this.el.phHeroDesc.textContent = sr.desc;
+    if (this.el.phHeroOpen) {
+      this.el.phHeroOpen.href = sr.url;
+      this.el.phHeroOpen.textContent = sr.id === 'contact' ? 'Send Email ↗' : 'Open Case Study ↗';
+    }
+    this.el.phTpBtns.forEach((btn) => {
+      btn.dataset.phTp = sr.id;
+      btn.textContent = sr.id === 'contact' ? 'Warp to Promenade' : 'Warp to Showroom';
+    });
+    this.el.phDriveBtns.forEach((btn) => {
+      btn.dataset.phDrive = sr.id;
+    });
+  }
+
   updateProjectsHub() {
     const act = this.mode === 'foot' ? this.playerState : this.carState;
     const allProjects = [...SHOWROOMS, CONTACT_SHOWROOM];
+    const visitedCount = SHOWROOMS.filter((s) => this.visited.has(s.id)).length;
+    if (this.el.phProgressText) this.el.phProgressText.textContent = `${visitedCount} / ${SHOWROOMS.length}`;
+    if (this.el.phProgressFill) this.el.phProgressFill.style.width = `${Math.round((visitedCount / SHOWROOMS.length) * 100)}%`;
+
     this.el.phDists.forEach((el) => {
       const sr = allProjects.find((s) => s.id === el.dataset.phDist);
       if (sr) el.textContent = `${Math.round(Math.hypot(sr.parkX - act.x, sr.parkZ - act.z))}m`;
@@ -10323,12 +10514,20 @@ class ViceCity3DApp {
       const id = el.dataset.phBadge;
       const sr = allProjects.find((s) => s.id === id);
       if (!sr) return;
+      const seen = this.visited.has(id);
       if (id === 'contact') {
-        el.textContent = '★ CONTACT';
+        el.textContent = 'DIRECT';
+        el.classList.remove('seen');
       } else {
-        el.textContent = this.visited.has(id) ? `✓ VISITED ${sr.num}` : `PROJECT ${sr.num}`;
+        el.textContent = seen ? 'EXPLORED' : 'UNSEEN';
+        el.classList.toggle('seen', seen);
       }
     });
+    const activeSr = allProjects.find((s) => s.id === this.projectsHubSelectedId);
+    if (activeSr && this.el.phHeroDist) {
+      const distM = Math.round(Math.hypot(activeSr.parkX - act.x, activeSr.parkZ - act.z));
+      this.el.phHeroDist.textContent = `${distM}m AWAY`;
+    }
   }
 
   updateProjectPins(act) {
@@ -11511,12 +11710,25 @@ class ViceCity3DApp {
         });
       }
 
-      // Relocate cruiser closer if player drove way ahead (>155m)
+      // Relocate cruiser closer if player drove way ahead (>155m), ensuring it never spawns inside a building!
       if (dist > 155) {
         const reAng = (act.yaw || 0) + (i === 0 ? 0.3 : -0.35);
-        pu.x = THREE.MathUtils.clamp(act.x - Math.sin(reAng) * 58, -478, 16);
-        pu.z = THREE.MathUtils.clamp(act.z - Math.cos(reAng) * 58, -1440, 338);
-        pu.y = getTerrainHeight(pu.x, pu.z) + 0.04;
+        const candX = THREE.MathUtils.clamp(act.x - Math.sin(reAng) * 58, -478, 16);
+        const candZ = THREE.MathUtils.clamp(act.z - Math.cos(reAng) * 58, -1440, 338);
+        if (!this.isPointBlocked(candX, candZ, 2.2)) {
+          pu.x = candX;
+          pu.z = candZ;
+          pu.y = getTerrainHeight(pu.x, pu.z) + 0.04;
+        } else {
+          // Snap to nearest open avenue centerline so VCPD cruisers always materialize on asphalt
+          const nearAve = Math.round(candX / 96) * 96;
+          const safeZ = (nearAve > -305 && nearAve < -8 && candZ > 10) ? -24 : candZ;
+          if (!this.isPointBlocked(nearAve + 3.6, safeZ, 2.0)) {
+            pu.x = nearAve + 3.6;
+            pu.z = safeZ;
+            pu.y = getTerrainHeight(pu.x, pu.z) + 0.04;
+          }
+        }
       }
     }
 
@@ -11800,7 +12012,9 @@ class ViceCity3DApp {
         this.autoWeatherTimer = 42 + Math.random() * 20;
         const wpNow = WEATHER_PRESETS[this.weatherIdx];
         if (this.el.weatherBtn) {
-          this.el.weatherBtn.textContent = `${wpNow.icon} ${wpNow.label} [Y]`;
+          const lbl = this.el.weatherBtn.querySelector('[data-weather-lbl]');
+          if (lbl) lbl.textContent = wpNow.label;
+          else this.el.weatherBtn.textContent = `${wpNow.label} [Y]`;
           this.el.weatherBtn.classList.toggle('on', this.weatherIdx > 0);
         }
       }
@@ -11934,7 +12148,9 @@ class ViceCity3DApp {
       this.timeIdx = livePhase;
       const curTp = TIME_PRESETS[this.timeIdx];
       if (this.el.timeBtn) {
-        this.el.timeBtn.textContent = `${curTp.icon} ${curTp.label} [T]`;
+        const lbl = this.el.timeBtn.querySelector('[data-time-lbl]');
+        if (lbl) lbl.textContent = curTp.label;
+        else this.el.timeBtn.textContent = `${curTp.label} [T]`;
         this.el.timeBtn.classList.toggle('on', this.timeIdx === 2);
       }
     }
@@ -13831,14 +14047,55 @@ class ViceCity3DApp {
       }
     }
 
-    // 3. Solid Traffic Cars (TRUE SOLID COLLISION, ENGINE FIRE, AIRBORNE EXPLOSION WRECKS & RESPAWN!)
+    // 3. Solid Traffic Cars (TRUE SOLID BUILDING COLLISIONS, LANE-END TURNAROUNDS, AIRBORNE WRECKS & RESPAWN!)
     const fwdX = -Math.sin(cs.yaw), fwdZ = -Math.cos(cs.yaw);
+    const pushTrafficOutOfBuildings = (carObj, carData, bounceVel) => {
+      const halfW = 1.18, halfL = 2.25;
+      const localBoxes = this.colliderGrid.queryBoxes(carObj.position.x, carObj.position.z, 3.8);
+      let collided = false;
+      for (let pass = 0; pass < 2; pass++) {
+        for (let bIdx = 0; bIdx < localBoxes.length; bIdx++) {
+          const b = localBoxes[bIdx];
+          const minX = b.minX - halfW, maxX = b.maxX + halfW;
+          const minZ = b.minZ - halfL, maxZ = b.maxZ + halfL;
+          if (carObj.position.x > minX && carObj.position.x < maxX && carObj.position.z > minZ && carObj.position.z < maxZ) {
+            const oL = carObj.position.x - minX;
+            const oR = maxX - carObj.position.x;
+            const oT = carObj.position.z - minZ;
+            const oB = maxZ - carObj.position.z;
+            const m = Math.min(oL, oR, oT, oB);
+            if (m === oL) {
+              carObj.position.x = minX - 0.04;
+              if (bounceVel && carData.vx > 0) carData.vx *= -0.35;
+            } else if (m === oR) {
+              carObj.position.x = maxX + 0.04;
+              if (bounceVel && carData.vx < 0) carData.vx *= -0.35;
+            } else if (m === oT) {
+              carObj.position.z = minZ - 0.04;
+              if (bounceVel && carData.vz > 0) carData.vz *= -0.35;
+            } else {
+              carObj.position.z = maxZ + 0.04;
+              if (bounceVel && carData.vz < 0) carData.vz *= -0.35;
+            }
+            collided = true;
+          }
+        }
+      }
+      return collided;
+    };
+
     for (let i = 0; i < this.traffic.length; i++) {
       const tc = this.traffic[i];
       const u = tc.userData;
+      const zMin = u.zMin !== undefined ? u.zMin : -1050;
+      const zMax = u.zMax !== undefined ? u.zMax : 300;
+      const tdxAct0 = tc.position.x - act.x, tdzAct0 = tc.position.z - act.z;
+      const distActSq = tdxAct0 * tdxAct0 + tdzAct0 * tdzAct0;
+      const tVis = distActSq < (this.trafficCullSq || 48400);
+      if (tc.visible !== tVis) tc.visible = tVis;
 
       if (u.vehState === 'wrecked') {
-        // Airborne flip/bounce physics -> smoking charred wreck -> clean respawn down avenue
+        // Airborne flip/bounce physics -> charred wreck -> clean respawn down avenue (never clips into buildings!)
         u.wreckTimer -= dt;
         if (tc.position.y > 0.01 || Math.abs(u.vy) > 0.15) {
           u.vy -= 22.0 * dt;
@@ -13847,6 +14104,7 @@ class ViceCity3DApp {
           tc.position.z += u.vz * dt;
           tc.rotation.x += u.spinX * dt;
           tc.rotation.z += u.spinZ * dt;
+          pushTrafficOutOfBuildings(tc, u, true);
           if (tc.position.y <= 0.12) {
             tc.position.y = 0.12;
             if (Math.abs(u.vy) > 2.4) {
@@ -13864,8 +14122,9 @@ class ViceCity3DApp {
           u.vehState = 'ok';
           u.hp = u.maxHp || 100;
           u.vx = 0; u.vy = 0; u.vz = 0; u.spinX = 0; u.spinZ = 0; u.stun = 0;
-          tc.position.set(u.origX, 0, u.origZ);
+          tc.position.set(u.origX, 0, THREE.MathUtils.clamp(u.origZ, zMin + 8, zMax - 8));
           tc.rotation.set(0, u.origYaw || 0, 0);
+          pushTrafficOutOfBuildings(tc, u, false);
           if (u.carRig) {
             if (u.carRig.paintMat) {
               u.carRig.paintMat.color.setHex(u.carRig.baseColor || u.colorHex || 0xf4c430);
@@ -13886,14 +14145,67 @@ class ViceCity3DApp {
         tc.position.z += u.vz * dt;
         u.vx *= Math.pow(0.08, dt);
         u.vz *= Math.pow(0.08, dt);
+        pushTrafficOutOfBuildings(tc, u, true);
         if (u.carRig && u.carRig.bodyGroup) {
           u.carRig.bodyGroup.rotation.z = THREE.MathUtils.damp(u.carRig.bodyGroup.rotation.z, 0, 8, dt);
         }
       } else {
         const trafficMult = this.cheats.fastTraffic ? 1.68 : 1.0;
-        tc.position.z += u.baseSpeed * trafficMult * dt;
-        if (tc.position.z > 358) tc.position.z = -1112;
-        if (tc.position.z < -1116) tc.position.z = 352;
+        const stepZ = u.baseSpeed * trafficMult * dt;
+        const dirZ = u.baseSpeed >= 0 ? 1 : -1;
+
+        // Smoothly steer back onto lane centerline after any bump or lane turnaround
+        if (Math.abs(tc.position.x - u.origX) > 0.04) {
+          const nextX = THREE.MathUtils.damp(tc.position.x, u.origX, 2.8, dt);
+          const steerDelta = nextX - tc.position.x;
+          tc.position.x = nextX;
+          const steerBank = THREE.MathUtils.clamp(steerDelta * 8.0 * dirZ, -0.35, 0.35);
+          tc.rotation.y = THREE.MathUtils.damp(tc.rotation.y, (u.origYaw || 0) + steerBank, 6.0, dt);
+        } else {
+          tc.rotation.y = THREE.MathUtils.damp(tc.rotation.y, u.origYaw || 0, 6.0, dt);
+        }
+
+        // Lookahead building/barricade check (runs on all visible cars so none ever enter buildings!)
+        let blockedAhead = false;
+        if (tVis) {
+          const probeZ = tc.position.z + stepZ + dirZ * 2.1;
+          const aheadBoxes = this.colliderGrid.queryBoxes(tc.position.x, probeZ, 3.4);
+          for (let bIdx = 0; bIdx < aheadBoxes.length; bIdx++) {
+            const b = aheadBoxes[bIdx];
+            if (tc.position.x + 1.15 > b.minX && tc.position.x - 1.15 < b.maxX && probeZ + 1.45 > b.minZ && probeZ - 1.45 < b.maxZ) {
+              blockedAhead = true;
+              break;
+            }
+          }
+        }
+
+        const nextZ = tc.position.z + stepZ;
+        const hitRoadEnd = nextZ > zMax || nextZ < zMin;
+
+        if (hitRoadEnd || blockedAhead) {
+          if (distActSq > 110 * 110) {
+            // Far from player: seamlessly wrap to clear opposite end of avenue
+            tc.position.x = u.origX;
+            tc.position.z = dirZ > 0 ? (zMin + 12) : (zMax - 12);
+            tc.rotation.y = u.origYaw || 0;
+          } else {
+            // Within player sight: gracefully reverse onto the parallel opposite lane instead of popping or hitting walls!
+            const prevOrig = u.origX;
+            u.origX = u.pairX !== undefined ? u.pairX : prevOrig;
+            u.pairX = prevOrig;
+            u.baseSpeed = -u.baseSpeed;
+            u.origYaw = u.baseSpeed > 0 ? Math.PI : 0;
+            tc.position.z = THREE.MathUtils.clamp(tc.position.z - dirZ * 1.1, zMin + 2, zMax - 2);
+          }
+        } else {
+          tc.position.z = nextZ;
+        }
+
+        // Ironclad safety net: guarantee zero overlap with any building collider on visible cars
+        if (tVis) {
+          pushTrafficOutOfBuildings(tc, u, false);
+        }
+
         if (u.carRig && u.carRig.wheelSpinGroups) {
           u.wheelSpin = (u.wheelSpin || 0) - Math.abs(u.baseSpeed * trafficMult) * dt * 2.5;
           for (let w = 0; w < u.carRig.wheelSpinGroups.length; w++) u.carRig.wheelSpinGroups[w].rotation.x = u.wheelSpin;
@@ -13909,10 +14221,6 @@ class ViceCity3DApp {
       if (u.stun > 0 && u.carRig && u.carRig.tailMat) {
         u.carRig.tailMat.emissiveIntensity = 2.8;
       }
-
-      const tdxAct = tc.position.x - act.x, tdzAct = tc.position.z - act.z;
-      const tVis = (tdxAct * tdxAct + tdzAct * tdzAct) < (this.trafficCullSq || 48400);
-      if (tc.visible !== tVis) tc.visible = tVis;
 
       const tdx = tc.position.x - cs.x, tdz = tc.position.z - cs.z;
       if (tdx * tdx + tdz * tdz > 100) continue;
@@ -13933,6 +14241,7 @@ class ViceCity3DApp {
           cs.z += nz * push * 0.72;
           tc.position.x -= nx * push * 0.28;
           tc.position.z -= nz * push * 0.28;
+          pushTrafficOutOfBuildings(tc, u, false);
           if (u.vehState !== 'wrecked') {
             u.stun = 1.6;
             u.vx = -nx * Math.min(Math.abs(cs.speed) * 0.35, 10);
@@ -15766,18 +16075,18 @@ class ViceCity3DApp {
       const grid = document.createElement('div');
       grid.className = 'v3-phone-grid';
       const apps = [
-        { id: 'mechanic', ico: '🔧', lbl: 'Mechanic' },
-        { id: 'missions', ico: '🏁', lbl: 'Jobs' },
-        { id: 'portfolio', ico: '💼', lbl: 'Portfolio' },
-        { id: 'taxi', ico: '🚕', lbl: 'Cab Co.' },
-        { id: 'camera', ico: '📸', lbl: 'Snapmatic' },
-        { id: 'settings', ico: '⚙️', lbl: 'Settings' }
+        { id: 'mechanic', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5a4 4 0 0 0-5.1 5.1L3.2 13.8a1.6 1.6 0 1 0 2.3 2.3l5.2-5.2a4 4 0 0 0 5.1-5.1l-2.1 2.1-2.3-2.3 2.1-2.1Z"/></svg>', lbl: 'Mechanic' },
+        { id: 'missions', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17V3.5M4 4h11l-2.2 3.5L15 11H4"/></svg>', lbl: 'Jobs' },
+        { id: 'portfolio', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="10" rx="1.6"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6"/></svg>', lbl: 'Portfolio' },
+        { id: 'taxi', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5L5 7.2A2 2 0 0 1 6.9 6h6.2a2 2 0 0 1 1.9 1.2l1.5 4.3"/><rect x="2.5" y="11" width="15" height="4.5" rx="1.2"/><path d="M8 6V4h4v2"/></svg>', lbl: 'Cab Co.' },
+        { id: 'camera', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5h2.5L7 4.5h6l1.5 2H17a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 17 16.5H3A1.5 1.5 0 0 1 1.5 15V8A1.5 1.5 0 0 1 3 6.5Z"/><circle cx="10" cy="11.2" r="2.7"/></svg>', lbl: 'Snapmatic' },
+        { id: 'settings', ico: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.8"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"/></svg>', lbl: 'Settings' }
       ];
       apps.forEach((a) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'v3-phone-app';
-        b.innerHTML = `<span class="v3-phone-app-ic">${a.ico}</span><span>${a.lbl}</span>`;
+        b.innerHTML = `<span class="v3-phone-app-ic" aria-hidden="true">${a.ico}</span><span>${a.lbl}</span>`;
         b.addEventListener('click', () => {
           if (a.id === 'camera') this.takeSnapmaticPhoto();
           else this.renderPhoneScreen(a.id);
@@ -15786,8 +16095,8 @@ class ViceCity3DApp {
       });
       scr.appendChild(grid);
       const stat = document.createElement('div');
-      stat.style.cssText = 'margin:8px 6px 4px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:11px;color:#b8b4cc;line-height:1.5';
-      stat.innerHTML = `<b style="color:#ffd36b">$${this.cash.toLocaleString()}</b> · Showrooms: <b style="color:#21e6d1">${this.visited.size}/5</b><br>Jobs Done: ${this.missionsCompleted} · Garage: ${(this.savedGarage || []).length}/6`;
+      stat.className = 'v3-phone-summary';
+      stat.innerHTML = `<b style="color:#4BD36B">$${this.cash.toLocaleString()}</b> · Showrooms <b style="color:#21E6D1">${this.visited.size}/5</b><br>Jobs Done: ${this.missionsCompleted} · Garage: ${(this.savedGarage || []).length}/6`;
       scr.appendChild(stat);
       return;
     }
@@ -16759,7 +17068,19 @@ class ViceCity3DApp {
         const leadGap = playerDist - rivalDist; // negative if player is ahead
         const targetSpd = THREE.MathUtils.clamp(43 + (leadGap < -18 ? 7.5 : (leadGap > 24 ? -5.5 : 0)), 34, 54);
         m.rivalSpeed = THREE.MathUtils.damp(m.rivalSpeed, targetSpd, 2.4, dt);
-        m.rivalZ += m.dirZ * m.rivalSpeed * dt;
+        const nextRivalZ = m.rivalZ + m.dirZ * m.rivalSpeed * dt;
+        const rivalBoxes = this.colliderGrid.queryBoxes(m.rivalX, nextRivalZ, 3.4);
+        let rivalBlocked = false;
+        for (let bIdx = 0; bIdx < rivalBoxes.length; bIdx++) {
+          const b = rivalBoxes[bIdx];
+          if (m.rivalX + 1.2 > b.minX && m.rivalX - 1.2 < b.maxX && nextRivalZ + 2.3 > b.minZ && nextRivalZ - 2.3 < b.maxZ) {
+            rivalBlocked = true;
+            const aveCenter = Math.round(m.rivalX / 96) * 96;
+            m.rivalX = THREE.MathUtils.damp(m.rivalX, aveCenter + (m.rivalX >= aveCenter ? -3.6 : 3.6), 5.0, dt);
+            break;
+          }
+        }
+        if (!rivalBlocked) m.rivalZ = nextRivalZ;
         const ry = this.getSurfaceY(m.rivalX, m.rivalZ, false) + 0.04;
         if (m.rivalMesh) {
           m.rivalMesh.position.set(m.rivalX, ry, m.rivalZ);

@@ -19,7 +19,18 @@ const BLOCKED_PATHS = new Set([
 ]);
 
 app.disable('x-powered-by');
-app.use(compression({ threshold: 1024 }));
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      const ext = path.extname(req.path || '').toLowerCase();
+      if (['.mp3', '.mp4', '.webm', '.ogg', '.wav', '.webp', '.jpg', '.jpeg', '.png'].includes(ext)) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  })
+);
 
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -69,20 +80,23 @@ const staticCacheHeaders = (res, filePath) => {
     ['.webp', '.png', '.jpg', '.jpeg', '.svg', '.mp4', '.webm', '.mp3', '.woff2'].includes(ext)
   ) {
     res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    if (['.mp4', '.webm', '.mp3'].includes(ext)) {
+      res.setHeader('Accept-Ranges', 'bytes');
+    }
   }
 };
 
-// Serve /public assets first (e.g. /assets/aistudio/*.mp3 radio RJ broadcasts)
+// Serve root static files (including /assets/aistudio/*) and fallback to /public for any AI Studio attachments
 app.use(
-  express.static(path.join(__dirname, 'public'), {
+  express.static(__dirname, {
+    extensions: ['html'],
+    index: 'index.html',
     setHeaders: staticCacheHeaders,
   })
 );
 
 app.use(
-  express.static(__dirname, {
-    extensions: ['html'],
-    index: 'index.html',
+  express.static(path.join(__dirname, 'public'), {
     setHeaders: staticCacheHeaders,
   })
 );
