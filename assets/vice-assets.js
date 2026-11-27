@@ -428,24 +428,15 @@ export function createSupercar(isSoftwareGl) {
   plate.position.set(0, 0.40, 2.34);
   bodyGroup.add(plate);
 
-  // Quad Titanium Exhausts + Nitro Flames
+  // Quad Titanium Exhausts (clean chrome pipes — no fire/flames on vehicle)
   const nitroFlames = [];
-  const flameOuterMat = new THREE.MeshBasicMaterial({ color: 0x21e6d1, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-  const flameCoreMat = new THREE.MeshBasicMaterial({ color: 0xffc660, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const flameOuterMat = new THREE.MeshBasicMaterial({ color: 0x21e6d1, transparent: true, opacity: 0, depthWrite: false });
+  const flameCoreMat = new THREE.MeshBasicMaterial({ color: 0xffc660, transparent: true, opacity: 0, depthWrite: false });
   [-0.66, -0.50, 0.50, 0.66].forEach((ex) => {
     const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.058, 0.24, 16), chromeMat);
     pipe.rotation.x = Math.PI / 2;
     pipe.position.set(ex, 0.22, 2.34);
     bodyGroup.add(pipe);
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.072, 0.88, 12), flameOuterMat);
-    flame.rotation.x = Math.PI / 2;
-    flame.position.set(ex, 0.22, 2.80);
-    bodyGroup.add(flame);
-    const core = new THREE.Mesh(new THREE.ConeGeometry(0.038, 0.46, 10), flameCoreMat);
-    core.rotation.x = Math.PI / 2;
-    core.position.set(ex, 0.22, 2.62);
-    bodyGroup.add(core);
-    nitroFlames.push(flame, core);
   });
 
   // Ground Contact Shadow
@@ -557,6 +548,7 @@ export function createSupercar(isSoftwareGl) {
   return {
     root, bodyGroup, driverDoorPivot, playerDriverMesh, wheelSpinGroups, frontSteerGroups, popPods,
     headLights, headLensMat, tailMat, brakeLight,
+    paintMat, rimMat, chromeMat, caliperMat,
     flameOuterMat, flameCoreMat, nitroFlames, applyPaint, setDynamicEnvMap
   };
 }
@@ -2000,6 +1992,7 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
   // Articulated High-Poly Twin-5-Spoke Alloy Wheels + Visible Ventilated Brake Rotors & Red Calipers!
   const wheelSpinGroups = [];
   const frontSteerGroups = [];
+  const rimMat = c.chromeMat.clone();
   const wheelScale = archetype === 'suv' ? 1.15 : 1.0;
   for (const [wx, wz, isFront] of [[-0.95, -1.32, true], [0.95, -1.32, true], [-0.95, 1.32, false], [0.95, 1.32, false]]) {
     const steerGrp = new THREE.Group();
@@ -2011,7 +2004,7 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
     const spinGrp = new THREE.Group();
     const tire = new THREE.Mesh(c.wheelTireGeo, c.tireMat);
     const rotor = new THREE.Mesh(c.wheelRotorGeo, c.rotorMat);
-    const rim = new THREE.Mesh(c.wheelRimGeo, c.chromeMat);
+    const rim = new THREE.Mesh(c.wheelRimGeo, rimMat);
     const hub = new THREE.Mesh(c.wheelHubGeo, c.darkMat);
     spinGrp.add(tire, rotor, rim, hub);
     spinGrp.scale.setScalar(wheelScale);
@@ -2029,6 +2022,7 @@ export function createTrafficCar(colorHex, archetype = 'sedan') {
     accel: spec.accel,
     grip: spec.grip,
     paintMat: paint,
+    rimMat,
     baseColor: finalColor,
     bodyGroup,
     driverDoorPivot,
@@ -4727,10 +4721,7 @@ export function createPrivateLearjet(accentHex = 0x21e6d1, maxAniso = 4) {
       bl.rotation.z = (b / 8) * Math.PI * 2;
       fan.add(bl);
     }
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.34, 2.8, 12), afterburnerMat);
-    flame.rotation.x = Math.PI / 2;
-    flame.position.set(side * 1.32, 2.32, 6.85);
-    root.add(tip, nav, pod, intake, fan, flame);
+    root.add(tip, nav, pod, intake, fan);
     fanMeshes.push(fan);
   }
 

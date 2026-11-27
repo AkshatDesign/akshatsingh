@@ -180,10 +180,21 @@ export class ViceAudioEngine {
   }
 
   init() {
-    if (this.ctx) return;
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') {
+        try { this.ctx.resume().catch(() => {}); } catch (_) {}
+      }
+      return;
+    }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    this.ctx = new AC();
+    const preUnlocked = (typeof window !== 'undefined' && window.__VICE_UNLOCKED_AC__ && window.__VICE_UNLOCKED_AC__.state !== 'closed')
+      ? window.__VICE_UNLOCKED_AC__
+      : null;
+    this.ctx = preUnlocked || new AC();
+    if (this.ctx.state === 'suspended') {
+      try { this.ctx.resume().catch(() => {}); } catch (_) {}
+    }
 
     // Master dynamics compressor prevents clipping during explosions + V12 rev + FM Radio
     this.compressor = this.ctx.createDynamicsCompressor();
@@ -1184,27 +1195,139 @@ export class ViceAudioEngine {
     this.windGain.gain.setTargetAtTime(windTarget, now, 0.18);
   }
 
-  horn() {
+  horn(tune = 'classic') {
     if (!this.enabled) return;
     this.init();
     if (!this.ctx) return;
     if (this.ctx.state === 'suspended') this.ctx.resume();
     const now = this.ctx.currentTime;
+
+    const playNote = (freqs, t0, dur, wave = 'sawtooth', vol = 0.085, lpFreq = 1850) => {
+      freqs.forEach((freq) => {
+        const o = this.ctx.createOscillator();
+        const lp = this.ctx.createBiquadFilter();
+        const g = this.ctx.createGain();
+        o.type = wave;
+        o.frequency.setValueAtTime(freq, now + t0);
+        lp.type = 'lowpass';
+        lp.frequency.value = lpFreq;
+        g.gain.setValueAtTime(0.001, now + t0);
+        g.gain.linearRampToValueAtTime(vol, now + t0 + 0.016);
+        g.gain.setValueAtTime(vol * 0.92, now + t0 + Math.max(0.02, dur - 0.06));
+        g.gain.exponentialRampToValueAtTime(0.001, now + t0 + dur);
+        o.connect(lp); lp.connect(g); g.connect(this.master);
+        o.start(now + t0); o.stop(now + t0 + dur + 0.03);
+      });
+    };
+
+    if (tune === 'cucaracha') {
+      // Classic 6-note La Cucaracha brass horn!
+      const seq = [
+        [261.6, 0.00, 0.11], [261.6, 0.12, 0.11], [261.6, 0.24, 0.11],
+        [349.2, 0.36, 0.24], [440.0, 0.62, 0.18],
+        [261.6, 0.84, 0.11], [261.6, 0.96, 0.11], [261.6, 1.08, 0.11],
+        [349.2, 1.20, 0.24], [440.0, 1.46, 0.26]
+      ];
+      seq.forEach(([f, t, d]) => playNote([f, f * 1.5], t, d, 'sawtooth', 0.072, 2200));
+      return;
+    }
+    if (tune === 'dixie') {
+      // High-energy Vice 80s musical fanfare horn!
+      const seq = [
+        [392.0, 0.00, 0.11], [329.6, 0.11, 0.11], [261.6, 0.22, 0.18],
+        [261.6, 0.42, 0.11], [293.7, 0.54, 0.11], [329.6, 0.66, 0.11],
+        [349.2, 0.78, 0.11], [392.0, 0.90, 0.20], [392.0, 1.12, 0.20],
+        [329.6, 1.34, 0.28]
+      ];
+      seq.forEach(([f, t, d]) => playNote([f, f * 2.0], t, d, 'sawtooth', 0.064, 2400));
+      return;
+    }
+    if (tune === 'airhorn') {
+      // Deep triple-trumpet stadium/truck airhorn
+      playNote([185, 233.1, 293.7, 370], 0.0, 0.58, 'sawtooth', 0.078, 1450);
+      return;
+    }
+    if (tune === 'synth80s') {
+      // Vice City neon Juno-106 major-7th synth chord stab
+      playNote([261.6, 329.6, 392.0, 493.9, 523.2], 0.0, 0.52, 'triangle', 0.075, 3200);
+      playNote([523.2, 659.3], 0.05, 0.42, 'sawtooth', 0.04, 2600);
+      return;
+    }
+    if (tune === 'siren') {
+      // Quick twin-chirp police whoop-whoop!
+      [0, 0.24].forEach((off) => {
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(520, now + off);
+        o.frequency.exponentialRampToValueAtTime(1240, now + off + 0.17);
+        g.gain.setValueAtTime(0.001, now + off);
+        g.gain.linearRampToValueAtTime(0.11, now + off + 0.025);
+        g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.20);
+        o.connect(g); g.connect(this.master);
+        o.start(now + off); o.stop(now + off + 0.22);
+      });
+      return;
+    }
     // Classic dual-tone Fiamm Italian sports car horn (420 Hz + 528 Hz filtered)
-    [420, 528].forEach((freq) => {
-      const o = this.ctx.createOscillator();
-      const lp = this.ctx.createBiquadFilter();
-      const g = this.ctx.createGain();
-      o.type = 'sawtooth';
-      o.frequency.value = freq;
-      lp.type = 'lowpass'; lp.frequency.value = 1850;
-      g.gain.setValueAtTime(0.001, now);
-      g.gain.linearRampToValueAtTime(0.095, now + 0.018);
-      g.gain.setValueAtTime(0.088, now + 0.22);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
-      o.connect(lp); lp.connect(g); g.connect(this.master);
-      o.start(now); o.stop(now + 0.38);
-    });
+    playNote([420, 528], 0.0, 0.36, 'sawtooth', 0.095, 1850);
+  }
+
+  hydraulicsBounce() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx || !this.noiseBuf) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    // Pneumatic hydraulic hiss burst
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(2600, now);
+    bp.frequency.exponentialRampToValueAtTime(920, now + 0.18);
+    bp.Q.value = 2.2;
+    const hg = this.ctx.createGain();
+    hg.gain.setValueAtTime(0.18, now);
+    hg.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+    src.connect(bp); bp.connect(hg); hg.connect(this.master);
+    src.start(now); src.stop(now + 0.21);
+    // Low hydraulic pump thump
+    const th = this.ctx.createOscillator();
+    const tg = this.ctx.createGain();
+    th.type = 'sine';
+    th.frequency.setValueAtTime(112, now);
+    th.frequency.exponentialRampToValueAtTime(42, now + 0.14);
+    tg.gain.setValueAtTime(0.24, now);
+    tg.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    th.connect(tg); tg.connect(this.master);
+    th.start(now); th.stop(now + 0.17);
+  }
+
+  volleyballHit(isSpike = false) {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx || !this.noiseBuf) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(isSpike ? 245 : 185, now);
+    o.frequency.exponentialRampToValueAtTime(68, now + 0.11);
+    g.gain.setValueAtTime(isSpike ? 0.34 : 0.24, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    o.connect(g); g.connect(this.master);
+    o.start(now); o.stop(now + 0.14);
+    const slap = this.ctx.createBufferSource();
+    slap.buffer = this.noiseBuf;
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = isSpike ? 1650 : 1200; bp.Q.value = 1.6;
+    const sg = this.ctx.createGain();
+    sg.gain.setValueAtTime(isSpike ? 0.22 : 0.13, now);
+    sg.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+    slap.connect(bp); bp.connect(sg); sg.connect(this.master);
+    slap.start(now); slap.stop(now + 0.08);
   }
 
   gunshot(type = 'pistol') {

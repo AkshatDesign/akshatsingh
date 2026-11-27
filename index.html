@@ -1074,7 +1074,7 @@ html.calm .city svg{filter:none!important}
 .pj .pj-top,.pj .bot{position:relative;z-index:1}
 .calm .pj::before{display:none!important}
 </style>
-<link rel="stylesheet" href="/assets/vice-game.css?v=25">
+<link rel="stylesheet" href="/assets/vice-game.css?v=29">
 </head>
 <body>
 
@@ -2216,6 +2216,7 @@ $('#inspectBtn').addEventListener('click',()=>setInspect(!inspecting));
 addEventListener('pointermove',e=>inspectAt(e.target),{passive:true});
 addEventListener('scroll',()=>{if(lastEl) inspectAt(lastEl)},{passive:true});
 addEventListener('keydown',e=>{
+  if(document.body.classList.contains('vice-game-open')) return;
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
   if(e.key==='i'||e.key==='I') setInspect(!inspecting);
@@ -2703,6 +2704,7 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
     panzer(){SFX.cheat();toast('Cheat activated','Rhino tank on the way');tank.classList.remove('on');void tank.offsetWidth;tank.classList.add('on');setTimeout(()=>{SFX.boom();sparkle(innerWidth*.58,innerHeight-130,50);addHeat(2)},3600);setTimeout(()=>tank.classList.remove('on'),6700);document.dispatchEvent(new CustomEvent('vcsecret',{detail:'panzer'}))}
   };
   addEventListener('keydown',e=>{
+    if(document.body.classList.contains('vice-game-open')) return;
     if(e.metaKey||e.ctrlKey||e.altKey||e.key.length!==1) return;
     const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
     buf=(buf+e.key.toLowerCase()).slice(-24);
@@ -2982,6 +2984,7 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
 
   /* Global safe keyboard shortcuts (zero conflict with GTA cheat codes) */
   addEventListener('keydown',e=>{
+    if(document.body.classList.contains('vice-game-open')) return;
     if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){
       e.preventDefault();
       if($('#cmdk').hidden) openCmd(); else closeAllOv();
@@ -3016,6 +3019,6 @@ const sparkle=(x,y,n)=>document.dispatchEvent(new CustomEvent('sparkle',{detail:
 })();
 })();
 </script>
-<script src="/assets/vice-game.js?v=48"></script>
+<script src="/assets/vice-game.js?v=53"></script>
 
 </body></html>

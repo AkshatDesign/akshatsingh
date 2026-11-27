@@ -70,9 +70,9 @@ import {
   createBoardingAirstairs,
   createMountViceRange,
   createSierraWestRange
-} from './vice-assets.js?v=27';
+} from './vice-assets.js?v=29';
 
-import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=22';
+import { ViceAudioEngine, RADIO_STATIONS } from './vice-audio.js?v=24';
 import {
   createMotorcycle,
   createPoliceCruiser,
@@ -1043,7 +1043,24 @@ class ViceCity3DApp {
     this.customWaypoint = null;
     this.stuntSlowMo = 0;
     this.carHealth = 100;
-    this.carMods = { underglow: 'none', spoiler: false, goldChrome: false };
+    this.carMods = {
+      underglow: 'none',
+      spoiler: false,
+      goldChrome: false,
+      turboStage: 0,
+      rims: 'stock',
+      hydraulics: false,
+      hornTune: 'classic'
+    };
+    this.savedGarage = [];
+    this.hydraulicsState = { mode: 0, bounceY: 0, bounceVel: 0, pitchOff: 0, rollOff: 0, phase: 0, pulseTimer: 0 };
+    this.dynamicEvent = null;
+    this.dynamicEventCooldown = 20.0;
+    this._dynamicEventMeshes = [];
+    this._volleyballRig = null;
+    this._jetSkiGates = [];
+    this._pizzaFaggio = null;
+    this._vehicleModCache = new WeakMap();
     this.graphicsPreset = 'high';
     this.phoneOpen = false;
     this.phoneApp = 'home';
@@ -1596,6 +1613,7 @@ class ViceCity3DApp {
     stage.className = 'v3-stage';
     stage.setAttribute('role', 'dialog');
     stage.setAttribute('aria-label', 'Vice City 3D Open World');
+    stage.tabIndex = -1;
 
     stage.innerHTML = `
       <div class="v3-mount" data-mount></div>
@@ -2110,6 +2128,39 @@ class ViceCity3DApp {
                 <button class="v3-mg-play" type="button" data-mg-start="skyring" style="margin-top:8px;">Launch Jet</button>
               </div>
             </div>
+            <div class="v3-mg-card" style="--mg-col:#FF7B2E">
+              <div>
+                <div class="v3-mg-tag">04 · Well Stacked Pizza Co.</div>
+                <h4>Pizza Boy Faggio Run</h4>
+                <p>Hop on the red-and-white delivery Faggio scooter and drop 5 piping-hot pizzas across Ocean Drive before time runs out.</p>
+              </div>
+              <div>
+                <div class="v3-mg-prize">Delivery Payout: $1,400+</div>
+                <button class="v3-mg-play" type="button" data-mg-start="pizza" style="margin-top:8px;">Ride Faggio</button>
+              </div>
+            </div>
+            <div class="v3-mg-card" style="--mg-col:#21E6D1">
+              <div>
+                <div class="v3-mg-tag">05 · Vice Beach Atlantic Surf</div>
+                <h4>Jet-Ski Slalom Trial</h4>
+                <p>Carve through 8 glowing ocean buoy gates along Vice Beach &amp; Carnival Pier on a turbo WaveRunner Jet-Ski.</p>
+              </div>
+              <div>
+                <div class="v3-mg-prize">Surf Prize: $1,350</div>
+                <button class="v3-mg-play" type="button" data-mg-start="jetski" style="margin-top:8px;">Launch Jet-Ski</button>
+              </div>
+            </div>
+            <div class="v3-mg-card" style="--mg-col:#34E89E">
+              <div>
+                <div class="v3-mg-tag">06 · Vice Beach Sand Court</div>
+                <h4>Beach Volleyball Rally</h4>
+                <p>Step onto the Ocean Beach sand court, race into the landing ring, and spike 8 consecutive volleys across the net.</p>
+              </div>
+              <div>
+                <div class="v3-mg-prize">Beach Trophy: $750</div>
+                <button class="v3-mg-play" type="button" data-mg-start="volleyball" style="margin-top:8px;">Hit Sand Court</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2423,10 +2474,6 @@ class ViceCity3DApp {
     this.car = createSupercar(this.isSoftwareGl);
     this.car.isHero = true;
     this.car.root.position.set(this.carState.x, 0, this.carState.z);
-    const carSh = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 5.75), getContactShadowMat());
-    carSh.rotation.x = -Math.PI / 2;
-    carSh.position.y = 0.035;
-    this.car.root.add(carSh);
     this.scene.add(this.car.root);
 
     // Active drivable vehicle tracker + persistent parked vehicles for GTA carjacking!
@@ -5582,25 +5629,25 @@ class ViceCity3DApp {
       const groundY = 0.16;
       const upperY = groundY + floor1Y;
 
-      // West upper stair landing (lx: -7.6..-4.35, lz: -11.4..-7.15)
-      const onWestLanding = lx <= -4.35 && lz <= -7.15;
-      if (onWestLanding && curY >= upperY - 1.55) {
+      // West upper stair landing (lx: -7.8..-4.20, lz: -11.5..-7.05)
+      const onWestLanding = lx <= -4.20 && lz <= -7.05;
+      if (onWestLanding && curY >= upperY - 1.95) {
         return upperY;
       }
 
-      // Walkable 16-step grand staircase along North wall: lx +4.2 (ground) -> lx -4.6 (1st floor), lz -11.2..-7.35
-      if (lz >= -11.2 && lz <= -7.35 && lx >= -4.85 && lx <= 4.75) {
+      // Walkable 16-step grand staircase along North wall: lx +4.2 (ground) -> lx -4.6 (1st floor), lz -11.4..-7.20
+      if (lz >= -11.4 && lz <= -7.20 && lx >= -4.85 && lx <= 4.75) {
         const t = THREE.MathUtils.clamp((4.2 - lx) / 8.8, 0, 1);
         const stairY = groundY + t * floor1Y;
         // Prevent snapping UP through the underside of the high stairs from ground floor!
-        if (stairY <= curY + 1.35 || curY >= groundY + 0.45) {
+        if (stairY <= curY + 1.45 || curY >= groundY + 0.30) {
           return stairY;
         }
         return groundY;
       }
 
-      // Main 1st-floor suite deck (lz >= -7.35) — only active once player has climbed upstairs!
-      if (lz >= -7.35 && curY >= groundY + floor1Y * 0.58) {
+      // Main 1st-floor suite deck (lz >= -7.30) — seamlessly active once player reaches top of stairs!
+      if (lz >= -7.30 && curY >= groundY + floor1Y * 0.50) {
         return upperY;
       }
       return groundY;
@@ -5970,6 +6017,12 @@ class ViceCity3DApp {
   fireWeapon() {
     if (!this.started || !this.el.modal.hidden || this.fullMapOpen || this.projectsHubOpen || this.miniGameHubOpen || this.weaponWheelOpen || this.activeDialogue || this.mode === 'ride' || this.wastedTimer > 0) return;
 
+    // During Vice Beach Volleyball rally, left-click spikes/returns the volleyball!
+    if (this.mode === 'foot' && this.activeSideMission && this.activeSideMission.kind === 'volleyball') {
+      this.tryVolleyballStrike();
+      return;
+    }
+
     // DRIVE-BY UZI SHOOTING FROM ANY CAR!
     if (this.mode === 'car') {
       if (this.fireCooldown > 0) return;
@@ -6025,22 +6078,24 @@ class ViceCity3DApp {
 
     if (wep.id === 'bazooka') {
       this.camShake = Math.max(this.camShake, 0.22);
+      if (!this._rocketShared) {
+        this._rocketShared = {
+          bodyGeo: new THREE.CylinderGeometry(0.055, 0.055, 0.56, 8),
+          bodyMat: new THREE.MeshStandardMaterial({ color: 0x3b482e, roughness: 0.45, metalness: 0.4 }),
+          tipGeo: new THREE.ConeGeometry(0.082, 0.22, 8),
+          tipMat: new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xff4620, emissiveIntensity: 1.5, roughness: 0.25 }),
+          flameGeo: new THREE.ConeGeometry(0.075, 0.36, 8),
+          flameMat: new THREE.MeshBasicMaterial({ color: 0xffd86b, transparent: true, opacity: 0.92 })
+        };
+      }
+      const rs = this._rocketShared;
       const rGrp = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.055, 0.055, 0.56, 8),
-        new THREE.MeshStandardMaterial({ color: 0x3b482e, roughness: 0.45, metalness: 0.4 })
-      );
+      const body = new THREE.Mesh(rs.bodyGeo, rs.bodyMat);
       body.rotation.x = Math.PI / 2;
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.082, 0.22, 8),
-        new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xff4620, emissiveIntensity: 1.5, roughness: 0.25 })
-      );
+      const tip = new THREE.Mesh(rs.tipGeo, rs.tipMat);
       tip.rotation.x = -Math.PI / 2;
       tip.position.z = -0.34;
-      const flame = new THREE.Mesh(
-        new THREE.ConeGeometry(0.075, 0.36, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffd86b, transparent: true, opacity: 0.92 })
-      );
+      const flame = new THREE.Mesh(rs.flameGeo, rs.flameMat);
       flame.rotation.x = Math.PI / 2;
       flame.position.z = 0.44;
       rGrp.add(body, tip, flame);
@@ -6360,46 +6415,28 @@ class ViceCity3DApp {
       u.carRig.bodyGroup.rotation.z = (Math.random() - 0.5) * 0.08;
     }
 
-    // Stage 1 (< 68% HP): Hood smoke puff
-    if (u.hp < (u.maxHp || 100) * 0.68 && u.hp > 0) {
-      const fx = -Math.sin(tc.rotation.y), fz = -Math.cos(tc.rotation.y);
-      this.spawnParticle(
-        tc.position.x + fx * 1.45, tc.position.y + 1.05, tc.position.z + fz * 1.45,
-        (Math.random() - 0.5) * 1.4, 2.6, (Math.random() - 0.5) * 1.4,
-        u.hp < (u.maxHp || 100) * 0.38 ? 0x26222e : 0xd8d6e0, 0.85, 0.85, 1.8, -0.7
-      );
-    }
-
-    // Stage 3 (HP <= 0): CATASTROPHIC DETONATION!
+    // Stage 3 (HP <= 0): Wreck vehicle cleanly (no fire on vehicles!)
     if (u.hp <= 0) {
       this.detonateVehicle(tc, sourceLabel);
       return;
     }
 
-    // Stage 2 (< 32% HP): Engine catches fire + panicked NPC driver bails out!
-    if (u.hp <= (u.maxHp || 100) * 0.32 && u.vehState === 'ok') {
-      u.vehState = 'burning';
-      u.burnTimer = 1.65;
-      u.stun = 3.0;
+    // Heavily damaged (< 32% HP): Panicked NPC driver bails out (no engine fire!)
+    if (u.hp <= (u.maxHp || 100) * 0.32 && u.carRig && u.carRig.driverMesh && u.carRig.driverMesh.visible) {
+      u.stun = 2.6;
       u.vx *= 0.35;
       u.vz *= 0.35;
-      // Panicked NPC driver bails out of burning car!
-      if (u.carRig && u.carRig.driverMesh && u.carRig.driverMesh.visible) {
-        u.carRig.driverMesh.visible = false;
-        if (u.carRig.driverDoorPivot) u.carRig.driverDoorPivot.rotation.y = -0.92;
-        if (this._addPed) {
-          const rx = Math.cos(tc.rotation.y), rz = -Math.sin(tc.rotation.y);
-          const bail = this._addPed(
-            tc.position.x - rx * 1.75, 0.02, tc.position.z - rz * 1.75,
-            1, true, Math.floor(Math.random() * 80), 'z', -775, 180, false
-          );
-          bail.state = 'panic';
-          bail.stateTimer = 6.5;
-        }
+      u.carRig.driverMesh.visible = false;
+      if (u.carRig.driverDoorPivot) u.carRig.driverDoorPivot.rotation.y = -0.92;
+      if (this._addPed) {
+        const rx = Math.cos(tc.rotation.y), rz = -Math.sin(tc.rotation.y);
+        const bail = this._addPed(
+          tc.position.x - rx * 1.75, 0.02, tc.position.z - rz * 1.75,
+          1, true, Math.floor(Math.random() * 80), 'z', -775, 180, false
+        );
+        bail.state = 'panic';
+        bail.stateTimer = 6.5;
       }
-      this.el.combo.innerHTML = `${u.carRig ? u.carRig.label : 'VEHICLE'} ON FIRE! <span>IGNITED</span>`;
-      this.el.combo.classList.add('on');
-      this.streakTimer = 2.0;
     }
   }
 
@@ -6785,10 +6822,29 @@ class ViceCity3DApp {
     if (kind === 'paynspray') {
       const vipFree = this.visited.size >= 1;
       const goldUnlocked = this.visited.size >= 5;
-      const items = [
+      const curVeh = this.activeVehicle || this.heroVehicle;
+      const curMods = this.getActiveVehicleMods();
+      const addSection = (title, items) => {
+        const sec = document.createElement('div');
+        sec.innerHTML = `<div class="v3-shop-sec-lbl">${title}</div><div class="v3-shop-list"></div>`;
+        const list = sec.querySelector('.v3-shop-list');
+        items.forEach((it) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `v3-shop-item${it.active ? ' active' : ''}`;
+          const badgeTxt = it.badge || (it.active ? 'INSTALLED' : (it.price === 0 ? 'FREE' : `$${it.price}`));
+          btn.innerHTML = `<div><div class="v3-shop-item-name">${it.name}</div><div class="v3-shop-item-sub">${it.sub}</div></div><span class="v3-shop-price ${it.active ? 'equipped' : ''}">${badgeTxt}</span>`;
+          btn.addEventListener('click', () => { it.act(); this.savePersistentSave(); this.renderShopDrawer(); });
+          list.appendChild(btn);
+        });
+        body.appendChild(sec);
+      };
+
+      // 1. Repair & Personal Garage Storage (Save ANY Stolen or Custom Car!)
+      const garageItems = [
         {
           name: 'Full Repair & Clear Wanted',
-          sub: `Car Health ${Math.round(this.carHealth)}% · Clears VCPD heat & stops engine smoke`,
+          sub: `${curVeh.label} · Health ${Math.round(this.carHealth)}% · Clears VCPD heat`,
           price: 50,
           act: () => {
             if (this.cash < 50) return this.showShopToast('NEED $50 FOR REPAIR');
@@ -6803,82 +6859,222 @@ class ViceCity3DApp {
           }
         },
         {
+          name: `Save "${curVeh.label}" to Personal Garage`,
+          sub: `Stores stolen/custom ride with all tuning (${this.savedGarage.length}/6 slots used)`,
+          price: 0,
+          badge: this.savedGarage.length >= 6 ? 'FULL' : 'SAVE',
+          act: () => this.saveCurrentVehicleToGarage()
+        }
+      ];
+      addSection('Pay ’n’ Spray Service & Personal Garage', garageItems);
+
+      // 1b. Saved Personal Garage Vehicles List
+      if (this.savedGarage.length > 0) {
+        const gSec = document.createElement('div');
+        gSec.innerHTML = `<div class="v3-shop-sec-lbl">Saved Garage Bay (${this.savedGarage.length}/6)</div><div class="v3-shop-list"></div>`;
+        const gList = gSec.querySelector('.v3-shop-list');
+        this.savedGarage.forEach((gv, gIdx) => {
+          const row = document.createElement('div');
+          row.className = 'v3-shop-item';
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:default;';
+          const turboLbl = ['Stock', 'ECU Stg 1', 'Twin-Turbo', 'Apex V12'][gv.mods?.turboStage || 0];
+          const extra = [turboLbl, gv.mods?.hydraulics ? 'Hydraulics' : '', gv.mods?.rims && gv.mods.rims !== 'stock' ? gv.mods.rims.replace('_', ' ') : ''].filter(Boolean).join(' · ');
+          row.innerHTML = `<div style="min-width:0;flex:1"><div class="v3-shop-item-name">${gv.label}</div><div class="v3-shop-item-sub">${extra || 'Stock Build'}</div></div><div style="display:flex;gap:6px;flex-shrink:0"><button type="button" class="v3-shop-price equipped" data-g-drive style="cursor:pointer;border:none;">DRIVE</button><button type="button" class="v3-shop-price" data-g-del style="cursor:pointer;border:none;background:rgba(255,46,136,0.22);color:#ff85bd;">✕</button></div>`;
+          row.querySelector('[data-g-drive]').addEventListener('click', () => {
+            this.spawnGarageVehicle(gIdx);
+            this.closeShopMenu(true);
+          });
+          row.querySelector('[data-g-del]').addEventListener('click', () => {
+            this.savedGarage.splice(gIdx, 1);
+            this.savePersistentSave();
+            this.showShopToast(`REMOVED ${gv.label} FROM GARAGE`);
+            this.renderShopDrawer();
+          });
+          gList.appendChild(row);
+        });
+        body.appendChild(gSec);
+      }
+
+      // 2. Engine & Turbo Upgrades
+      const turboSpecs = [
+        { stage: 0, name: 'Stock Engine Tune', sub: 'Factory Vice City calibration', price: 0 },
+        { stage: 1, name: 'Stage 1 · Street ECU Chip', sub: '+12% Top Speed · +16% Launch Torque', price: 220 },
+        { stage: 2, name: 'Stage 2 · Twin-Turbo Kit', sub: '+24% Top Speed · +32% Accel · Turbo Whine', price: 480 },
+        { stage: 3, name: 'Stage 3 · Apex V12 Supercharger', sub: '+36% Top Speed · +48% Accel · Max Boost', price: 850 }
+      ];
+      addSection('Engine & Turbo Tuning', turboSpecs.map((ts) => ({
+        name: ts.name,
+        sub: ts.sub,
+        price: ts.price,
+        active: (curMods.turboStage || 0) === ts.stage,
+        act: () => {
+          if ((curMods.turboStage || 0) === ts.stage) return;
+          if (ts.price > 0 && this.cash < ts.price) return this.showShopToast(`NEED $${ts.price}`);
+          this.cash -= ts.price;
+          curMods.turboStage = ts.stage;
+          this.applyCarMods();
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          if (this.audio) this.audio.exhaustPop();
+          this.showShopToast(`${ts.name.toUpperCase()} INSTALLED!`);
+        }
+      })));
+
+      // 3. Hydraulics / Lowrider Bounce Mode
+      addSection('Suspension & Hydraulics', [
+        {
+          name: 'Pro Lowrider Hydraulics Kit',
+          sub: 'Press [H] while driving to hop, tilt & bounce! (Shift+H Dance Mode)',
+          price: 380,
+          active: Boolean(curMods.hydraulics),
+          act: () => {
+            if (!curMods.hydraulics && this.cash < 380) return this.showShopToast('NEED $380 FOR HYDRAULICS');
+            if (!curMods.hydraulics) this.cash -= 380;
+            curMods.hydraulics = !curMods.hydraulics;
+            this.hydraulicsState.mode = 0;
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.hydraulicsBounce();
+            if (curMods.hydraulics) this.triggerHydraulicsBounce(false);
+            this.showShopToast(curMods.hydraulics ? 'HYDRAULICS INSTALLED · PRESS [H] TO BOUNCE!' : 'HYDRAULICS REMOVED');
+          }
+        }
+      ]);
+
+      // 4. Custom Wheel Rims
+      const rimSpecs = [
+        { id: 'stock', name: 'Factory Alloy Rims', sub: 'Original twin-5-spoke finish', price: 0 },
+        { id: 'gold_mesh', name: 'Gold Mesh ’86 Rims', sub: 'Anodized Miami gold forged alloy', price: 140 },
+        { id: 'neon_cyan', name: 'Neon Cyan Deep-Dish', sub: 'Electric cyan spokes + glowing rim rings', price: 180 },
+        { id: 'hot_pink', name: 'Hot Pink Turbofan', sub: 'Vice sunset magenta spokes + neon halo', price: 180 },
+        { id: 'stealth_black', name: 'Stealth Carbon Matte', sub: 'Satin obsidian street-racer rims', price: 160 },
+        { id: 'chrome_deep', name: 'Mirror Chrome Spinners', sub: 'Polished chrome deep-dish rims', price: 200 }
+      ];
+      addSection('Custom Wheel Rims', rimSpecs.map((rm) => ({
+        name: rm.name,
+        sub: rm.sub,
+        price: rm.price,
+        active: (curMods.rims || 'stock') === rm.id,
+        act: () => {
+          if ((curMods.rims || 'stock') === rm.id) return;
+          if (rm.price > 0 && this.cash < rm.price) return this.showShopToast(`NEED $${rm.price}`);
+          this.cash -= rm.price;
+          curMods.rims = rm.id;
+          this.applyCarMods();
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          if (this.audio) this.audio.sprayHiss();
+          this.showShopToast(`CUSTOM RIMS · ${rm.name.toUpperCase()}`);
+        }
+      })));
+
+      // 5. Custom Horn Tunes (Plays instant preview on click!)
+      const hornSpecs = [
+        { id: 'classic', name: 'Classic Italian Dual-Tone', sub: 'Factory Fiamm sports horn ([K] / [H])', price: 0 },
+        { id: 'cucaracha', name: 'La Cucaracha Brass', sub: 'Iconic 10-note musical lowrider horn', price: 120 },
+        { id: 'dixie', name: 'Vice ’86 Fanfare', sub: 'High-energy classic stunt car melody', price: 140 },
+        { id: 'airhorn', name: 'Heavy Truck Air Horn', sub: 'Deep triple-trumpet blast', price: 110 },
+        { id: 'synth80s', name: 'Neon 80s Synth Chord', sub: 'Warm Juno-106 Ocean Drive chord stab', price: 150 },
+        { id: 'siren', name: 'VCPD Whoop-Whoop Chirp', sub: 'Quick twin police cruiser siren chirp', price: 180 }
+      ];
+      addSection('Custom Horn Tunes (Tap to Preview)', hornSpecs.map((hn) => ({
+        name: hn.name,
+        sub: hn.sub,
+        price: hn.price,
+        active: (curMods.hornTune || 'classic') === hn.id,
+        act: () => {
+          if ((curMods.hornTune || 'classic') !== hn.id) {
+            if (hn.price > 0 && this.cash < hn.price) return this.showShopToast(`NEED $${hn.price}`);
+            this.cash -= hn.price;
+            curMods.hornTune = hn.id;
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          }
+          if (this.audio) this.audio.horn(hn.id);
+          this.showShopToast(`HORN EQUIPPED · ${hn.name.toUpperCase()}`);
+        }
+      })));
+
+      // 6. Body Kits, Underglow & 24K Chrome
+      const bodyItems = [
+        {
           name: 'Neon Underglow: Vice Pink',
-          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'Glowing underbody neon kit',
+          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'Glowing magenta underbody neon kit',
           price: vipFree ? 0 : 120,
-          active: this.carMods.underglow === 'pink',
+          active: curMods.underglow === 'pink',
           act: () => {
             const p = vipFree ? 0 : 120;
-            if (this.cash < p) return this.showShopToast(`NEED $${p}`);
-            this.cash -= p;
-            this.carMods.underglow = this.carMods.underglow === 'pink' ? 'none' : 'pink';
+            if (curMods.underglow !== 'pink' && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (curMods.underglow !== 'pink') this.cash -= p;
+            curMods.underglow = curMods.underglow === 'pink' ? 'none' : 'pink';
             this.applyCarMods();
             if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
             if (this.audio) this.audio.sprayHiss();
-            this.showShopToast(this.carMods.underglow === 'pink' ? 'PINK NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
+            this.showShopToast(curMods.underglow === 'pink' ? 'PINK NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
           }
         },
         {
           name: 'Neon Underglow: Miami Cyan',
           sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'Electric ocean neon underbody',
           price: vipFree ? 0 : 120,
-          active: this.carMods.underglow === 'cyan',
+          active: curMods.underglow === 'cyan',
           act: () => {
             const p = vipFree ? 0 : 120;
-            if (this.cash < p) return this.showShopToast(`NEED $${p}`);
-            this.cash -= p;
-            this.carMods.underglow = this.carMods.underglow === 'cyan' ? 'none' : 'cyan';
+            if (curMods.underglow !== 'cyan' && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (curMods.underglow !== 'cyan') this.cash -= p;
+            curMods.underglow = curMods.underglow === 'cyan' ? 'none' : 'cyan';
             this.applyCarMods();
             if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
             if (this.audio) this.audio.sprayHiss();
-            this.showShopToast(this.carMods.underglow === 'cyan' ? 'CYAN NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
+            this.showShopToast(curMods.underglow === 'cyan' ? 'CYAN NEON UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
+          }
+        },
+        {
+          name: 'Neon Underglow: Sunset Gold',
+          sub: '24K amber underbody street glow',
+          price: 120,
+          active: curMods.underglow === 'gold',
+          act: () => {
+            if (curMods.underglow !== 'gold' && this.cash < 120) return this.showShopToast('NEED $120');
+            if (curMods.underglow !== 'gold') this.cash -= 120;
+            curMods.underglow = curMods.underglow === 'gold' ? 'none' : 'gold';
+            this.applyCarMods();
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            if (this.audio) this.audio.sprayHiss();
+            this.showShopToast(curMods.underglow === 'gold' ? 'GOLD UNDERGLOW INSTALLED' : 'UNDERGLOW REMOVED');
           }
         },
         {
           name: 'Carbon GT Wing Spoiler',
-          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'High-downforce rear wing',
+          sub: vipFree ? 'Scavenger VIP Pack (FREE!)' : 'High-downforce rear GT wing',
           price: vipFree ? 0 : 160,
-          active: this.carMods.spoiler,
+          active: Boolean(curMods.spoiler),
           act: () => {
             const p = vipFree ? 0 : 160;
-            if (!this.carMods.spoiler && this.cash < p) return this.showShopToast(`NEED $${p}`);
-            if (!this.carMods.spoiler) this.cash -= p;
-            this.carMods.spoiler = !this.carMods.spoiler;
+            if (!curMods.spoiler && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (!curMods.spoiler) this.cash -= p;
+            curMods.spoiler = !curMods.spoiler;
             this.applyCarMods();
             if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
             if (this.audio) this.audio.sprayHiss();
-            this.showShopToast(this.carMods.spoiler ? 'CARBON GT SPOILER INSTALLED' : 'SPOILER REMOVED');
+            this.showShopToast(curMods.spoiler ? 'CARBON GT SPOILER INSTALLED' : 'SPOILER REMOVED');
           }
         },
         {
           name: '24K Gold Chrome Respray',
           sub: goldUnlocked ? '5/5 Portfolio Showrooms Reward (FREE!)' : 'Unlock FREE at 5/5 showrooms or buy now',
           price: goldUnlocked ? 0 : 500,
-          active: this.carMods.goldChrome,
+          active: Boolean(curMods.goldChrome),
           act: () => {
             const p = goldUnlocked ? 0 : 500;
-            if (!this.carMods.goldChrome && this.cash < p) return this.showShopToast(`NEED $${p}`);
-            if (!this.carMods.goldChrome) this.cash -= p;
-            this.carMods.goldChrome = !this.carMods.goldChrome;
+            if (!curMods.goldChrome && this.cash < p) return this.showShopToast(`NEED $${p}`);
+            if (!curMods.goldChrome) this.cash -= p;
+            curMods.goldChrome = !curMods.goldChrome;
             this.applyCarMods();
             if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
             if (this.audio) this.audio.sprayHiss();
-            this.showShopToast(this.carMods.goldChrome ? 'GOLD CHROME FINISH APPLIED!' : 'STANDARD PAINT RESTORED');
+            this.showShopToast(curMods.goldChrome ? 'GOLD CHROME FINISH APPLIED!' : 'STANDARD PAINT RESTORED');
           }
         }
       ];
-      const sec = document.createElement('div');
-      sec.innerHTML = '<div class="v3-shop-sec-lbl">Garage Services & Body Mods</div><div class="v3-shop-list"></div>';
-      const list = sec.querySelector('.v3-shop-list');
-      items.forEach((it) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `v3-shop-item${it.active ? ' active' : ''}`;
-        btn.innerHTML = `<div><div class="v3-shop-item-name">${it.name}</div><div class="v3-shop-item-sub">${it.sub}</div></div><span class="v3-shop-price ${it.active ? 'equipped' : ''}">${it.active ? 'INSTALLED' : (it.price === 0 ? 'FREE' : `$${it.price}`)}</span>`;
-        btn.addEventListener('click', () => { it.act(); this.savePersistentSave(); this.renderShopDrawer(); });
-        list.appendChild(btn);
-      });
-      body.appendChild(sec);
+      addSection('Neon Underglow & Aero Kits', bodyItems);
 
       const secP = document.createElement('div');
       secP.innerHTML = '<div class="v3-shop-sec-lbl">Respray Paint Booth ($25)</div><div class="v3-shop-swatches"></div>';
@@ -6886,12 +7082,20 @@ class ViceCity3DApp {
       PAINTS.forEach((p, idx) => {
         const sw = document.createElement('button');
         sw.type = 'button';
-        sw.className = `v3-shop-swatch${idx === this.paintIdx && !this.carMods.goldChrome ? ' active' : ''}`;
+        sw.className = `v3-shop-swatch${idx === this.paintIdx && !curMods.goldChrome ? ' active' : ''}`;
         sw.style.background = p.swatch;
         sw.title = p.name;
         sw.addEventListener('click', () => {
-          this.carMods.goldChrome = false;
-          this.setPaint(idx);
+          curMods.goldChrome = false;
+          curMods.paintIdx = idx;
+          if (curVeh.isHero) this.setPaint(idx);
+          else if (curVeh.rig && curVeh.rig.paintMat) {
+            curVeh.rig.paintMat.color.setHex(p.color);
+            curVeh.rig.paintMat.metalness = p.metalness;
+            curVeh.rig.paintMat.roughness = p.roughness;
+            curVeh.rig.baseColor = p.color;
+            curMods.paintHex = p.color;
+          }
           this.applyCarMods();
           if (this.audio) this.audio.sprayHiss();
           this.showShopToast(`RESPRAYED · ${p.name.toUpperCase()}`);
@@ -7840,7 +8044,13 @@ class ViceCity3DApp {
     if (this.el.carName) this.el.carName.textContent = pv.isHero ? pv.label : `STOLEN · ${pv.label}`;
     this.orbitYawOffset = 0;
     this.orbitPitchOffset = 0;
+    if (this.hydraulicsState) {
+      this.hydraulicsState.bounceY = 0;
+      this.hydraulicsState.bounceVel = 0;
+      this.hydraulicsState.mode = 0;
+    }
     this.setMode('car');
+    this.applyCarMods();
     this.audio.carDoor();
   }
 
@@ -8195,27 +8405,35 @@ class ViceCity3DApp {
         }
       }
 
-      // 2b. Ocean View Safehouse Floor-Aware Interior Colliders (Stairwell Glass Rail, Solid Under-Stairs & Furniture)
+      // 2b. Ocean View Safehouse Floor-Aware Interior Colliders (100% Unobstructed Grand Staircase + Suite Furniture)
       const ovX = -24.5, ovZ = -48.0;
       const ovLx = ps.x - ovX, ovLz = ps.z - ovZ;
       if (ovLx >= -8.0 && ovLx <= 8.0 && ovLz >= -12.0 && ovLz <= 12.0) {
-        const floorBoxes = ps.y > 2.35
-          ? [
-              // 1st-Floor Suite: Full stairwell glass railing (prevents falling through glass!) + solid furniture
-              { minX: ovX - 4.35, maxX: ovX + 7.35, minZ: ovZ - 7.50, maxZ: ovZ - 7.05 }, // stairwell safety railing
-              { minX: ovX - 7.05, maxX: ovX - 3.10, minZ: ovZ + 4.95, maxZ: ovZ + 8.25 }, // king bed
-              { minX: ovX + 5.25, maxX: ovX + 6.95, minZ: ovZ + 5.90, maxZ: ovZ + 9.30 }, // TV console
-              { minX: ovX + 3.65, maxX: ovX + 4.65, minZ: ovZ + 6.75, maxZ: ovZ + 8.85 }, // coffee table
-              { minX: ovX + 5.45, maxX: ovX + 7.10, minZ: ovZ - 5.10, maxZ: ovZ + 1.25 }, // kitchen counter & fridge
-              { minX: ovX + 2.75, maxX: ovX + 4.85, minZ: ovZ - 1.80, maxZ: ovZ + 1.00 }, // dining table
-              { minX: ovX - 7.30, maxX: ovX - 6.00, minZ: ovZ - 3.45, maxZ: ovZ - 0.15 }  // wardrobe closet
-            ]
-          : [
-              // Ground Lobby: Solid under-stair enclosure (stops walking under high steps!) + reception desk + lobby sofa
-              { minX: ovX - 7.30, maxX: ovX + 1.55, minZ: ovZ - 11.2, maxZ: ovZ - 7.42 }, // solid under-stairs wall
-              { minX: ovX - 6.10, maxX: ovX - 4.35, minZ: ovZ - 1.10, maxZ: ovZ + 5.50 }, // reception desk
-              { minX: ovX + 0.35, maxX: ovX + 2.05, minZ: ovZ + 5.20, maxZ: ovZ + 9.75 }  // lobby lounge sofa/table
-            ];
+        let floorBoxes;
+        if (ps.y >= 3.60) {
+          // 1st-Floor Suite: Stairwell glass railing (leaves West landing -7.3..-4.35 wide open!) + solid furniture
+          floorBoxes = [
+            { minX: ovX - 4.25, maxX: ovX + 7.35, minZ: ovZ - 7.45, maxZ: ovZ - 7.05 }, // stairwell safety railing
+            { minX: ovX - 7.05, maxX: ovX - 3.10, minZ: ovZ + 4.95, maxZ: ovZ + 8.25 }, // king bed
+            { minX: ovX + 5.25, maxX: ovX + 6.95, minZ: ovZ + 5.90, maxZ: ovZ + 9.30 }, // TV console
+            { minX: ovX + 3.65, maxX: ovX + 4.65, minZ: ovZ + 6.75, maxZ: ovZ + 8.85 }, // coffee table
+            { minX: ovX + 5.45, maxX: ovX + 7.10, minZ: ovZ - 5.10, maxZ: ovZ + 1.25 }, // kitchen counter & fridge
+            { minX: ovX + 2.75, maxX: ovX + 4.85, minZ: ovZ - 1.80, maxZ: ovZ + 1.00 }, // dining table
+            { minX: ovX - 7.30, maxX: ovX - 6.00, minZ: ovZ - 3.45, maxZ: ovZ - 0.15 }  // wardrobe closet
+          ];
+        } else if (ps.y >= 0.40) {
+          // Actively climbing or descending the grand staircase: keep full flight & landing open, guide south rail!
+          floorBoxes = [
+            { minX: ovX - 4.25, maxX: ovX + 4.30, minZ: ovZ - 7.52, maxZ: ovZ - 7.22 }  // angled brass handrail guide
+          ];
+        } else {
+          // Ground Lobby: Solid under-stair wall ONLY west of the entry steps + reception desk + lobby lounge sofa
+          floorBoxes = [
+            { minX: ovX - 7.30, maxX: ovX + 1.40, minZ: ovZ - 11.2, maxZ: ovZ - 7.42 }, // solid under-stairs enclosure
+            { minX: ovX - 6.10, maxX: ovX - 4.35, minZ: ovZ - 1.10, maxZ: ovZ + 5.50 }, // reception desk
+            { minX: ovX + 0.35, maxX: ovX + 2.05, minZ: ovZ + 5.20, maxZ: ovZ + 9.75 }  // lobby lounge sofa/table
+          ];
+        }
         for (let fi = 0; fi < floorBoxes.length; fi++) {
           const fb = floorBoxes[fi];
           const cx = THREE.MathUtils.clamp(ps.x, fb.minX, fb.maxX);
@@ -9212,9 +9430,29 @@ class ViceCity3DApp {
       const [mx, my] = toRadar(this.activeSideMission.target.x, this.activeSideMission.target.z);
       const clx = THREE.MathUtils.clamp(mx, 9, w - 9);
       const cly = THREE.MathUtils.clamp(my, 9, h - 9);
-      ctx.fillStyle = '#21E6D1';
+      ctx.fillStyle = this.activeSideMission.kind === 'pizza' ? '#FF7B2E' : (this.activeSideMission.kind === 'impromptuRace' ? '#FF2E88' : '#21E6D1');
       ctx.beginPath(); ctx.arc(clx, cly, 5.6, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#0B0418'; ctx.lineWidth = 1.4; ctx.stroke();
+    }
+    // Dynamic Street Events & Rival Gangs Radar Blips
+    if (this.dynamicEvent && !this.dynamicEvent.completed) {
+      const de = this.dynamicEvent;
+      const [ex, ey] = toRadar(de.x, de.z);
+      const clx = THREE.MathUtils.clamp(ex, 9, w - 9);
+      const cly = THREE.MathUtils.clamp(ey, 9, h - 9);
+      ctx.save();
+      ctx.translate(clx, cly);
+      if (de.kind === 'racer') {
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = '#FF2E88';
+        ctx.fillRect(-4.5, -4.5, 9, 9);
+        ctx.strokeStyle = '#FFD36B'; ctx.lineWidth = 1.4; ctx.strokeRect(-4.5, -4.5, 9, 9);
+      } else {
+        ctx.fillStyle = '#FF384B';
+        ctx.beginPath(); ctx.arc(0, 0, 5.4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#FFD36B'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      ctx.restore();
     }
     // Flashing Red/Blue VCPD Police Cruiser Blips on Minimap Radar!
     if (this.policeUnits && this.policeUnits.length > 0) {
@@ -9727,6 +9965,7 @@ class ViceCity3DApp {
 
     window.addEventListener('keydown', (e) => {
       if (!this.isOpen) return;
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
       // Classic GTA Vice City Real-Time Cheat Code Listener (type any code like PANZER, ASPIRINE, LEAVEMEALONE, COMEFLYWITHME, SEAWAYS!)
       if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key && e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
         this.handleCheatKey(e.key.toUpperCase());
@@ -9814,7 +10053,16 @@ class ViceCity3DApp {
           return;
         }
         if (this.started && this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.miniGameHubOpen) {
+          if (this.activeSideMission && this.activeSideMission.kind === 'volleyball') {
+            e.preventDefault();
+            this.tryVolleyballStrike();
+            return;
+          }
           if (this.mode === 'car') {
+            if (this.tryAcceptStreetRacerChallenge()) {
+              e.preventDefault();
+              return;
+            }
             const nearDriveShop = this.findNearestShopZone();
             if (nearDriveShop) {
               e.preventDefault();
@@ -9826,6 +10074,11 @@ class ViceCity3DApp {
             if (this.isDancing) {
               e.preventDefault();
               this.stopDancing();
+              return;
+            }
+            if (Math.hypot(this.playerState.x - 24.8, this.playerState.z + 124) < 10.8 && !this.activeSideMission) {
+              e.preventDefault();
+              this.startBeachVolleyball();
               return;
             }
             const nearShop = this.findNearestShopZone();
@@ -9924,7 +10177,17 @@ class ViceCity3DApp {
       if (e.key === 'l' || e.key === 'L') { this.toggleLights(); return; }
       if (e.key === 'm' || e.key === 'M') { this.el.audioBtn.click(); return; }
       if (e.key === 'h' || e.key === 'H') {
-        this.audio.horn();
+        const mods = this.getActiveVehicleMods();
+        const isFourWheelCar = this.mode === 'car' && !(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
+        if (this.mode === 'car' && this.tryAcceptStreetRacerChallenge()) {
+          this.audio.horn(mods.hornTune || 'classic');
+          return;
+        }
+        if (isFourWheelCar && mods.hydraulics) {
+          this.triggerHydraulicsBounce(Boolean(e.shiftKey));
+          return;
+        }
+        this.audio.horn(mods.hornTune || 'classic');
         const act = this.mode === 'foot' ? this.playerState : this.carState;
         for (let i = 0; i < this.pedestrians.length; i++) {
           const p = this.pedestrians[i];
@@ -9934,17 +10197,40 @@ class ViceCity3DApp {
         }
         return;
       }
+      if ((e.key === 'k' || e.key === 'K') && this.mode === 'car') {
+        const mods = this.getActiveVehicleMods();
+        this.audio.horn(mods.hornTune || 'classic');
+        if (this.tryAcceptStreetRacerChallenge()) return;
+        const act = this.carState;
+        for (let i = 0; i < this.pedestrians.length; i++) {
+          const p = this.pedestrians[i];
+          if (p.state === 'walk' && Math.hypot(p.x - act.x, p.z - act.z) < 22) {
+            p.state = 'panic'; p.stateTimer = 3.0;
+          }
+        }
+        return;
+      }
 
-      const k = e.key.toLowerCase();
+      const k = (e.key || '').toLowerCase();
+      const code = e.code || '';
       let drivingKey = false;
-      if (k === 'w' || e.key === 'ArrowUp') { this.keys.up = true; drivingKey = true; }
-      if (k === 's' || e.key === 'ArrowDown') { this.keys.down = true; drivingKey = true; }
-      if (k === 'a' || e.key === 'ArrowLeft') { this.keys.left = true; drivingKey = true; }
-      if (k === 'd' || e.key === 'ArrowRight') { this.keys.right = true; drivingKey = true; }
-      if (e.key === 'Shift') { this.keys.nitro = true; drivingKey = true; }
-      if (e.key === ' ') { e.preventDefault(); this.keys.drift = true; drivingKey = true; }
-      if (k === 'q' || e.key === 'Control') { this.keys.dive = true; }
+      if (k === 'w' || code === 'KeyW' || e.key === 'ArrowUp' || code === 'ArrowUp') { this.keys.up = true; drivingKey = true; }
+      if (k === 's' || code === 'KeyS' || e.key === 'ArrowDown' || code === 'ArrowDown') { this.keys.down = true; drivingKey = true; }
+      if (k === 'a' || code === 'KeyA' || e.key === 'ArrowLeft' || code === 'ArrowLeft') { this.keys.left = true; drivingKey = true; }
+      if (k === 'd' || code === 'KeyD' || e.key === 'ArrowRight' || code === 'ArrowRight') { this.keys.right = true; drivingKey = true; }
+      if (e.key === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight') { this.keys.nitro = true; drivingKey = true; }
+      if (e.key === ' ' || code === 'Space') {
+        e.preventDefault();
+        if (this.activeSideMission && this.activeSideMission.kind === 'volleyball' && this.mode === 'foot') {
+          this.tryVolleyballStrike();
+          return;
+        }
+        this.keys.drift = true;
+        drivingKey = true;
+      }
+      if (k === 'q' || code === 'KeyQ' || e.key === 'Control') { this.keys.dive = true; }
       if (drivingKey) {
+        if (e.key && e.key.startsWith('Arrow')) e.preventDefault();
         if (this.isDancing) this.stopDancing();
         this.cancelAutopilot();
         if (!this.started) {
@@ -9954,7 +10240,7 @@ class ViceCity3DApp {
           this.flashLockTip();
         }
       }
-    });
+    }, true);
 
     window.addEventListener('keyup', (e) => {
       if (e.key === 'Tab' && this.weaponWheelOpen && this.weaponWheelHoldMode) {
@@ -9962,15 +10248,27 @@ class ViceCity3DApp {
         this.closeWeaponWheel(true);
         return;
       }
-      const k = e.key.toLowerCase();
-      if (k === 'w' || e.key === 'ArrowUp') this.keys.up = false;
-      if (k === 's' || e.key === 'ArrowDown') this.keys.down = false;
-      if (k === 'a' || e.key === 'ArrowLeft') this.keys.left = false;
-      if (k === 'd' || e.key === 'ArrowRight') this.keys.right = false;
-      if (e.key === 'Shift') this.keys.nitro = false;
-      if (e.key === ' ') this.keys.drift = false;
-      if (k === 'q' || e.key === 'Control') this.keys.dive = false;
+      const k = (e.key || '').toLowerCase();
+      const code = e.code || '';
+      if (k === 'w' || code === 'KeyW' || e.key === 'ArrowUp' || code === 'ArrowUp') this.keys.up = false;
+      if (k === 's' || code === 'KeyS' || e.key === 'ArrowDown' || code === 'ArrowDown') this.keys.down = false;
+      if (k === 'a' || code === 'KeyA' || e.key === 'ArrowLeft' || code === 'ArrowLeft') this.keys.left = false;
+      if (k === 'd' || code === 'KeyD' || e.key === 'ArrowRight' || code === 'ArrowRight') this.keys.right = false;
+      if (e.key === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight') this.keys.nitro = false;
+      if (e.key === ' ' || code === 'Space') this.keys.drift = false;
+      if (k === 'q' || code === 'KeyQ' || e.key === 'Control') this.keys.dive = false;
       if (k === 'j' || k === 'e' || k === 'x') this.fireHeld = false;
+    }, true);
+
+    window.addEventListener('blur', () => {
+      this.keys.up = false;
+      this.keys.down = false;
+      this.keys.left = false;
+      this.keys.right = false;
+      this.keys.nitro = false;
+      this.keys.drift = false;
+      this.keys.dive = false;
+      this.fireHeld = false;
     });
 
     window.addEventListener('resize', () => this.onResize());
@@ -10123,6 +10421,10 @@ class ViceCity3DApp {
 
   onResize() {
     const w = window.innerWidth, h = window.innerHeight;
+    if (w <= 900 && this.isOpen) {
+      this.close();
+      return;
+    }
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
@@ -10137,11 +10439,45 @@ class ViceCity3DApp {
     this.isOpen = true;
     this.started = true;
     this.snapCameraNext = true;
+    // Clear any stale UI overlays or held keys so the car responds immediately with zero mouse click required
+    this.fullMapOpen = false;
+    this.projectsHubOpen = false;
+    this.miniGameHubOpen = false;
+    this.taxiModalOpen = false;
+    this.phoneOpen = false;
+    this.weaponWheelOpen = false;
+    this.activeDialogue = null;
+    this.activeShop = null;
+    this.tvOpen = false;
+    this.sleepAnimTimer = 0;
+    this.wastedTimer = 0;
+    this.isDancing = false;
+    this.fireHeld = false;
+    this.keys = { up: false, down: false, left: false, right: false, nitro: false, drift: false, dive: false };
+    if (this.el && this.el.modal) this.el.modal.hidden = true;
+    if (this.el && this.el.startOv) this.el.startOv.hidden = true;
+
     document.body.classList.add('vice-game-open');
     try { if (typeof window.__stopMainWebsiteRadio === 'function') window.__stopMainWebsiteRadio(); } catch (_) {}
     try { window.dispatchEvent(new CustomEvent('vice:game-open')); } catch (_) {}
     this.el.stage.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Focus the 3D game stage immediately so WASD / Arrow keys drive the car right away without clicking the screen
+    const grabFocus = () => {
+      try {
+        if (document.activeElement && document.activeElement !== this.el.stage && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+        if (typeof window.focus === 'function') window.focus();
+        if (this.el && this.el.stage && typeof this.el.stage.focus === 'function') {
+          this.el.stage.focus({ preventScroll: true });
+        }
+      } catch (_) {}
+    };
+    grabFocus();
+    requestAnimationFrame(grabFocus);
+
     // Always start the game with our character seated inside the car
     const isSeatedInCar = this.mode === 'car' && !(this.activeVehicle && this.activeVehicle.rig && this.activeVehicle.rig.isBike);
     if (!isSeatedInCar) {
@@ -10163,6 +10499,8 @@ class ViceCity3DApp {
         this.el.audioBtn.textContent = 'Audio: On';
         this.el.audioBtn.classList.add('on');
         this.audio.setRainLevel(WEATHER_PRESETS[this.weatherIdx].rain);
+      } else {
+        this.audio.resumeUnlockedAmbient();
       }
       const rjClip = this.audio.playSpecialIntroRJ();
       if (rjClip && this.el && this.el.combo) {
@@ -10222,8 +10560,15 @@ class ViceCity3DApp {
   renderFrame() {
     // Always keep sky dome centered on active camera so teleports & instant camera snaps never clip sky horizon
     if (this.skyDome) this.skyDome.position.copy(this.camera.position);
-    // Smart Dynamic CubeCamera reflection update: only refresh on startup or after driving >16m (eliminates 6-face stutter!)
-    if (this.cubeCamera && (this.frameCount === 0 || (this.frameCount - this.lastCubeFrame >= 24 && Math.hypot(this.carState.x - this.lastCubeX, this.carState.z - this.lastCubeZ) > 16))) {
+    // Smart Dynamic CubeCamera reflection update: only refresh on startup or after driving >48m (eliminates 6-face stutter!)
+    const wantsCube = this.cubeCamera && this.graphicsPreset !== 'low' && (
+      this.frameCount === 0 || (
+        this.mode === 'car' && this.activeVehicle && this.activeVehicle.isHero &&
+        this.frameCount - this.lastCubeFrame >= 72 &&
+        Math.hypot(this.carState.x - this.lastCubeX, this.carState.z - this.lastCubeZ) > 48
+      )
+    );
+    if (wantsCube) {
       try {
         this.car.root.visible = false;
         this.cubeCamera.position.set(this.carState.x, 1.2, this.carState.z);
@@ -10495,6 +10840,10 @@ class ViceCity3DApp {
     this.cancelAutopilot();
     this.started = true;
     this.el.startOv.hidden = true;
+
+    if (id === 'pizza') { this.startPizzaBoyJob(); return; }
+    if (id === 'jetski') { this.startJetSkiTimeTrial(); return; }
+    if (id === 'volleyball') { this.startBeachVolleyball(); return; }
 
     if (id === 'range') {
       // 1. VICE CARNIVAL PIER SHOOTING GALLERY (30s Neon Floating Ocean Bullseyes — ZERO Buildings Blocking!)
@@ -11144,12 +11493,16 @@ class ViceCity3DApp {
       }
 
       // Deploy VCPD officer on foot if player is on foot & cruiser pulls up!
-      if (isFoot && dist < 16.0 && !pu.copDeployed && this.policeCops.length < 3) {
+      if (isFoot && dist < 16.0 && !pu.copDeployed && this.policeCops.length < 3 && this._pedSharedGeos && this._pedMats) {
         pu.copDeployed = true;
-        const copRig = createPedestrian(0x2d4a7c, 0x1b2434, 0xd9a17a, 0x1a1a22, false);
         const cx = pu.x + Math.cos(pu.yaw) * 2.2;
         const cz = pu.z - Math.sin(pu.yaw) * 2.2;
         const cy = getTerrainHeight(cx, cz);
+        const copRig = createPedestrian({
+          x: cx, y: cy, z: cz, dir: 0, jog: false, axis: 'z', minPos: cz - 50, maxPos: cz + 50,
+          bikini: false, speed: 4.5, phase: 0, scale: 1.02,
+          skin: 0xd9a17a, shirt: 0x2d4a7c, pants: 0x1b2434, hair: 0x1a1a22, shoe: 0x12141a, blazer: false, shades: true
+        }, this._pedSharedGeos, this._pedSplatMat, this._pedStarMat, this._pedMats);
         copRig.root.position.set(cx, cy, cz);
         this.scene.add(copRig.root);
         this.policeCops.push({
@@ -11182,15 +11535,19 @@ class ViceCity3DApp {
       cop.root.rotation.y = cop.yaw;
       if (d > 2.0) {
         const spd = 4.5;
-        cop.x = THREE.MathUtils.clamp(cop.x + (dx / d) * spd * dt, -488, 185);
-        cop.z = THREE.MathUtils.clamp(cop.z + (dz / d) * spd * dt, -1462, 348);
+        const nx = THREE.MathUtils.clamp(cop.x + (dx / d) * spd * dt, -488, 185);
+        const nz = THREE.MathUtils.clamp(cop.z + (dz / d) * spd * dt, -1462, 348);
+        if (!this.isPointBlocked(nx, nz, 0.55)) {
+          cop.x = nx;
+          cop.z = nz;
+        }
         cop.y = getTerrainHeight(cop.x, cop.z);
         cop.walkPhase += dt * spd * 2.2;
         const sw = Math.sin(cop.walkPhase);
-        cop.legL.rotation.x = -sw * 0.55;
-        cop.legR.rotation.x = sw * 0.55;
-        cop.armL.rotation.x = sw * 0.48;
-        cop.armR.rotation.x = -sw * 0.48;
+        if (cop.legL) cop.legL.rotation.x = -sw * 0.55;
+        if (cop.legR) cop.legR.rotation.x = sw * 0.55;
+        if (cop.armL) cop.armL.rotation.x = sw * 0.48;
+        if (cop.armR) cop.armR.rotation.x = -sw * 0.48;
       } else if (isFoot && cop.attackCd <= 0 && this.wastedTimer <= 0) {
         cop.attackCd = 1.25;
         this.damagePlayer(8, cop);
@@ -11466,6 +11823,7 @@ class ViceCity3DApp {
     this.updateMalibuClub(dt, elapsed);
     this.updateBoats(dt, elapsed);
     this.updateSideMissions(dt, elapsed, act);
+    this.updateDynamicEvents(dt, elapsed, act);
     this.updateSkyRings(dt, elapsed, act);
     if (this.ammuNation && this.ammuNation.rangeTargets) {
       for (let ri = 0; ri < this.ammuNation.rangeTargets.length; ri++) {
@@ -12322,8 +12680,12 @@ class ViceCity3DApp {
 
     // Realistic 6-Speed Gearbox Torque Curve, Mountain Slope Gravity, Aerodynamic Drag & Weight Transfer Physics
     const veh = this.activeVehicle || this.heroVehicle;
-    const maxSpeed = nitroActive ? (veh.nitroSpeed || 74) : (veh.topSpeed || 54);
-    const baseAccel = nitroActive ? (veh.accel || 24) * 1.55 : (veh.accel || 24);
+    const activeMods = this.getActiveVehicleMods();
+    const tStage = Math.max(0, Math.min(3, activeMods.turboStage || 0));
+    const turboSpdMult = 1 + tStage * 0.12;
+    const turboAccMult = 1 + tStage * 0.16;
+    const maxSpeed = (nitroActive ? (veh.nitroSpeed || 74) : (veh.topSpeed || 54)) * turboSpdMult;
+    const baseAccel = (nitroActive ? (veh.accel || 24) * 1.55 : (veh.accel || 24)) * turboAccMult;
     const spdFrac = THREE.MathUtils.clamp(Math.abs(cs.speed) / Math.max(1, maxSpeed), 0, 1);
     const torqueMult = 1.24 - spdFrac * 0.56; // Punchy 1st-2nd gear launch tapering realistically in 5th-6th!
     let targetPitch = 0;
@@ -13316,7 +13678,14 @@ class ViceCity3DApp {
           }
         }
         const inOceanLobby = ps.x >= -32.2 && ps.x <= -16.8 && ps.z >= -59.5 && ps.z <= -36.5 && ps.y < 2.2;
-        if (nearDoor && uiFree) {
+        const nearVball = Math.hypot(ps.x - 24.8, ps.z + 124) < 10.8 && !this.activeSideMission;
+        if (this.activeSideMission && this.activeSideMission.kind === 'volleyball' && uiFree) {
+          this.el.carPrompt.textContent = `Move Into Glowing Ring · Press [SPACE] or [E] to SPIKE!`;
+          this.el.carPrompt.classList.add('on');
+        } else if (nearVball && uiFree) {
+          this.el.carPrompt.textContent = `Press E · Play Vice Beach Volleyball Rally ($750 Prize)`;
+          this.el.carPrompt.classList.add('on');
+        } else if (nearDoor && uiFree) {
           this.el.carPrompt.textContent = `Walk Inside · ${nearDoor.label}`;
           this.el.carPrompt.classList.add('on');
         } else if (inOceanLobby && uiFree) {
@@ -13329,8 +13698,13 @@ class ViceCity3DApp {
     } else if (this.mode === 'car') {
       const nearDriveShop = this.findNearestShopZone();
       const uiFreeCar = this.el.modal.hidden && !this.fullMapOpen && !this.projectsHubOpen && !this.activeShop && !this.phoneOpen;
-      if (uiFreeCar && nearDriveShop) {
-        this.el.carPrompt.textContent = `Press E · Open ${nearDriveShop.label} (Repair · Repaint · Neon · Spoiler)`;
+      const nearRacer = this.dynamicEvent && this.dynamicEvent.kind === 'racer' && !this.dynamicEvent.completed
+        && Math.hypot(cs.x - this.dynamicEvent.x, cs.z - this.dynamicEvent.z) < 26;
+      if (uiFreeCar && nearRacer) {
+        this.el.carPrompt.textContent = `STREET RACER CHALLENGE · Press [H] Honk or [E] to Race ($1,200)!`;
+        this.el.carPrompt.classList.add('on');
+      } else if (uiFreeCar && nearDriveShop) {
+        this.el.carPrompt.textContent = `Press E · Open ${nearDriveShop.label} (Turbo · Rims · Hydraulics · Horns · Garage)`;
         this.el.carPrompt.classList.add('on');
       } else {
         this.el.carPrompt.classList.remove('on');
@@ -13485,17 +13859,6 @@ class ViceCity3DApp {
             }
           }
         }
-        // Billowing black wreck smoke & embers while burning out
-        u.fireTick = (u.fireTick || 0) - dt;
-        if (u.fireTick <= 0 && tc.visible) {
-          u.fireTick = 0.14;
-          const hot = u.wreckTimer > 11.0;
-          this.spawnParticle(
-            tc.position.x + (Math.random() - 0.5) * 1.1, tc.position.y + 0.85, tc.position.z + (Math.random() - 0.5) * 1.1,
-            (Math.random() - 0.5) * 1.2, 2.8 + Math.random() * 1.6, (Math.random() - 0.5) * 1.2,
-            hot && Math.random() < 0.42 ? 0xff6e1a : 0x1d1926, hot ? 1.15 : 1.35, 1.1, 2.1, -1.0
-          );
-        }
         if (u.wreckTimer <= 0) {
           // Clean respawn back onto original lane away from player
           u.vehState = 'ok';
@@ -13516,32 +13879,6 @@ class ViceCity3DApp {
             if (u.carRig.driverDoorPivot) u.carRig.driverDoorPivot.rotation.y = 0;
             if (u.carRig.bodyGroup) u.carRig.bodyGroup.rotation.set(0, 0, 0);
           }
-        }
-      } else if (u.vehState === 'burning') {
-        // Engine engulfed in roaring flames -> automatic fuse detonation!
-        u.burnTimer -= dt;
-        tc.position.x += u.vx * dt;
-        tc.position.z += u.vz * dt;
-        u.vx *= Math.pow(0.06, dt);
-        u.vz *= Math.pow(0.06, dt);
-        u.fireTick = (u.fireTick || 0) - dt;
-        if (u.fireTick <= 0 && tc.visible) {
-          u.fireTick = 0.065;
-          const fx = -Math.sin(tc.rotation.y), fz = -Math.cos(tc.rotation.y);
-          const hx = tc.position.x + fx * 1.48, hz = tc.position.z + fz * 1.48;
-          this.spawnParticle(
-            hx + (Math.random() - 0.5) * 0.65, 1.05, hz + (Math.random() - 0.5) * 0.65,
-            (Math.random() - 0.5) * 1.5, 3.8 + Math.random() * 2.2, (Math.random() - 0.5) * 1.5,
-            Math.random() < 0.55 ? 0xff6e1a : 0xffd36b, 0.95, 0.45, 1.4, -0.6
-          );
-          this.spawnParticle(
-            hx + (Math.random() - 0.5) * 0.7, 1.35, hz + (Math.random() - 0.5) * 0.7,
-            (Math.random() - 0.5) * 1.2, 3.2, (Math.random() - 0.5) * 1.2,
-            0x201c28, 1.15, 0.95, 2.0, -1.0
-          );
-        }
-        if (u.burnTimer <= 0) {
-          this.detonateVehicle(tc, 'ENGINE FIRE');
         }
       } else if (u.stun > 0) {
         u.stun = Math.max(0, u.stun - dt);
@@ -13566,11 +13903,6 @@ class ViceCity3DApp {
           const nearCross = Math.abs((tc.position.z % 160)) < 16;
           const blink = nearCross && (Math.floor(elapsed * 4.5 + i) % 2 === 0);
           u.carRig.tailMat.emissiveIntensity = blink ? 2.4 : 1.05;
-        }
-        // Subtle damaged hood smoke if injured below 65% HP
-        if (u.hp < (u.maxHp || 100) * 0.65 && tc.visible && Math.random() < 0.16) {
-          const fx = -Math.sin(tc.rotation.y), fz = -Math.cos(tc.rotation.y);
-          this.spawnParticle(tc.position.x + fx * 1.45, 1.05, tc.position.z + fz * 1.45, 0, 2.4, 0, 0xcac8d4, 0.72, 0.65, 1.4, -0.5);
         }
       }
 
@@ -13662,7 +13994,7 @@ class ViceCity3DApp {
       if (ped.state === 'squished') {
         ped.stateTimer -= dt;
         if (ped.root.visible) ped.stars.rotation.y += dt * 4.5;
-        if (ped.stateTimer <= 0) {
+        if (ped.stateTimer <= 0 && !ped.isGang) {
           ped.state = 'walk';
           ped.hp = 3;
           ped.x = ped.homeX; ped.z = ped.homeZ;
@@ -14268,10 +14600,37 @@ class ViceCity3DApp {
       : -cs.steer * speedFactor * (drifting ? 0.12 : 0.065);
     cs.pitch = THREE.MathUtils.damp(cs.pitch, targetPitch + rampPitch + bikeWheeliePitch, 8, dt);
     cs.roll = THREE.MathUtils.damp(cs.roll, bikeLeanRoll, 8, dt);
+    // Pro Lowrider Hydraulics Bounce Physics (H key hop & Shift+H rhythmic bounce dance!)
+    const hy = this.hydraulicsState;
+    const hasHydraulics = this.mode === 'car' && !activeRig.isBike && Boolean(this.getActiveVehicleMods().hydraulics);
+    if (hasHydraulics) {
+      if (hy.mode > 0) {
+        hy.phase += dt * (hy.mode === 2 ? 7.8 : 6.4);
+        const hopWave = Math.max(0, Math.sin(hy.phase));
+        const targetY = 0.08 + hopWave * 0.24;
+        const targetPitch = hy.mode === 1 ? (Math.sin(hy.phase) * 0.14) : (Math.sin(hy.phase * 0.5) * 0.11);
+        const targetRoll = hy.mode === 2 ? (Math.cos(hy.phase) * 0.15) : (Math.sin(hy.phase * 0.5) * 0.04);
+        hy.bounceY = THREE.MathUtils.damp(hy.bounceY, targetY, 14, dt);
+        hy.pitchOff = THREE.MathUtils.damp(hy.pitchOff, targetPitch, 14, dt);
+        hy.rollOff = THREE.MathUtils.damp(hy.rollOff, targetRoll, 14, dt);
+      } else {
+        // Spring-damper physics for manual single-tap [H] hydraulic hops
+        hy.bounceVel += (-110 * hy.bounceY - 12 * hy.bounceVel) * dt;
+        hy.bounceY = Math.max(0, hy.bounceY + hy.bounceVel * dt);
+        if (hy.bounceY <= 0.001 && Math.abs(hy.bounceVel) < 0.05) { hy.bounceY = 0; hy.bounceVel = 0; }
+        hy.pitchOff = THREE.MathUtils.damp(hy.pitchOff, hy.bounceY * 0.42, 12, dt);
+        hy.rollOff = THREE.MathUtils.damp(hy.rollOff, 0, 10, dt);
+      }
+    } else {
+      hy.mode = 0;
+      hy.bounceY = THREE.MathUtils.damp(hy.bounceY, 0, 12, dt);
+      hy.pitchOff = THREE.MathUtils.damp(hy.pitchOff, 0, 12, dt);
+      hy.rollOff = THREE.MathUtils.damp(hy.rollOff, 0, 12, dt);
+    }
     if (activeRig.bodyGroup) {
-      activeRig.bodyGroup.rotation.x = cs.pitch;
-      activeRig.bodyGroup.rotation.z = cs.roll;
-      activeRig.bodyGroup.position.y = cs.airborne ? 0 : Math.sin(elapsed * 22) * Math.min(carAbsSpd * 0.0004, 0.012);
+      activeRig.bodyGroup.rotation.x = cs.pitch + hy.pitchOff;
+      activeRig.bodyGroup.rotation.z = cs.roll + hy.rollOff;
+      activeRig.bodyGroup.position.y = (cs.airborne ? 0 : Math.sin(elapsed * 22) * Math.min(carAbsSpd * 0.0004, 0.012)) + hy.bounceY;
     }
 
     // Keep standing player mesh strictly synchronized with vehicle (never left behind when driving car/boat!)
@@ -14349,11 +14708,8 @@ class ViceCity3DApp {
       cs.popAngle = THREE.MathUtils.damp(cs.popAngle, this.lightsOn ? 0.56 : 0.0, 10, dt);
       for (let i = 0; i < this.car.popPods.length; i++) this.car.popPods[i].rotation.x = cs.popAngle;
       this.car.brakeLight.intensity = braking ? 1.85 : 0.6;
-      const flameAlpha = nitroActive ? 0.65 + Math.sin(elapsed * 55) * 0.2 : 0;
-      this.car.flameOuterMat.opacity = flameAlpha;
-      this.car.flameCoreMat.opacity = flameAlpha * 1.05;
-      const flameScale = nitroActive ? 0.95 + Math.sin(elapsed * 64) * 0.24 : 0.01;
-      for (let i = 0; i < this.car.nitroFlames.length; i++) this.car.nitroFlames[i].scale.set(1, flameScale, 1);
+      if (this.car.flameOuterMat) this.car.flameOuterMat.opacity = 0;
+      if (this.car.flameCoreMat) this.car.flameCoreMat.opacity = 0;
     }
 
     if (drifting && !cs.airborne) {
@@ -14367,14 +14723,6 @@ class ViceCity3DApp {
     // Rain Tire Water Spray behind rear wheels!
     if (!isFoot && !isPlane && !isBoat && this.curRainLevel > 0.22 && carAbsSpd > 10 && !cs.airborne && Math.random() < 0.55) {
       this.spawnParticle(cs.x - fwdX * 1.65 + (Math.random() - 0.5) * 1.5, cs.y + 0.26, cs.z - fwdZ * 1.65, -fwdX * 2.5 + (Math.random() - 0.5) * 1.4, 1.35 + Math.random() * 0.9, -fwdZ * 2.5 + (Math.random() - 0.5) * 1.4, 0xd4eefc, 0.68, 0.44, 1.8, 3.2);
-    }
-    // Damaged Car Engine Hood Smoke (<45 HP) & Sparks (<20 HP)!
-    if (this.carHealth < 45 && !isPlane && !isBoat && Math.random() < (this.carHealth < 20 ? 0.52 : 0.22)) {
-      const smokeCol = this.carHealth < 20 ? (Math.random() < 0.35 ? 0xff7a22 : 0x262430) : 0xb8bcc8;
-      this.spawnParticle(cs.x + fwdX * 1.55 + (Math.random() - 0.5) * 0.5, cs.y + 1.05, cs.z + fwdZ * 1.55 + (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.8, 2.2 + Math.random() * 1.2, (Math.random() - 0.5) * 0.8, smokeCol, 0.82, 0.68, 1.6, -0.5);
-    }
-    if (nitroActive && Math.random() < 0.7) {
-      this.spawnParticle(cs.x - fwdX * 2.5 + (Math.random() - 0.5) * 0.9, cs.y + 0.28, cs.z - fwdZ * 2.5, 0, 0.4, 0, 0x21e6d1, 0.52, 0.35, 1.4);
     }
 
     for (let i = 0; i < this.particles.length; i++) {
@@ -14393,9 +14741,11 @@ class ViceCity3DApp {
       }
     }
 
-    // Keep shadow frustum anchored around active actor & live dynamic sun direction!
-    this.sunLight.position.set(act.x + this.envSunDir.x * 85, Math.max(12, this.envSunDir.y * 85), act.z + this.envSunDir.z * 85);
-    this.sunLight.target.position.set(act.x, 0, act.z);
+    // Keep shadow frustum texel-snapped around active actor so shadows never shimmer while driving!
+    const snapX = Math.round(act.x * 0.25) * 4;
+    const snapZ = Math.round(act.z * 0.25) * 4;
+    this.sunLight.position.set(snapX + this.envSunDir.x * 85, Math.max(12, this.envSunDir.y * 85), snapZ + this.envSunDir.z * 85);
+    this.sunLight.target.position.set(snapX, 0, snapZ);
 
     // 6b. 3D Overhead GPS Pointer Arrow + Turn-by-Turn GPS Navigation Ribbon
     if (this.autopilotQueue.length > 0 && this.autopilotTarget) {
@@ -14562,14 +14912,15 @@ class ViceCity3DApp {
       if (indoorBounds) {
         cx = THREE.MathUtils.clamp(cx, indoorBounds.minX + 0.65, indoorBounds.maxX - 0.65);
         cz = THREE.MathUtils.clamp(cz, indoorBounds.minZ + 0.65, indoorBounds.maxZ - 0.65);
-        if (indoorBounds.floor1Y && ps.y < indoorBounds.floor1Y - 1.15) {
-          // Ground floor lobby: clamp strictly below the 1st-floor slab so camera NEVER clips through the floor!
+        const inOpenStairwell = Boolean(indoorBounds.floor1Y) && ps.z < -55.15;
+        if (indoorBounds.floor1Y && !inOpenStairwell && ps.y < indoorBounds.floor1Y - 1.15) {
+          // Ground floor lobby under deck: clamp below 1st-floor slab so camera never clips through ceiling!
           cy = THREE.MathUtils.clamp(cy, 1.15, indoorBounds.floor1Y - 0.55);
         } else if (indoorBounds.floor1Y && ps.y >= indoorBounds.floor1Y - 1.15) {
           // 1st-floor suite: clamp cleanly between hardwood deck and suite ceiling!
           cy = THREE.MathUtils.clamp(cy, indoorBounds.floor1Y + 0.65, (indoorBounds.ceilY || 9.25) - 0.50);
         } else if (indoorBounds.ceilY) {
-          cy = Math.min(cy, indoorBounds.ceilY - 0.45);
+          cy = THREE.MathUtils.clamp(cy, 1.15, indoorBounds.ceilY - 0.45);
         }
       }
       if (ps.parachuting) targetFov = 64;
@@ -14698,7 +15049,11 @@ class ViceCity3DApp {
       this.lastTachDeg = tachDeg;
       this.el.tachNeedle.setAttribute('transform', `rotate(${tachDeg.toFixed(1)} 100 100)`);
     }
-    if (this.el.cluster) this.el.cluster.classList.toggle('rev', rpmVal > 6.5);
+    const isRev = rpmVal > 6.5;
+    if (this.el.cluster && isRev !== this.lastRevState) {
+      this.lastRevState = isRev;
+      this.el.cluster.classList.toggle('rev', isRev);
+    }
 
     // GTA V Special / Nitro Bar beneath Minimap + Live In-Game Clock
     if (typeof this.specialCharge !== 'number') this.specialCharge = 100;
@@ -14708,8 +15063,15 @@ class ViceCity3DApp {
       this.specialCharge = Math.min(100, this.specialCharge + dt * 14);
     }
     if (this.el.nosFill) {
-      this.el.nosFill.style.width = `${Math.round(this.specialCharge)}%`;
-      this.el.nosFill.classList.toggle('burning', nitroActive);
+      const nosPct = Math.round(this.specialCharge);
+      if (nosPct !== this.lastNosPct) {
+        this.lastNosPct = nosPct;
+        this.el.nosFill.style.width = `${nosPct}%`;
+      }
+      if (nitroActive !== this.lastNosBurn) {
+        this.lastNosBurn = nitroActive;
+        this.el.nosFill.classList.toggle('burning', nitroActive);
+      }
     }
     if (this.el.gtaClock && this.frameCount % 12 === 0) {
       const totalMins = Math.floor((((this.dayTime % 24) + 24) % 24) * 60);
@@ -14985,6 +15347,7 @@ class ViceCity3DApp {
       if (Array.isArray(d.visited)) d.visited.forEach((id) => this.visited.add(id));
       if (typeof d.paintIdx === 'number') this.paintIdx = ((d.paintIdx % PAINTS.length) + PAINTS.length) % PAINTS.length;
       if (d.carMods && typeof d.carMods === 'object') this.carMods = { ...this.carMods, ...d.carMods };
+      if (Array.isArray(d.savedGarage)) this.savedGarage = d.savedGarage.slice(0, 6);
       if (d.graphicsPreset && ['low', 'med', 'high'].includes(d.graphicsPreset)) this.graphicsPreset = d.graphicsPreset;
       if (typeof d.missionsCompleted === 'number') this.missionsCompleted = d.missionsCompleted;
       if (typeof d.stuntJumpsDone === 'number') this.stuntJumpsDone = d.stuntJumpsDone;
@@ -14998,6 +15361,7 @@ class ViceCity3DApp {
         visited: Array.from(this.visited),
         paintIdx: this.paintIdx,
         carMods: this.carMods,
+        savedGarage: (this.savedGarage || []).slice(0, 6),
         graphicsPreset: this.graphicsPreset,
         missionsCompleted: this.missionsCompleted || 0,
         stuntJumpsDone: this.stuntJumpsDone || 0
@@ -15012,7 +15376,11 @@ class ViceCity3DApp {
     } catch (_) {}
     this.cash = 1000;
     this.visited.clear();
-    this.carMods = { underglow: 'none', spoiler: false, goldChrome: false };
+    this.carMods = {
+      underglow: 'none', spoiler: false, goldChrome: false,
+      turboStage: 0, rims: 'stock', hydraulics: false, hornTune: 'classic'
+    };
+    this.savedGarage = [];
     this.carHealth = 100;
     this.missionsCompleted = 0;
     this.stuntJumpsDone = 0;
@@ -15027,7 +15395,7 @@ class ViceCity3DApp {
 
   applyGraphicsPreset(preset = 'high', save = true) {
     this.graphicsPreset = ['low', 'med', 'high'].includes(preset) ? preset : 'high';
-    const dpr = Math.min(window.devicePixelRatio || 1, this.graphicsPreset === 'high' ? 1.5 : (this.graphicsPreset === 'med' ? 1.15 : 0.85));
+    const dpr = Math.min(window.devicePixelRatio || 1, this.graphicsPreset === 'high' ? 1.35 : (this.graphicsPreset === 'med' ? 1.05 : 0.8));
     if (this.renderer) {
       this.renderer.setPixelRatio(dpr);
       this.renderer.shadowMap.enabled = this.graphicsPreset !== 'low';
@@ -15057,56 +15425,278 @@ class ViceCity3DApp {
     }
   }
 
-  setupCarModMeshes() {
-    if (!this.car || !this.car.root || this._carModMeshesReady) return;
-    this._carModMeshesReady = true;
-    // Neon Underglow plane under chassis
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff2e88, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide });
-    const glowPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 4.75), glowMat);
+  getActiveVehicleMods() {
+    if (!this.activeVehicle || this.activeVehicle.isHero) return this.carMods;
+    if (!this.activeVehicle.customMods) {
+      this.activeVehicle.customMods = {
+        underglow: 'none', spoiler: false, goldChrome: false,
+        turboStage: 0, rims: 'stock', hydraulics: false, hornTune: 'classic'
+      };
+    }
+    return this.activeVehicle.customMods;
+  }
+
+  ensureVehicleModMeshes(root, rig, isHero = false) {
+    if (!root || !rig) return null;
+    let cache = this._vehicleModCache.get(root);
+    if (cache) return cache;
+
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0xff2e88, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide
+    });
+    const glowPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.32, 4.7), glowMat);
     glowPlane.rotation.x = -Math.PI / 2;
     glowPlane.position.set(0, 0.09, 0);
     glowPlane.visible = false;
-    this.car.root.add(glowPlane);
-    this._carUnderglow = glowPlane;
-    this._carUnderglowMat = glowMat;
+    root.add(glowPlane);
 
-    // Carbon GT Rear Wing Spoiler
     const spGroup = new THREE.Group();
     const carbMat = new THREE.MeshStandardMaterial({ color: 0x12151e, roughness: 0.25, metalness: 0.72 });
     const wing = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.08, 0.42), carbMat);
-    wing.position.set(0, 1.18, 2.02);
+    wing.position.set(0, isHero ? 1.18 : 1.24, isHero ? 2.02 : 1.92);
     const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.24), carbMat);
-    strutL.position.set(-0.62, 0.99, 1.98);
+    strutL.position.set(-0.62, isHero ? 0.99 : 1.05, isHero ? 1.98 : 1.88);
     const strutR = strutL.clone(); strutR.position.x = 0.62;
-    const endL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.22, 0.48), new THREE.MeshStandardMaterial({ color: 0xff2e88, emissive: 0xff2e88, emissiveIntensity: 0.5 }));
-    endL.position.set(-0.97, 1.18, 2.02);
+    const endMat = new THREE.MeshStandardMaterial({ color: 0xff2e88, emissive: 0xff2e88, emissiveIntensity: 0.5 });
+    const endL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.22, 0.48), endMat);
+    endL.position.set(-0.97, isHero ? 1.18 : 1.24, isHero ? 2.02 : 1.92);
     const endR = endL.clone(); endR.position.x = 0.97;
     spGroup.add(wing, strutL, strutR, endL, endR);
     spGroup.visible = false;
-    (this.car.bodyGroup || this.car.root).add(spGroup);
-    this._carSpoiler = spGroup;
+    (rig.bodyGroup || root).add(spGroup);
+
+    // Custom glowing 3D Rim Halo Rings mounted onto each wheel spin group
+    const rimRingMat = new THREE.MeshBasicMaterial({ color: 0x21e6d1, side: THREE.DoubleSide });
+    const rimRingGeo = new THREE.TorusGeometry(isHero ? 0.27 : 0.24, 0.024, 8, 20);
+    const rimRings = [];
+    const spins = rig.wheelSpinGroups || rig.wheels || [];
+    for (let i = 0; i < spins.length; i++) {
+      const wg = spins[i];
+      if (!wg) continue;
+      const ring = new THREE.Mesh(rimRingGeo, rimRingMat);
+      ring.rotation.y = Math.PI / 2;
+      const sideSign = (i % 2 === 0) ? -1 : 1;
+      ring.position.set(sideSign * (isHero ? 0.16 : 0.14), 0, 0);
+      ring.visible = false;
+      wg.add(ring);
+      rimRings.push(ring);
+    }
+
+    cache = { glowPlane, glowMat, spGroup, rimRings, rimRingMat };
+    this._vehicleModCache.set(root, cache);
+    return cache;
+  }
+
+  setupCarModMeshes() {
+    if (!this.car || !this.car.root || this._carModMeshesReady) return;
+    this._carModMeshesReady = true;
+    const c = this.ensureVehicleModMeshes(this.car.root, this.car, true);
+    if (c) {
+      this._carUnderglow = c.glowPlane;
+      this._carUnderglowMat = c.glowMat;
+      this._carSpoiler = c.spGroup;
+    }
+  }
+
+  applyModsToRig(root, rig, mods, isHero = false) {
+    if (!root || !rig || !mods || rig.isBike) return;
+    const c = this.ensureVehicleModMeshes(root, rig, isHero);
+    if (c) {
+      const ug = mods.underglow || 'none';
+      c.glowPlane.visible = ug !== 'none';
+      if (ug === 'pink') c.glowMat.color.setHex(0xff2e88);
+      else if (ug === 'cyan') c.glowMat.color.setHex(0x21e6d1);
+      else if (ug === 'gold') c.glowMat.color.setHex(0xffd36b);
+      c.spGroup.visible = Boolean(mods.spoiler);
+
+      const rimStyle = mods.rims || 'stock';
+      const isCyan = rimStyle === 'neon_cyan' || rimStyle === 'cyan';
+      const isPink = rimStyle === 'hot_pink' || rimStyle === 'pink';
+      const isGold = rimStyle === 'gold_mesh' || rimStyle === 'gold';
+      const isStealth = rimStyle === 'stealth_black' || rimStyle === 'stealth';
+      const isChrome = rimStyle === 'chrome_deep' || rimStyle === 'chrome';
+      const showHalo = isCyan || isPink || isGold;
+      if (isCyan) c.rimRingMat.color.setHex(0x21e6d1);
+      else if (isPink) c.rimRingMat.color.setHex(0xff2e88);
+      else if (isGold) c.rimRingMat.color.setHex(0xffd36b);
+      for (let i = 0; i < c.rimRings.length; i++) c.rimRings[i].visible = showHalo;
+    }
+    if (rig.rimMat) {
+      const rimStyle = mods.rims || 'stock';
+      if (rimStyle === 'gold_mesh' || rimStyle === 'gold') {
+        rig.rimMat.color.setHex(0xffc947); rig.rimMat.metalness = 0.96; rig.rimMat.roughness = 0.14;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x3a2600);
+      } else if (rimStyle === 'neon_cyan' || rimStyle === 'cyan') {
+        rig.rimMat.color.setHex(0x21e6d1); rig.rimMat.metalness = 0.85; rig.rimMat.roughness = 0.18;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x0b5e58);
+      } else if (rimStyle === 'hot_pink' || rimStyle === 'pink') {
+        rig.rimMat.color.setHex(0xff2e88); rig.rimMat.metalness = 0.85; rig.rimMat.roughness = 0.18;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x5c0c30);
+      } else if (rimStyle === 'stealth_black' || rimStyle === 'stealth') {
+        rig.rimMat.color.setHex(0x161820); rig.rimMat.metalness = 0.55; rig.rimMat.roughness = 0.42;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x000000);
+      } else if (rimStyle === 'chrome_deep' || rimStyle === 'chrome') {
+        rig.rimMat.color.setHex(0xf4f7ff); rig.rimMat.metalness = 1.0; rig.rimMat.roughness = 0.04;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x10141c);
+      } else {
+        rig.rimMat.color.setHex(0xd4dce6); rig.rimMat.metalness = 0.88; rig.rimMat.roughness = 0.22;
+        if (rig.rimMat.emissive) rig.rimMat.emissive.setHex(0x000000);
+      }
+    }
+    if (rig.paintMat) {
+      if (mods.goldChrome) {
+        rig.paintMat.color.setHex(0xffd24c);
+        rig.paintMat.metalness = 0.98;
+        rig.paintMat.roughness = 0.08;
+      } else if (isHero && this.car && this.car.applyPaint) {
+        this.car.applyPaint(this.paintIdx);
+      } else if (typeof mods.paintHex === 'number') {
+        rig.paintMat.color.setHex(mods.paintHex);
+        rig.paintMat.metalness = 0.72;
+        rig.paintMat.roughness = 0.22;
+      }
+    }
   }
 
   applyCarMods() {
-    if (this._carUnderglow && this._carUnderglowMat) {
-      const ug = this.carMods.underglow || 'none';
-      this._carUnderglow.visible = ug !== 'none';
-      if (ug === 'pink') this._carUnderglowMat.color.setHex(0xff2e88);
-      else if (ug === 'cyan') this._carUnderglowMat.color.setHex(0x21e6d1);
-      else if (ug === 'gold') this._carUnderglowMat.color.setHex(0xffd36b);
+    if (this.car && this.car.root) {
+      this.applyModsToRig(this.car.root, this.car, this.carMods, true);
     }
-    if (this._carSpoiler) {
-      this._carSpoiler.visible = Boolean(this.carMods.spoiler);
+    if (this.activeVehicle && !this.activeVehicle.isHero && !this.activeVehicle.isBike && this.activeVehicle.mesh && this.activeVehicle.rig) {
+      this.applyModsToRig(this.activeVehicle.mesh, this.activeVehicle.rig, this.getActiveVehicleMods(), false);
     }
-    if (this.car && this.car.paintMat) {
-      if (this.carMods.goldChrome) {
-        this.car.paintMat.color.setHex(0xffd24c);
-        this.car.paintMat.metalness = 0.98;
-        this.car.paintMat.roughness = 0.08;
-      } else {
-        this.car.applyPaint(this.paintIdx);
-      }
+  }
+
+  triggerHydraulicsBounce(toggleDance = false) {
+    if (this.mode !== 'car' || !this.activeVehicle || this.activeVehicle.isBike) return;
+    const mods = this.getActiveVehicleMods();
+    if (!mods.hydraulics) return;
+    const hs = this.hydraulicsState;
+    if (toggleDance) {
+      hs.mode = (hs.mode + 1) % 3;
+      const modeNames = ['OFF', 'LOWRIDER BOUNCE', '3-WHEEL TILT DANCE'];
+      if (this.audio && typeof this.audio.hydraulicsBounce === 'function') this.audio.hydraulicsBounce();
+      this.el.combo.innerHTML = `HYDRAULICS · ${modeNames[hs.mode]} <span>SHIFT+H TO CYCLE</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.4;
+      return;
     }
+    hs.bounceVel = Math.max(hs.bounceVel, 2.85);
+    hs.bounceY = Math.max(hs.bounceY, 0.06);
+    if (this.audio && typeof this.audio.hydraulicsBounce === 'function') this.audio.hydraulicsBounce();
+    const cs = this.carState;
+    for (let i = 0; i < 4; i++) {
+      this.spawnParticle(
+        cs.x + (Math.random() - 0.5) * 1.6, cs.y + 0.14, cs.z + (Math.random() - 0.5) * 3.0,
+        (Math.random() - 0.5) * 2.2, 0.65, (Math.random() - 0.5) * 2.2,
+        0xdcf7ff, 0.35, 0.28, 1.3, 1.2
+      );
+    }
+    this.el.combo.innerHTML = `HYDRAULICS HOP! <span>SHIFT+H FOR CONTINUOUS BOUNCE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 1.6;
+  }
+
+  saveCurrentVehicleToGarage() {
+    if (!this.activeVehicle) {
+      this.el.combo.innerHTML = `GET IN A VEHICLE FIRST <span>DRIVE INTO PAY 'N' SPRAY</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.0;
+      return;
+    }
+    const v = this.activeVehicle;
+    const mods = { ...this.getActiveVehicleMods() };
+    const paintHex = v.isHero
+      ? PAINTS[this.paintIdx].color
+      : (typeof mods.paintHex === 'number' ? mods.paintHex : (v.rig && v.rig.paintMat ? v.rig.paintMat.color.getHex() : 0x21e6d1));
+    const entry = {
+      id: `gar-${Date.now()}-${Math.floor(Math.random() * 999)}`,
+      label: v.label || 'CUSTOM RIDE',
+      isHero: Boolean(v.isHero),
+      isBike: Boolean(v.isBike),
+      bikeKind: v.isBike ? (v.rig && v.rig.kind ? v.rig.kind : 'pcj600') : null,
+      archetype: !v.isHero && !v.isBike ? (v.rig && v.rig.archetype ? v.rig.archetype : 'sports') : null,
+      paintIdx: this.paintIdx,
+      paintHex,
+      mods
+    };
+    if (!Array.isArray(this.savedGarage)) this.savedGarage = [];
+    const existingHeroIdx = entry.isHero ? this.savedGarage.findIndex((g) => g.isHero) : -1;
+    if (existingHeroIdx >= 0) {
+      this.savedGarage[existingHeroIdx] = entry;
+    } else if (this.savedGarage.length >= 6) {
+      this.savedGarage.shift();
+      this.savedGarage.push(entry);
+    } else {
+      this.savedGarage.push(entry);
+    }
+    this.savePersistentSave();
+    if (this.audio) this.audio.pickup();
+    this.el.combo.innerHTML = `SAVED TO GARAGE · ${entry.label} <span>${this.savedGarage.length}/6 SLOTS · CALL VIA PHONE [I]</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.8;
+  }
+
+  spawnGarageVehicle(idx) {
+    if (!Array.isArray(this.savedGarage) || !this.savedGarage[idx]) return;
+    const g = this.savedGarage[idx];
+    this.togglePhone(false);
+    if (this.activeShop && typeof this.closeShopMenu === 'function') this.closeShopMenu(true);
+    const act = this.mode === 'foot' ? this.playerState : this.carState;
+    const inPns = Math.hypot(act.x + 66.5, act.z + 182.0) < 10.5;
+    const sx = inPns ? -64.0 : act.x + 4.2;
+    const sz = inPns ? -182.0 : act.z + 2.4;
+    const sy = this.getSurfaceY(sx, sz, false) + 0.05;
+    const syaw = inPns ? -Math.PI / 2 : (act.yaw || 0);
+
+    if (g.isHero) {
+      if (typeof g.paintIdx === 'number') this.paintIdx = ((g.paintIdx % PAINTS.length) + PAINTS.length) % PAINTS.length;
+      if (g.mods) this.carMods = { ...this.carMods, ...g.mods };
+      this.activeVehicle = this.heroVehicle;
+      this.carHealth = 100;
+      this.updateCarHealthHUD();
+      this.carState.x = sx; this.carState.y = sy; this.carState.z = sz;
+      this.carState.yaw = syaw; this.carState.speed = 0; this.carState.vy = 0; this.carState.airborne = false;
+      this.setMode('car');
+      this.applyCarMods();
+    } else if (g.isBike) {
+      const rig = createMotorcycle(g.bikeKind || 'pcj600', g.paintHex || 0xff2e88);
+      rig.root.position.set(sx, sy, sz);
+      rig.root.rotation.y = syaw;
+      this.scene.add(rig.root);
+      const pv = {
+        isHero: false, isBike: true, label: g.label || rig.label,
+        mesh: rig.root, rig,
+        topSpeed: rig.topSpeed, nitroSpeed: rig.topSpeed * 1.34,
+        accel: rig.accel, grip: rig.grip,
+        x: sx, y: sy, z: sz, yaw: syaw,
+        customMods: { ...(g.mods || {}), paintHex: g.paintHex }
+      };
+      this.enterParkedVehicle(pv, -1);
+    } else {
+      const mesh = createTrafficCar(g.paintHex || 0x21e6d1, g.archetype || 'sports');
+      mesh.position.set(sx, sy, sz);
+      mesh.rotation.y = syaw;
+      this.scene.add(mesh);
+      const rig = mesh.userData.carRig;
+      const pv = {
+        isHero: false, isBike: false, label: g.label || rig.label,
+        mesh, rig,
+        topSpeed: rig.topSpeed || 46, nitroSpeed: (rig.topSpeed || 46) * 1.32,
+        accel: rig.accel || 22, grip: rig.grip || 0.94,
+        x: sx, y: sy, z: sz, yaw: syaw,
+        customMods: { ...(g.mods || {}), paintHex: g.paintHex }
+      };
+      this.carHealth = 100;
+      this.updateCarHealthHUD();
+      this.enterParkedVehicle(pv, -1);
+      this.applyCarMods();
+    }
+    this.snapCameraNext = true;
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `GARAGE DELIVERED · ${g.label} <span>100% TUNED</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 2.8;
   }
 
   damageCar(amount) {
@@ -15197,7 +15787,7 @@ class ViceCity3DApp {
       scr.appendChild(grid);
       const stat = document.createElement('div');
       stat.style.cssText = 'margin:8px 6px 4px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:11px;color:#b8b4cc;line-height:1.5';
-      stat.innerHTML = `<b style="color:#ffd36b">$${this.cash.toLocaleString()}</b> · Showrooms: <b style="color:#21e6d1">${this.visited.size}/5</b><br>Jobs Done: ${this.missionsCompleted} · Stunts: ${this.stuntJumpsDone}`;
+      stat.innerHTML = `<b style="color:#ffd36b">$${this.cash.toLocaleString()}</b> · Showrooms: <b style="color:#21e6d1">${this.visited.size}/5</b><br>Jobs Done: ${this.missionsCompleted} · Garage: ${(this.savedGarage || []).length}/6`;
       scr.appendChild(stat);
       return;
     }
@@ -15223,17 +15813,29 @@ class ViceCity3DApp {
     };
 
     if (app === 'mechanic') {
+      if (Array.isArray(this.savedGarage) && this.savedGarage.length > 0) {
+        this.savedGarage.forEach((g, idx) => {
+          const tStg = g.mods && g.mods.turboStage ? `Turbo S${g.mods.turboStage}` : 'Stock';
+          const hyd = g.mods && g.mods.hydraulics ? ' · Hydraulics' : '';
+          addRow(`★ ${g.label}`, `Saved Garage · ${tStg}${hyd}`, 'DELIVER', () => this.spawnGarageVehicle(idx));
+        });
+      }
       addRow('Personal Vice Supercar', 'Instant roadside delivery + full repair', 'CALL', () => this.summonMechanicVehicle('hero'));
       addRow('PCJ-600 Streetbike', 'Fast two-wheeler right beside you', 'CALL', () => this.summonMechanicVehicle('bike'));
       const hyperOk = this.visited.size >= 3;
       addRow('Infernus Apex V12 Hypercar', hyperOk ? 'Unlocked! 230 MPH tuned hypercar' : `Discover 3/5 showrooms (${this.visited.size}/3)`, hyperOk ? 'DELIVER' : 'LOCKED', () => this.summonMechanicVehicle('hyper'), !hyperOk);
       const heliOk = this.visited.size >= 5;
       addRow('VIP Maverick Chopper', heliOk ? 'Unlocked! Summon VTOL helicopter' : `Discover 5/5 showrooms (${this.visited.size}/5)`, heliOk ? 'SUMMON' : 'LOCKED', () => this.summonMechanicVehicle('heli'), !heliOk);
-      addRow("GPS → Pay 'n' Spray Garage", 'Repair, Neon Underglow & Spoilers', 'GPS', () => {
+      addRow("GPS → Pay 'n' Spray Mod Shop", 'Turbo, Rims, Hydraulics, Horns & Garage', 'GPS', () => {
         this.togglePhone(false);
         this.planAutopilotTo({ id: 'pns', label: "Pay 'n' Spray", x: -64, z: -182, yaw: 0 });
       });
     } else if (app === 'missions') {
+      addRow('🍕 Pizza Boy Faggio Run', '5 timed scooter deliveries ($1,400+)', 'RIDE', () => { this.togglePhone(false); this.startPizzaBoyJob(); });
+      addRow('🌊 Jet-Ski Ocean Slalom', '8 glowing Atlantic buoy gates ($1,350)', 'RACE', () => { this.togglePhone(false); this.startJetSkiTimeTrial(); });
+      addRow('🏐 Vice Beach Volleyball', '8-hit sand court rally challenge ($750)', 'PLAY', () => { this.togglePhone(false); this.startBeachVolleyball(); });
+      addRow('🔥 Red-Light Street Racer', 'Spawn live neon rival ahead ($1,200)', 'SPAWN', () => { this.togglePhone(false); this.spawnDynamicStreetEvent('racer'); });
+      addRow('💀 Rival Gang Turf Raid', 'Clear rival crew & loot stash ($950)', 'RAID', () => { this.togglePhone(false); this.spawnDynamicStreetEvent('gang'); });
       addRow('Taxi Fare Driver Job', 'Pick up & drop off passengers ($350+)', 'START', () => { this.togglePhone(false); this.startTaxiJob(); });
       addRow('Leonida Street Race', '10-gate Vice Beach circuit ($1,800 prize)', 'RACE', () => { this.togglePhone(false); this.startStreetRace(); });
       addRow('Ammu-Nation Shooting Range', 'Hit 10 moving indoor targets ($400)', 'PLAY', () => { this.togglePhone(false); this.startIndoorRange(); });
@@ -15305,7 +15907,6 @@ class ViceCity3DApp {
       }
       return;
     }
-    // Deliver Personal Supercar (or tuned Infernus Apex V12 Hypercar!)
     const cs = this.carState;
     this.activeVehicle = this.heroVehicle;
     this.heroVehicle.topSpeed = kind === 'hyper' ? 68 : 54;
@@ -15316,6 +15917,7 @@ class ViceCity3DApp {
     cs.x = sx; cs.z = sz; cs.y = this.getSurfaceY(sx, sz, false) + 0.05;
     cs.speed = 0; cs.vy = 0; cs.airborne = false;
     this.setMode('car');
+    this.applyCarMods();
     if (this.audio) this.audio.phoneChime();
     this.el.combo.innerHTML = `MECHANIC DELIVERED · ${this.heroVehicle.label} <span>100% HP</span>`;
     this.el.combo.classList.add('on');
@@ -15345,6 +15947,7 @@ class ViceCity3DApp {
   }
 
   startTaxiJob() {
+    this.abortSideMission();
     if (this.mode !== 'car') this.setMode('car');
     const pickup = TAXI_FARE_SPOTS[Math.floor(Math.random() * TAXI_FARE_SPOTS.length)];
     this.activeSideMission = {
@@ -15362,6 +15965,7 @@ class ViceCity3DApp {
   }
 
   startStreetRace() {
+    this.abortSideMission();
     if (this.mode !== 'car') this.setMode('car');
     const cs = this.carState;
     cs.x = 0; cs.z = -38; cs.yaw = 0; cs.speed = 0;
@@ -15381,6 +15985,7 @@ class ViceCity3DApp {
   }
 
   startIndoorRange() {
+    this.abortSideMission();
     const ps = this.playerState;
     this.setMode('foot');
     ps.x = -67.5; ps.z = -102; ps.y = 0.22; ps.yaw = Math.PI / 2;
@@ -15401,7 +16006,584 @@ class ViceCity3DApp {
     this.streakTimer = 3.2;
   }
 
+  startPizzaBoyJob() {
+    this.abortSideMission();
+    const sx = -10.5, sz = -64.0;
+    const sy = this.getSurfaceY(sx, sz, false) + 0.04;
+    if (!this._pizzaFaggio) {
+      const rig = createMotorcycle('faggio', 0xd92638);
+      // Composite 3D Well Stacked Pizza Co. insulated heated rear delivery box!
+      const boxGroup = new THREE.Group();
+      const rackMat = new THREE.MeshStandardMaterial({ color: 0x262934, metalness: 0.78, roughness: 0.3 });
+      const redBoxMat = new THREE.MeshStandardMaterial({ color: 0xe6323e, roughness: 0.34, metalness: 0.12 });
+      const lidMat = new THREE.MeshStandardMaterial({ color: 0xfff3de, roughness: 0.38 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd36b, emissive: 0xffa020, emissiveIntensity: 0.35, roughness: 0.28 });
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.46), rackMat);
+      rack.position.set(0, 0.86, 0.72);
+      const crate = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.44, 0.52), redBoxMat);
+      crate.position.set(0, 1.11, 0.74);
+      const lid = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.07, 0.56), lidMat);
+      lid.position.set(0, 1.35, 0.74);
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.06, 0.54), goldMat);
+      stripe.position.set(0, 1.14, 0.74);
+      boxGroup.add(rack, crate, lid, stripe);
+      (rig.bodyGroup || rig.root).add(boxGroup);
+      rig.root.position.set(sx, sy, sz);
+      rig.root.rotation.y = 0;
+      this.scene.add(rig.root);
+      this._pizzaFaggio = {
+        isHero: false, isBike: true, isPizzaBike: true,
+        label: 'PIZZA BOY FAGGIO',
+        mesh: rig.root, rig,
+        topSpeed: 39, nitroSpeed: 50, accel: 24, grip: 0.96,
+        x: sx, y: sy, z: sz, yaw: 0
+      };
+    } else {
+      const pIdx = this.parkedVehicles.indexOf(this._pizzaFaggio);
+      if (pIdx >= 0) this.parkedVehicles.splice(pIdx, 1);
+      this._pizzaFaggio.x = sx; this._pizzaFaggio.y = sy; this._pizzaFaggio.z = sz; this._pizzaFaggio.yaw = 0;
+      this._pizzaFaggio.mesh.position.set(sx, sy, sz);
+      this._pizzaFaggio.mesh.rotation.y = 0;
+    }
+    if (this.activeVehicle === this._pizzaFaggio) {
+      this.carState.x = sx; this.carState.y = sy; this.carState.z = sz; this.carState.yaw = 0; this.carState.speed = 0;
+      this.setMode('car');
+    } else {
+      this.enterParkedVehicle(this._pizzaFaggio, -1);
+    }
+    this.snapCameraNext = true;
+
+    const pool = [
+      { x: -16, z: -168, name: 'Ocean View Plaza' },
+      { x: -24, z: -344, name: 'The Malibu Club' },
+      { x: 18,  z: -248, name: 'Vice Beach Boardwalk' },
+      { x: -58, z: -262, name: 'Burger Shot Corner' },
+      { x: 20,  z: -424, name: 'Carnival Pier Gate' },
+      { x: -46, z: -480, name: 'Downtown Towers' },
+      { x: -14, z: -102, name: 'Ammu-Nation Block' }
+    ];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    const drops = pool.slice(0, 5);
+    this.activeSideMission = {
+      kind: 'pizza',
+      drops,
+      dropIdx: 0,
+      delivered: 0,
+      timer: 52,
+      target: drops[0]
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio) this.audio.horn('cucaracha');
+    this.el.combo.innerHTML = `🍕 PIZZA BOY RUN · 5 HOT PIZZAS! <span>DELIVER TO ${drops[0].name.toUpperCase()}</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.4;
+  }
+
+  startJetSkiTimeTrial() {
+    this.abortSideMission();
+    const js = (this.boats || []).find((b) => b.type === 'jetski') || (this.boats && this.boats[0]);
+    if (!js) return;
+    js.x = 42; js.z = -90; js.yaw = 0; js.speed = 0;
+    js.root.position.set(js.x, -0.35, js.z);
+    js.root.rotation.set(0, 0, 0);
+    this.enterBoat(js);
+
+    const gateCoords = [
+      { x: 46, z: -138 },
+      { x: 60, z: -186 },
+      { x: 42, z: -236 },
+      { x: 64, z: -288 },
+      { x: 44, z: -340 },
+      { x: 68, z: -392 },
+      { x: 54, z: -446 },
+      { x: 74, z: -502 }
+    ];
+    const buoyGeo = new THREE.CylinderGeometry(0.42, 0.52, 1.8, 10);
+    const topGeo = new THREE.SphereGeometry(0.32, 10, 8);
+    const archGeo = new THREE.TorusGeometry(6.8, 0.24, 8, 28, Math.PI);
+    this._jetSkiGates = [];
+    gateCoords.forEach((gc, idx) => {
+      const grp = new THREE.Group();
+      const bMat = new THREE.MeshStandardMaterial({ color: 0xff6b2c, roughness: 0.35 });
+      const archMat = new THREE.MeshBasicMaterial({
+        color: idx === 0 ? 0xffd36b : 0x21e6d1, transparent: true, opacity: idx === 0 ? 0.92 : 0.45
+      });
+      const bL = new THREE.Mesh(buoyGeo, bMat); bL.position.set(-6.8, 0.65, 0);
+      const bR = new THREE.Mesh(buoyGeo, bMat); bR.position.set(6.8, 0.65, 0);
+      const tL = new THREE.Mesh(topGeo, archMat); tL.position.set(-6.8, 1.65, 0);
+      const tR = new THREE.Mesh(topGeo, archMat); tR.position.set(6.8, 1.65, 0);
+      const arch = new THREE.Mesh(archGeo, archMat); arch.position.set(0, 0.45, 0);
+      grp.add(bL, bR, tL, tR, arch);
+      grp.position.set(gc.x, -0.32, gc.z);
+      this.scene.add(grp);
+      this._jetSkiGates.push({ x: gc.x, z: gc.z, group: grp, archMat, cleared: false });
+    });
+
+    this.activeSideMission = {
+      kind: 'jetski',
+      gateIdx: 0,
+      total: gateCoords.length,
+      timer: 56,
+      target: { x: gateCoords[0].x, z: gateCoords[0].z, name: 'Buoy Gate 1/8' }
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `🌊 JET-SKI OCEAN SLALOM! <span>CLEAR 8 BUOY GATES · $1,350 PRIZE</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.4;
+  }
+
+  startBeachVolleyball() {
+    this.abortSideMission();
+    const ps = this.playerState;
+    this.setMode('foot');
+    ps.x = 22.0; ps.z = -124.0;
+    ps.y = Math.max(0.16, this.getSurfaceY(ps.x, ps.z, true));
+    ps.yaw = -Math.PI / 2;
+    ps.vx = 0; ps.vz = 0; ps.vy = 0;
+    this.orbitYawOffset = -Math.PI / 2;
+    this.orbitPitchOffset = 0.08;
+    this.player.root.position.set(ps.x, ps.y, ps.z);
+    this.player.root.rotation.y = ps.yaw;
+    this.snapCameraNext = true;
+
+    // Composite 3D striped beach volleyball + glowing landing target ring + Beach Rival NPC
+    const ballGrp = new THREE.Group();
+    const ballCore = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 16, 14),
+      new THREE.MeshStandardMaterial({ color: 0xfff8f0, roughness: 0.35 })
+    );
+    const band1 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.275, 0.032, 8, 22),
+      new THREE.MeshStandardMaterial({ color: 0xff2e88, roughness: 0.3 })
+    );
+    const band2 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.275, 0.032, 8, 22),
+      new THREE.MeshStandardMaterial({ color: 0x21e6d1, roughness: 0.3 })
+    );
+    band2.rotation.y = Math.PI / 2;
+    ballGrp.add(ballCore, band1, band2);
+    ballGrp.position.set(27.4, 2.2, -124.0);
+    this.scene.add(ballGrp);
+
+    const landRingMat = new THREE.MeshBasicMaterial({
+      color: 0x21e6d1, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false
+    });
+    const landRing = new THREE.Mesh(new THREE.RingGeometry(0.75, 1.15, 24), landRingMat);
+    landRing.rotation.x = -Math.PI / 2;
+    landRing.position.set(22.0, ps.y + 0.06, -124.0);
+    this.scene.add(landRing);
+
+    const timingRingMat = new THREE.MeshBasicMaterial({
+      color: 0xffd36b, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false
+    });
+    const timingRing = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.58, 24), timingRingMat);
+    timingRing.rotation.x = -Math.PI / 2;
+    timingRing.position.set(22.0, ps.y + 0.07, -124.0);
+    this.scene.add(timingRing);
+
+    let rival = null;
+    if (this._pedSharedGeos && this._pedMats) {
+      rival = createPedestrian({
+        x: 27.6, y: ps.y, z: -124.0, dir: 0, jog: false, axis: 'z', minPos: -129, maxPos: -119,
+        bikini: true, speed: 0, phase: 0, scale: 0.98,
+        skin: 0xd89d72, shirt: 0xff2e88, pants: 0x21e6d1, hair: 0x1b151e, shoe: 0xf2eff6, blazer: false, shades: true
+      }, this._pedSharedGeos, this._pedSplatMat, this._pedStarMat, this._pedMats);
+      rival.root.position.set(27.6, ps.y, -124.0);
+      rival.root.rotation.y = Math.PI / 2;
+      this.scene.add(rival.root);
+    }
+
+    this._volleyballRig = { ballGrp, landRing, landRingMat, timingRing, rival };
+    this.activeSideMission = {
+      kind: 'volleyball',
+      rally: 0,
+      goal: 8,
+      misses: 0,
+      maxMisses: 3,
+      timer: 70,
+      phase: 'incoming',
+      t: 0,
+      duration: 1.48,
+      startX: 27.4, startZ: -124.0,
+      destX: 22.0, destZ: -124.0,
+      target: { x: 22.0, z: -124.0, name: 'Volleyball Ring' }
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio && typeof this.audio.volleyballHit === 'function') this.audio.volleyballHit(false);
+    this.el.combo.innerHTML = `🏐 BEACH VOLLEYBALL RALLY! <span>STEP INTO RING & PRESS [SPACE / E / CLICK] TO SPIKE!</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.8;
+  }
+
+  tryVolleyballStrike() {
+    const m = this.activeSideMission;
+    if (!m || m.kind !== 'volleyball' || !this._volleyballRig) return;
+    const ps = this.playerState;
+    const dist = Math.hypot(ps.x - m.destX, ps.z - m.destZ);
+    if (m.phase === 'incoming' && m.t >= 0.54 && dist < 3.35) {
+      const isSpike = m.t >= 0.76 && dist < 2.1;
+      m.rally += 1;
+      m.phase = 'outgoing';
+      m.t = 0;
+      m.duration = isSpike ? 0.92 : 1.15;
+      m.startX = ps.x + 0.35;
+      m.startZ = ps.z;
+      m.destX = 27.2 + (Math.random() - 0.5) * 1.4;
+      m.destZ = -124.0 + (Math.random() - 0.5) * 5.2;
+      ps.vy = Math.max(ps.vy, isSpike ? 4.4 : 2.8);
+      if (this.audio && typeof this.audio.volleyballHit === 'function') this.audio.volleyballHit(isSpike);
+      for (let i = 0; i < 6; i++) {
+        this.spawnParticle(
+          ps.x + 0.4, ps.y + 1.5, ps.z,
+          (Math.random() - 0.5) * 3.0, 1.8 + Math.random() * 1.5, (Math.random() - 0.5) * 3.0,
+          isSpike ? 0xffd36b : 0x21e6d1, 0.36, 0.24, 1.3, 4.0
+        );
+      }
+      if (m.rally >= m.goal) {
+        this.cash += 750;
+        this.missionsCompleted += 1;
+        if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+        this.abortSideMission();
+        this.savePersistentSave();
+        if (this.audio) this.audio.pickup();
+        this.el.combo.innerHTML = `🏐 BEACH VOLLEYBALL CHAMPION! <span>8-HIT RALLY · +$750</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 4.0;
+      } else {
+        this.el.combo.innerHTML = `${isSpike ? 'POWER SPIKE!' : 'CLEAN RETURN!'} <span>RALLY ${m.rally}/${m.goal}</span>`;
+        this.el.combo.classList.add('on');
+        this.streakTimer = 1.5;
+      }
+    } else if (m.phase === 'incoming') {
+      this.el.combo.innerHTML = dist >= 3.35 ? `MOVE INTO THE GLOWING RING! <span>WASD</span>` : `WAIT FOR BALL TO DROP! <span>TIMING</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 1.1;
+    }
+  }
+
+  clearDynamicEvent(despawnGangPeds = false) {
+    if (this._dynamicEventMeshes && this._dynamicEventMeshes.length) {
+      for (let i = 0; i < this._dynamicEventMeshes.length; i++) {
+        const obj = this._dynamicEventMeshes[i];
+        if (obj && obj.parent) obj.parent.remove(obj);
+      }
+      this._dynamicEventMeshes = [];
+    }
+    if (despawnGangPeds && this.dynamicEvent && Array.isArray(this.dynamicEvent.gangPeds)) {
+      this.dynamicEvent.gangPeds.forEach((gp) => {
+        if (gp.root && gp.root.parent) gp.root.parent.remove(gp.root);
+        const idx = this.pedestrians.indexOf(gp);
+        if (idx >= 0) this.pedestrians.splice(idx, 1);
+      });
+    }
+    this.dynamicEvent = null;
+  }
+
+  spawnDynamicStreetEvent(forceKind = null) {
+    this.clearDynamicEvent(true);
+    const act = this.mode === 'car' ? this.carState : this.playerState;
+    const kind = forceKind || (this.mode === 'car' ? (Math.random() < 0.65 ? 'racer' : 'gang') : 'gang');
+
+    if (kind === 'racer') {
+      // Pick nearest clean city avenue slightly ahead of player
+      const avenues = [-2, -46, -126];
+      let roadX = avenues[0];
+      let bestD = Infinity;
+      for (let i = 0; i < avenues.length; i++) {
+        const d = Math.abs(act.x - avenues[i]);
+        if (d < bestD) { bestD = d; roadX = avenues[i]; }
+      }
+      const dirZ = act.z < -420 ? 1 : -1;
+      const sx = roadX + (dirZ < 0 ? 3.2 : -3.2);
+      const sz = THREE.MathUtils.clamp(act.z + dirZ * (58 + Math.random() * 24), -820, -45);
+      const sy = this.getSurfaceY(sx, sz, false) + 0.04;
+      const syaw = dirZ < 0 ? 0 : Math.PI;
+      const neonColors = [0xff2e88, 0x21e6d1, 0xffd36b, 0xa855f7];
+      const col = neonColors[Math.floor(Math.random() * neonColors.length)];
+      const carMesh = createTrafficCar(col, Math.random() < 0.5 ? 'sports' : 'muscle');
+      carMesh.position.set(sx, sy, sz);
+      carMesh.rotation.y = syaw;
+      this.scene.add(carMesh);
+      const carRig = carMesh.userData.carRig;
+      this.applyModsToRig(carMesh, carRig, { underglow: 'pink', spoiler: true, rims: 'cyan' }, false);
+
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(3.2, 4.1, 28),
+        new THREE.MeshBasicMaterial({ color: 0xff2e88, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(sx, sy + 0.08, sz);
+      this.scene.add(ring);
+
+      const beacon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.45, 0.9, 26, 12, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0xff2e88, transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false })
+      );
+      beacon.position.set(sx, sy + 13, sz);
+      this.scene.add(beacon);
+
+      this._dynamicEventMeshes = [carMesh, ring, beacon];
+      this.dynamicEvent = {
+        kind: 'racer',
+        x: sx, y: sy, z: sz, yaw: syaw, roadX, dirZ,
+        carMesh, carRig, ring, beacon,
+        label: carRig ? carRig.label : 'MIDNIGHT RACER',
+        timer: 65
+      };
+      if (this.audio) this.audio.horn('synth80s');
+      this.el.combo.innerHTML = `🔥 STREET RACER CHALLENGE NEARBY! <span>PULL UP & HONK [H/K] OR [E] · $1,200</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 4.2;
+      return;
+    }
+
+    // Rival Gang Turf Ambush & Contraband Cash Stash!
+    const angle = Math.random() * Math.PI * 2;
+    const dist = forceKind ? 32 : 52 + Math.random() * 26;
+    const gx = THREE.MathUtils.clamp(act.x + Math.cos(angle) * dist, -145, 16);
+    const gz = THREE.MathUtils.clamp(act.z + Math.sin(angle) * dist, -820, -25);
+    const gy = this.getSurfaceY(gx, gz, false) + 0.04;
+    const isSharks = Math.random() < 0.5;
+    const gangName = isSharks ? 'VICE SHARKS' : 'HAVANA KINGS';
+    const jacketCol = isSharks ? 0x16d9c6 : 0xe02848;
+
+    // Composite 3D Contraband Stash Crate + glowing cash stacks + perimeter turf ring
+    const stashGrp = new THREE.Group();
+    const crate = new THREE.Mesh(
+      new THREE.BoxGeometry(1.45, 0.85, 1.05),
+      new THREE.MeshStandardMaterial({ color: 0x181c26, roughness: 0.42, metalness: 0.55 })
+    );
+    crate.position.y = 0.44;
+    const cashTop = new THREE.Mesh(
+      new THREE.BoxGeometry(1.15, 0.24, 0.78),
+      new THREE.MeshStandardMaterial({ color: 0x34e89e, emissive: 0x10b981, emissiveIntensity: 0.55, roughness: 0.35 })
+    );
+    cashTop.position.y = 0.96;
+    const trim = new THREE.Mesh(
+      new THREE.BoxGeometry(1.52, 0.12, 1.12),
+      new THREE.MeshStandardMaterial({ color: 0xffd36b, metalness: 0.85, roughness: 0.2 })
+    );
+    trim.position.y = 0.82;
+    stashGrp.add(crate, cashTop, trim);
+    stashGrp.position.set(gx, gy, gz);
+    this.scene.add(stashGrp);
+
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xff4040, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(4.2, 4.9, 28), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(gx, gy + 0.08, gz);
+    this.scene.add(ring);
+
+    const beaconMat = new THREE.MeshBasicMaterial({
+      color: 0xff4040, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false
+    });
+    const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.85, 22, 10, 1, true), beaconMat);
+    beacon.position.set(gx, gy + 11, gz);
+    this.scene.add(beacon);
+
+    const gangPeds = [];
+    if (this._pedSharedGeos && this._pedMats) {
+      const count = 4;
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + 0.4;
+        const px = gx + Math.cos(a) * 3.4;
+        const pz = gz + Math.sin(a) * 3.4;
+        const p = createPedestrian({
+          x: px, y: gy, z: pz, dir: 0, jog: false, axis: 'z', minPos: gz - 20, maxPos: gz + 20,
+          bikini: false, speed: 3.0, phase: i * 1.4, scale: 1.04,
+          skin: [0xd89d72, 0x9b6543, 0xf2c29b, 0x6f452c][i % 4],
+          shirt: jacketCol, pants: 0x161822, hair: 0x18141c, shoe: 0xffd36b, blazer: true, shades: true
+        }, this._pedSharedGeos, this._pedSplatMat, this._pedStarMat, this._pedMats);
+        p.name = `${gangName} ENFORCER`;
+        p.role = 'Rival Gang';
+        p.isGang = true;
+        p.hp = 5;
+        p.fighter = true;
+        p.provoked = false;
+        p.stateTimer = 45.0;
+        p.attackTimer = 0;
+        p.attackCooldown = 0;
+        p.hitDealt = false;
+        p.root.position.set(px, gy, pz);
+        p.root.rotation.y = a + Math.PI;
+        this.scene.add(p.root);
+        this.pedestrians.push(p);
+        gangPeds.push(p);
+      }
+    }
+
+    this._dynamicEventMeshes = [stashGrp, ring, beacon];
+    this.dynamicEvent = {
+      kind: 'gang',
+      gangName,
+      x: gx, y: gy, z: gz,
+      stashGrp, ring, ringMat, beacon, beaconMat,
+      gangPeds,
+      cleared: false,
+      timer: 95
+    };
+    if (this.audio) this.audio.phoneChime();
+    this.el.combo.innerHTML = `💀 ${gangName} TURF STASH NEARBY! <span>TAKE OUT CREW & LOOT $950</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 4.2;
+  }
+
+  tryAcceptStreetRacerChallenge() {
+    if (!this.dynamicEvent || this.dynamicEvent.kind !== 'racer') return false;
+    const ev = this.dynamicEvent;
+    const act = this.mode === 'car' ? this.carState : this.playerState;
+    const dist = Math.hypot(act.x - ev.x, act.z - ev.z);
+    if (dist > 34) return false;
+    if (this.mode !== 'car') {
+      this.el.combo.innerHTML = `GET IN A CAR TO RACE! <span>PRESS [F] TO BOARD</span>`;
+      this.el.combo.classList.add('on');
+      this.streakTimer = 2.0;
+      return true;
+    }
+
+    // Remove challenge ring & beacon, keep rival car mesh for the live head-to-head race!
+    if (ev.ring && ev.ring.parent) ev.ring.parent.remove(ev.ring);
+    if (ev.beacon && ev.beacon.parent) ev.beacon.parent.remove(ev.beacon);
+    const rivalMesh = ev.carMesh;
+    const rivalRig = ev.carRig;
+    const roadX = ev.roadX;
+    const dirZ = ev.dirZ;
+    const finishZ = THREE.MathUtils.clamp(ev.z + dirZ * 460, -880, -15);
+    this._dynamicEventMeshes = [];
+    this.dynamicEvent = null;
+
+    this.abortSideMission();
+    const cs = this.carState;
+    cs.yaw = dirZ < 0 ? 0 : Math.PI;
+    cs.speed = 0;
+
+    this.activeSideMission = {
+      kind: 'impromptuRace',
+      rivalMesh,
+      rivalRig,
+      rivalX: ev.x,
+      rivalZ: ev.z,
+      rivalYaw: ev.yaw,
+      rivalSpeed: 0,
+      roadX,
+      dirZ,
+      countdown: 2.2,
+      timer: 65,
+      target: { x: roadX, z: finishZ, name: 'Street Race Finish' }
+    };
+    if (this.el.missionBar) this.el.missionBar.hidden = false;
+    if (this.audio) this.audio.horn('airhorn');
+    this.el.combo.innerHTML = `🏁 HEAD-TO-HEAD STREET RACE! <span>BEAT ${ev.label} TO THE FINISH · $1,200</span>`;
+    this.el.combo.classList.add('on');
+    this.streakTimer = 3.4;
+    return true;
+  }
+
+  updateDynamicEvents(dt, elapsed, act) {
+    if (this.dynamicEvent) {
+      const ev = this.dynamicEvent;
+      ev.timer -= dt;
+      const dist = Math.hypot(act.x - ev.x, act.z - ev.z);
+      if (ev.ring) {
+        ev.ring.scale.setScalar(1 + Math.sin(elapsed * 5.2) * 0.12);
+      }
+      if (ev.kind === 'racer') {
+        if (ev.carRig && ev.carRig.bodyGroup) {
+          ev.carRig.bodyGroup.position.y = Math.sin(elapsed * 22) * 0.015;
+        }
+        if (ev.timer <= 0 || dist > 320) {
+          this.clearDynamicEvent(false);
+          this.dynamicEventCooldown = 28;
+        }
+      } else if (ev.kind === 'gang') {
+        if (ev.stashGrp) {
+          ev.stashGrp.rotation.y += dt * 0.55;
+        }
+        let aliveCount = 0;
+        for (let i = 0; i < ev.gangPeds.length; i++) {
+          const gp = ev.gangPeds[i];
+          const alive = gp.state !== 'dead' && gp.state !== 'ragdoll' && gp.state !== 'squished';
+          if (alive) {
+            aliveCount++;
+            if (dist < 26 && !gp.provoked) {
+              gp.provoked = true;
+              gp.state = 'fight';
+              gp.stateTimer = 45.0;
+            }
+          }
+        }
+        if (aliveCount === 0 && !ev.cleared) {
+          ev.cleared = true;
+          ev.ringMat.color.setHex(0x34e89e);
+          ev.beaconMat.color.setHex(0x34e89e);
+          if (this.audio) this.audio.pickup();
+          this.el.combo.innerHTML = `💀 ${ev.gangName} WIPED OUT! <span>GRAB THE GREEN CASH STASH ($950)</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 3.6;
+        }
+        if (ev.cleared && dist < 6.8) {
+          this.cash += 950;
+          this.missionsCompleted += 1;
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          this.savePersistentSave();
+          if (this.audio) this.audio.pickup();
+          for (let i = 0; i < 12; i++) {
+            this.spawnParticle(
+              ev.x + (Math.random() - 0.5) * 1.4, ev.y + 1.0, ev.z + (Math.random() - 0.5) * 1.4,
+              (Math.random() - 0.5) * 4.5, 2.5 + Math.random() * 2.5, (Math.random() - 0.5) * 4.5,
+              0x34e89e, 0.55, 0.35, 1.5, 5.5
+            );
+          }
+          this.el.combo.innerHTML = `TURF STASH CLAIMED! <span>+$950 CASH</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 3.8;
+          this.clearDynamicEvent(false);
+          this.dynamicEventCooldown = 42 + Math.random() * 18;
+          return;
+        }
+        if (ev.timer <= 0 || dist > 340) {
+          this.clearDynamicEvent(true);
+          this.dynamicEventCooldown = 34;
+        }
+      }
+      return;
+    }
+
+    // Ambient random encounter spawner while cruising Vice City!
+    if (!this.activeSideMission && (this.mode === 'car' || this.mode === 'foot') && act.x > -170 && act.x < 35 && act.z < -20 && act.z > -840) {
+      this.dynamicEventCooldown -= dt;
+      if (this.dynamicEventCooldown <= 0) {
+        this.spawnDynamicStreetEvent();
+        this.dynamicEventCooldown = 46 + Math.random() * 18;
+      }
+    }
+  }
+
   abortSideMission() {
+    if (this.activeSideMission && this.activeSideMission.rivalMesh && this.activeSideMission.rivalMesh.parent) {
+      this.activeSideMission.rivalMesh.parent.remove(this.activeSideMission.rivalMesh);
+    }
+    if (this._volleyballRig) {
+      const vr = this._volleyballRig;
+      if (vr.ballGrp && vr.ballGrp.parent) vr.ballGrp.parent.remove(vr.ballGrp);
+      if (vr.landRing && vr.landRing.parent) vr.landRing.parent.remove(vr.landRing);
+      if (vr.timingRing && vr.timingRing.parent) vr.timingRing.parent.remove(vr.timingRing);
+      if (vr.rival && vr.rival.root && vr.rival.root.parent) vr.rival.root.parent.remove(vr.rival.root);
+      this._volleyballRig = null;
+    }
+    if (this._jetSkiGates && this._jetSkiGates.length) {
+      for (let i = 0; i < this._jetSkiGates.length; i++) {
+        const g = this._jetSkiGates[i];
+        if (g.group && g.group.parent) g.group.parent.remove(g.group);
+      }
+      this._jetSkiGates = [];
+    }
     this.activeSideMission = null;
     if (this.el.missionBar) this.el.missionBar.hidden = true;
     if (this.missionBeacon) this.missionBeacon.group.visible = false;
@@ -15439,17 +16621,213 @@ class ViceCity3DApp {
       return;
     }
 
+    if (m.kind === 'volleyball' && this._volleyballRig) {
+      if (this.missionBeacon) this.missionBeacon.group.visible = false;
+      const vr = this._volleyballRig;
+      if (this.el.missionObj) {
+        this.el.missionObj.textContent = `🏐 BEACH VOLLEYBALL · RALLY ${m.rally}/${m.goal} · MISSES ${m.misses}/${m.maxMisses}`;
+      }
+      m.t += dt / m.duration;
+      const u = THREE.MathUtils.clamp(m.t, 0, 1);
+      const bx = THREE.MathUtils.lerp(m.startX, m.destX, u);
+      const bz = THREE.MathUtils.lerp(m.startZ, m.destZ, u);
+      const peakH = m.phase === 'incoming' ? 4.4 : 4.1;
+      const by = 0.85 + Math.sin(u * Math.PI) * peakH;
+      vr.ballGrp.position.set(bx, by, bz);
+      vr.ballGrp.rotation.x += dt * 7.5;
+      vr.ballGrp.rotation.z += dt * 5.0;
+
+      const baseSandY = this.getSurfaceY(m.destX, m.destZ, true) + 0.06;
+      if (m.phase === 'incoming') {
+        vr.landRing.visible = true;
+        vr.timingRing.visible = true;
+        vr.landRing.position.set(m.destX, baseSandY, m.destZ);
+        vr.timingRing.position.set(m.destX, baseSandY + 0.02, m.destZ);
+        const s = Math.max(0.25, 1.9 - u * 1.5);
+        vr.timingRing.scale.setScalar(s);
+        vr.landRingMat.color.setHex(u >= 0.56 ? 0xffd36b : 0x21e6d1);
+      } else {
+        vr.landRing.visible = false;
+        vr.timingRing.visible = false;
+      }
+
+      if (vr.rival && vr.rival.root) {
+        const targetRZ = m.phase === 'outgoing' ? m.destZ : -124.0;
+        vr.rival.root.position.z = THREE.MathUtils.damp(vr.rival.root.position.z, targetRZ, 6.0, dt);
+      }
+
+      if (m.t >= 1.0) {
+        if (m.phase === 'outgoing') {
+          // Rival returns the volleyball across the net!
+          m.phase = 'incoming';
+          m.t = 0;
+          m.duration = Math.max(1.12, 1.48 - m.rally * 0.04);
+          m.startX = m.destX;
+          m.startZ = m.destZ;
+          m.destX = 21.3 + Math.random() * 2.1;
+          m.destZ = -124.0 + (Math.random() - 0.5) * 5.4;
+          if (this.audio && typeof this.audio.volleyballHit === 'function') this.audio.volleyballHit(false);
+        } else {
+          // Ball landed on player's sand!
+          m.misses += 1;
+          if (m.misses >= m.maxMisses) {
+            const consolation = m.rally * 40;
+            if (consolation > 0) {
+              this.cash += consolation;
+              if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            }
+            this.abortSideMission();
+            this.el.combo.innerHTML = `MATCH OVER · ${m.rally} VOLLEYS <span>${consolation > 0 ? `+$${consolation}` : 'PRESS [E] AT COURT TO RETRY'}</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 3.2;
+            return;
+          }
+          m.t = 0;
+          m.startX = 27.4; m.startZ = -124.0;
+          m.destX = 22.0; m.destZ = -124.0 + (Math.random() - 0.5) * 3.6;
+          this.el.combo.innerHTML = `MISSED VOLLEY! (${m.misses}/${m.maxMisses}) <span>NEXT SERVE INCOMING</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 1.8;
+        }
+      }
+      return;
+    }
+
+    if (m.kind === 'jetski' && this._jetSkiGates && this._jetSkiGates.length) {
+      if (this.missionBeacon) this.missionBeacon.group.visible = false;
+      for (let i = 0; i < this._jetSkiGates.length; i++) {
+        const g = this._jetSkiGates[i];
+        g.group.position.y = -0.32 + Math.sin(elapsed * 2.6 + i * 0.9) * 0.14;
+      }
+      const cur = this._jetSkiGates[m.gateIdx];
+      if (cur) {
+        const d = Math.hypot(act.x - cur.x, act.z - cur.z);
+        if (this.el.missionObj) {
+          this.el.missionObj.textContent = `🌊 JET-SKI SLALOM · GATE ${m.gateIdx + 1}/${m.total} (${Math.round(d)}m)`;
+        }
+        if (d < 12.0) {
+          cur.cleared = true;
+          cur.group.visible = false;
+          this.audio.pickup();
+          m.gateIdx += 1;
+          m.timer = Math.min(70, m.timer + 5);
+          if (m.gateIdx >= m.total) {
+            this.cash += 1350;
+            this.missionsCompleted += 1;
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            this.abortSideMission();
+            this.savePersistentSave();
+            this.el.combo.innerHTML = `🌊 JET-SKI SLALOM CHAMPION! <span>+$1,350</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 4.2;
+          } else {
+            const nxt = this._jetSkiGates[m.gateIdx];
+            nxt.archMat.color.setHex(0xffd36b);
+            nxt.archMat.opacity = 0.92;
+            m.target = { x: nxt.x, z: nxt.z, name: `Buoy Gate ${m.gateIdx + 1}/${m.total}` };
+            this.el.combo.innerHTML = `GATE ${m.gateIdx}/${m.total} CLEARED! <span>+5s BONUS</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 1.6;
+          }
+        }
+      }
+      return;
+    }
+
     if (m.target && this.missionBeacon) {
       const by = this.getSurfaceY(m.target.x, m.target.z, false);
       this.missionBeacon.group.visible = true;
       this.missionBeacon.group.position.set(m.target.x, by, m.target.z);
       this.missionBeacon.ring.scale.setScalar(1 + Math.sin(elapsed * 5.0) * 0.14);
-      const col = m.kind === 'race' ? 0x21e6d1 : (m.phase === 'pickup' ? 0xffd36b : 0x34e89e);
+      const col = m.kind === 'race' ? 0x21e6d1
+        : (m.kind === 'pizza' ? 0xff7b2e
+        : (m.kind === 'impromptuRace' ? 0xff2e88
+        : (m.phase === 'pickup' ? 0xffd36b : 0x34e89e)));
       this.missionBeacon.cylMat.color.setHex(col);
       this.missionBeacon.ringMat.color.setHex(col);
 
       const d = Math.hypot(act.x - m.target.x, act.z - m.target.z);
-      if (m.kind === 'taxi') {
+      if (m.kind === 'impromptuRace') {
+        if (m.countdown > 0) {
+          m.countdown -= dt;
+          if (this.el.missionObj) this.el.missionObj.textContent = `🏁 STREET RACE STARTING · ${Math.ceil(m.countdown)}...`;
+          return;
+        }
+        // Drive AI rival car along the avenue with exciting gentle rubber-banding!
+        const playerDist = Math.abs(act.z - m.target.z);
+        const rivalDist = Math.abs(m.rivalZ - m.target.z);
+        const leadGap = playerDist - rivalDist; // negative if player is ahead
+        const targetSpd = THREE.MathUtils.clamp(43 + (leadGap < -18 ? 7.5 : (leadGap > 24 ? -5.5 : 0)), 34, 54);
+        m.rivalSpeed = THREE.MathUtils.damp(m.rivalSpeed, targetSpd, 2.4, dt);
+        m.rivalZ += m.dirZ * m.rivalSpeed * dt;
+        const ry = this.getSurfaceY(m.rivalX, m.rivalZ, false) + 0.04;
+        if (m.rivalMesh) {
+          m.rivalMesh.position.set(m.rivalX, ry, m.rivalZ);
+          if (m.rivalRig && m.rivalRig.wheelSpinGroups) {
+            for (let i = 0; i < m.rivalRig.wheelSpinGroups.length; i++) {
+              m.rivalRig.wheelSpinGroups[i].rotation.x -= m.rivalSpeed * dt * 2.5;
+            }
+          }
+        }
+        const posStr = playerDist <= rivalDist ? '1ST' : '2ND';
+        if (this.el.missionObj) this.el.missionObj.textContent = `🔥 STREET RACE · ${posStr} · ${Math.round(d)}m TO FINISH`;
+
+        if (d < 15.0) {
+          this.cash += 1200;
+          this.missionsCompleted += 1;
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          this.abortSideMission();
+          this.savePersistentSave();
+          this.audio.pickup();
+          this.el.combo.innerHTML = `🏁 STREET RACE WINNER! <span>+$1,200 PRIZE</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 4.2;
+          return;
+        }
+        if (rivalDist < 12.0) {
+          this.cash += 250;
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          this.abortSideMission();
+          this.savePersistentSave();
+          this.el.combo.innerHTML = `2ND PLACE · CLOSE RACE! <span>+$250 CONSOLATION</span>`;
+          this.el.combo.classList.add('on');
+          this.streakTimer = 3.4;
+          return;
+        }
+      } else if (m.kind === 'pizza') {
+        if (this.el.missionObj) this.el.missionObj.textContent = `🍕 PIZZA BOY (${m.delivered}/${m.drops.length}) · ${m.target.name} (${Math.round(d)}m)`;
+        if (d < 10.5) {
+          this.audio.pickup();
+          m.delivered += 1;
+          const tip = 220 + Math.min(180, Math.round(m.timer * 4));
+          this.cash += tip;
+          if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+          for (let i = 0; i < 8; i++) {
+            this.spawnParticle(
+              m.target.x + (Math.random() - 0.5) * 1.4, by + 1.2, m.target.z + (Math.random() - 0.5) * 1.4,
+              (Math.random() - 0.5) * 3.5, 2.2 + Math.random() * 1.8, (Math.random() - 0.5) * 3.5,
+              0xff7b2e, 0.45, 0.3, 1.4, 4.5
+            );
+          }
+          if (m.delivered >= m.drops.length) {
+            this.cash += 1400;
+            this.missionsCompleted += 1;
+            if (this.el.cash) this.el.cash.textContent = `$${this.cash.toLocaleString()}`;
+            this.abortSideMission();
+            this.savePersistentSave();
+            this.el.combo.innerHTML = `🍕 PIZZA BOY SHIFT COMPLETE! <span>+$1,400 BONUS</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 4.2;
+          } else {
+            m.dropIdx += 1;
+            m.target = m.drops[m.dropIdx];
+            m.timer = Math.min(72, m.timer + 28);
+            this.el.combo.innerHTML = `HOT PIZZA DELIVERED! +$${tip} <span>NEXT: ${m.target.name.toUpperCase()}</span>`;
+            this.el.combo.classList.add('on');
+            this.streakTimer = 2.8;
+          }
+        }
+      } else if (m.kind === 'taxi') {
         if (this.el.missionObj) this.el.missionObj.textContent = `${m.phase === 'pickup' ? 'PICKUP' : 'DROPOFF'} · ${m.target.name} (${Math.round(d)}m)`;
         if (d < 9.5) {
           this.audio.pickup();
@@ -15562,6 +16940,11 @@ class ViceCity3DApp {
       b.root.position.set(b.x, b.y, b.z);
     }
   }
+}
+
+export function preloadViceCity3D() {
+  if (!instance) instance = new ViceCity3DApp();
+  return instance;
 }
 
 export function openViceCity3D() {
